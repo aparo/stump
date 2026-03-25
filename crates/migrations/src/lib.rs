@@ -1,6 +1,7 @@
 use sea_orm_migration::async_trait::async_trait;
 pub use sea_orm_migration::*;
 
+mod dumper;
 mod m20250807_202824_init;
 mod m20251013_233701_add_media_metadata_fields;
 mod m20251020_145410_add_thumbnail_ratio;
@@ -18,7 +19,6 @@ mod m20260220_000000_user_avatar_path;
 mod m20260307_000000_library_skip_book_overview;
 mod m20260322_151809_normalize_timestamp;
 mod m20260325_074458_migrate_text_uuid;
-
 pub struct Migrator;
 
 #[async_trait]

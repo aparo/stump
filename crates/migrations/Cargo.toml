@@ -5,5 +5,7 @@ edition = "2021"
 [dependencies]
 sea-orm = { workspace = true }
 sea-orm-migration = { workspace = true }
+chrono = { workspace = true }
+tokio = { workspace = true }
 
 models = { path = "../models" }

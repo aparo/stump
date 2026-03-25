@@ -4667,9 +4667,11 @@ dependencies = [
 name = "migrations"
 version = "0.0.0"
 dependencies = [
+ "chrono",
  "models",
  "sea-orm",
  "sea-orm-migration",
+ "tokio",
 ]
 
 [[package]]
