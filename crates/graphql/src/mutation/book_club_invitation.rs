@@ -195,7 +195,7 @@ mod tests {
 	fn get_default_book_club_invitation() -> book_club_invitation::Model {
 		let book_club_id =
 			Uuid::from_str("f1ae2ad1-c2ef-46bf-806b-0848200c9693").unwrap();
-		let user_id = Uuid::from_str("6d53ddf7-f0d4-4918-b559-9d0a950f2d43 ").unwrap();
+		let user_id = Uuid::from_str("6d53ddf7-f0d4-4918-b559-9d0a950f2d43").unwrap();
 
 		book_club_invitation::Model {
 			id: Uuid::new_v4(),
@@ -289,7 +289,7 @@ mod tests {
 
 		let result = validate_book_club_invitation_input(
 			&get_default_user(),
-			&"123".into(),
+			&default_user_id().to_string().into(),
 			&input,
 			&mock_db,
 		)
@@ -308,7 +308,7 @@ mod tests {
 		};
 		let result = validate_book_club_invitation_input(
 			&get_default_user(),
-			&"123".into(),
+			&default_user_id().to_string().into(),
 			&input,
 			&mock_db,
 		)
@@ -327,7 +327,7 @@ mod tests {
 		};
 		let result = validate_book_club_invitation_input(
 			&get_default_user(),
-			&"123".into(),
+			&default_user_id().to_string().into(),
 			&input,
 			&mock_db,
 		)
@@ -345,7 +345,7 @@ mod tests {
 		};
 		let result = validate_book_club_invitation_input(
 			&get_default_user(),
-			&"123".into(),
+			&default_user_id().to_string().into(),
 			&input,
 			&mock_db,
 		)

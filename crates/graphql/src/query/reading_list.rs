@@ -113,7 +113,7 @@ mod tests {
 		match reading_lists.page_info {
 			PaginationInfo::Cursor(info) => {
 				assert_eq!(info.current_cursor, Some("abc".to_string()));
-				assert_eq!(info.next_cursor, Some("1".to_string()));
+				assert_eq!(info.next_cursor, Some(get_uuid_1().to_string()));
 			},
 			_ => panic!("Expected Offset pagination info"),
 		}

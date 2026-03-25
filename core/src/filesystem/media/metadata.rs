@@ -6,7 +6,7 @@ use pdf::{
 	object::InfoDict,
 	primitive::{Dictionary, PdfString},
 };
-use sea_orm::{prelude::*, Set};
+use sea_orm::Set;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 

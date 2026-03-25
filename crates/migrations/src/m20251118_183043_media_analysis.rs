@@ -94,7 +94,7 @@ impl MigrationTrait for Migration {
 }
 
 #[derive(DeriveIden)]
-enum MediaAnalysis {
+pub enum MediaAnalysis {
 	Table,
 	Id,
 	Data,

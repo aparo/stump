@@ -6,7 +6,8 @@ pub struct Model {
 	#[sea_orm(primary_key, auto_increment = true)]
 	pub id: i32,
 	pub session_id: String,
-	pub user_id: String,
+	#[sea_orm(column_type = "Uuid")]
+	pub user_id: Uuid,
 
 	pub created_at: DateTimeWithTimeZone,
 

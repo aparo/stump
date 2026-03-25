@@ -5,8 +5,8 @@ use sea_orm::entity::prelude::*;
 pub struct Model {
 	#[sea_orm(primary_key)]
 	pub id: i32,
-	#[sea_orm(column_type = "Text")]
-	pub media_id: String,
+	#[sea_orm(column_type = "Uuid")]
+	pub media_id: Uuid,
 	pub tag_id: i32,
 }
 

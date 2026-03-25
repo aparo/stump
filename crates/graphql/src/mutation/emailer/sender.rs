@@ -460,7 +460,10 @@ mod tests {
 		let sender = MockEmailerSender { is_error: true };
 		let user = get_default_user();
 		let input = SendAttachmentEmailsInput {
-			media_ids: vec!["1".to_string().into(), "2".to_string().into()],
+			media_ids: vec![
+				Uuid::new_v4().to_string().into(),
+				Uuid::new_v4().to_string().into(),
+			],
 			send_to: vec![
 				EmailerSendTo::Device(SendToDevice { id: 1 }),
 				EmailerSendTo::Anonymous(SendToEmail {
@@ -650,7 +653,7 @@ mod tests {
 		let sender = MockEmailerSender { is_error: false };
 
 		let (records, errors) =
-			send_attachments(&user, &emailer, &vec![book], &recipients, &sender)
+			send_attachments(&user, &emailer, &[book], &recipients, &sender)
 				.await
 				.unwrap();
 

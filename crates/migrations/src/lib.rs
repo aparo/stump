@@ -17,6 +17,7 @@ mod m20260118_204601_add_bookmark_created_at;
 mod m20260220_000000_user_avatar_path;
 mod m20260307_000000_library_skip_book_overview;
 mod m20260322_151809_normalize_timestamp;
+mod m20260325_074458_migrate_text_uuid;
 
 pub struct Migrator;
 
@@ -40,6 +41,7 @@ impl MigratorTrait for Migrator {
 			Box::new(m20260220_000000_user_avatar_path::Migration),
 			Box::new(m20260307_000000_library_skip_book_overview::Migration),
 			Box::new(m20260322_151809_normalize_timestamp::Migration),
+			Box::new(m20260325_074458_migrate_text_uuid::Migration),
 		]
 	}
 }

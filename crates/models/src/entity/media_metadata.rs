@@ -16,7 +16,7 @@ pub struct Model {
 	#[serde(skip_serializing)]
 	#[sea_orm(primary_key, auto_increment = true)]
 	pub id: i32,
-	#[sea_orm(column_type = "Text", nullable, unique)]
+	#[sea_orm(column_type = "Uuid", nullable, unique)]
 	pub media_id: Option<Uuid>,
 	pub age_rating: Option<i32>,
 	#[graphql(skip)]

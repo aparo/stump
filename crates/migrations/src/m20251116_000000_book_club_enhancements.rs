@@ -1553,7 +1553,7 @@ impl MigrationTrait for Migration {
 }
 
 #[derive(DeriveIden)]
-enum BookClubs {
+pub enum BookClubs {
 	Table,
 	Id,
 	Name,
@@ -1579,7 +1579,7 @@ pub enum BookClubMembers {
 }
 
 #[derive(DeriveIden)]
-enum BookClubInvitations {
+pub enum BookClubInvitations {
 	Table,
 	Id,
 	Role,
@@ -1588,7 +1588,7 @@ enum BookClubInvitations {
 }
 
 #[derive(DeriveIden)]
-enum BookClubMemberFavoriteBooks {
+pub enum BookClubMemberFavoriteBooks {
 	Table,
 	Id,
 	Title,
@@ -1673,7 +1673,7 @@ pub enum BookClubDiscussionMessage {
 
 #[derive(DeriveIden)]
 #[allow(dead_code)]
-enum BookClubDiscussionMessageLikes {
+pub enum BookClubDiscussionMessageLikes {
 	Table,
 	Id,
 	Timestamp,
@@ -1706,7 +1706,7 @@ pub enum CustomEmojis {
 // Start of OLD defs
 
 #[derive(DeriveIden)]
-enum BookClubSchedules {
+pub enum BookClubSchedules {
 	Table,
 	Id,
 	DefaultIntervalDays,

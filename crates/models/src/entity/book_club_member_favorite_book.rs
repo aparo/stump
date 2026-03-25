@@ -3,8 +3,8 @@ use sea_orm::entity::prelude::*;
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
 #[sea_orm(table_name = "book_club_member_favorite_books")]
 pub struct Model {
-	#[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
-	pub id: String,
+	#[sea_orm(primary_key, auto_increment = false, column_type = "Uuid")]
+	pub id: Uuid,
 	#[sea_orm(column_type = "Text", nullable)]
 	pub title: Option<String>,
 	#[sea_orm(column_type = "Text", nullable)]
@@ -13,10 +13,10 @@ pub struct Model {
 	pub url: Option<String>,
 	#[sea_orm(column_type = "Text", nullable)]
 	pub notes: Option<String>,
-	#[sea_orm(column_type = "Text", unique)]
-	pub member_id: String,
-	#[sea_orm(column_type = "Text", nullable)]
-	pub book_id: Option<String>,
+	#[sea_orm(column_type = "Uuid", unique)]
+	pub member_id: Uuid,
+	#[sea_orm(column_type = "Uuid", nullable)]
+	pub book_id: Option<Uuid>,
 	#[sea_orm(column_type = "Text", nullable)]
 	pub image_url: Option<String>,
 }

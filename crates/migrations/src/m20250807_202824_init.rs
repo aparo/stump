@@ -4,7 +4,7 @@ use sea_orm_migration::prelude::*;
 pub struct Migration;
 
 #[derive(DeriveIden)]
-enum AgeRestrictions {
+pub enum AgeRestrictions {
 	Table,
 	Id,
 	Age,
@@ -27,7 +27,7 @@ pub enum ApiKeys {
 }
 
 #[derive(DeriveIden)]
-pub enum BookClubs {
+enum BookClubs {
 	Table,
 	Id,
 	Name,
@@ -189,7 +189,7 @@ pub enum LibraryExclusions {
 }
 
 #[derive(DeriveIden)]
-enum LibraryTags {
+pub enum LibraryTags {
 	Table,
 	Id,
 	LibraryId,
@@ -197,7 +197,7 @@ enum LibraryTags {
 }
 
 #[derive(DeriveIden)]
-enum MediaTags {
+pub enum MediaTags {
 	Table,
 	Id,
 	MediaId,
@@ -205,7 +205,7 @@ enum MediaTags {
 }
 
 #[derive(DeriveIden)]
-enum SeriesTags {
+pub enum SeriesTags {
 	Table,
 	Id,
 	SeriesId,
@@ -287,7 +287,7 @@ enum MediaAnnotations {
 }
 
 #[derive(DeriveIden)]
-enum MediaMetadata {
+pub enum MediaMetadata {
 	Table,
 	Id,
 	MediaId,
@@ -333,7 +333,7 @@ enum PageAnalysis {
 }
 
 #[derive(DeriveIden)]
-enum SeriesMetadata {
+pub enum SeriesMetadata {
 	Table,
 	SeriesId,
 	AgeRating,
@@ -382,7 +382,7 @@ pub enum FinishedReadingSessions {
 }
 
 #[derive(DeriveIden)]
-enum SmartLists {
+pub enum SmartLists {
 	Table,
 	Id,
 	Name,
@@ -395,7 +395,7 @@ enum SmartLists {
 }
 
 #[derive(DeriveIden)]
-enum SmartListAccessRules {
+pub enum SmartListAccessRules {
 	Table,
 	Id,
 	Role,
@@ -404,7 +404,7 @@ enum SmartListAccessRules {
 }
 
 #[derive(DeriveIden)]
-enum SmartListViews {
+pub enum SmartListViews {
 	Table,
 	Id,
 	Name,
@@ -536,7 +536,7 @@ pub enum Users {
 }
 
 #[derive(DeriveIden)]
-enum UserPreferences {
+pub enum UserPreferences {
 	Table,
 	Id,
 	PreferredLayoutMode,
@@ -594,7 +594,7 @@ pub enum Libraries {
 }
 
 #[derive(DeriveIden)]
-enum LibraryConfigs {
+pub enum LibraryConfigs {
 	Table,
 	Id,
 	ConvertRarToZip,

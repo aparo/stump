@@ -116,7 +116,7 @@ mod tests {
 	#[tokio::test]
 	async fn get_book_club_for_admin_no_result() {
 		let book_club = get_default_book_club();
-		let id: ID = book_club.id.clone().into();
+		let id: ID = book_club.id.into();
 		let user = get_default_user();
 		let conn = get_mock_db_for_model::<book_club::Model>(vec![]).into_connection();
 		let id = Uuid::parse_str(id.as_ref()).unwrap();
@@ -128,7 +128,7 @@ mod tests {
 	#[tokio::test]
 	async fn get_book_club_for_admin_valid() {
 		let book_club = get_default_book_club();
-		let id: ID = book_club.id.clone().into();
+		let id: ID = book_club.id.into();
 		let user = get_default_user();
 		let conn = get_mock_db_for_model(vec![book_club.clone()]).into_connection();
 		let id = Uuid::parse_str(id.as_ref()).unwrap();

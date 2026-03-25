@@ -106,9 +106,11 @@ impl SessionStore for StumpSessionStore {
 		let session_id = record.id.to_string();
 		tracing::trace!(session_id, ?user_id, "Saving session");
 
+		let user_id = Uuid::from_str(user_id).map_err(|_| SessionError::DecodeFailed)?;
+
 		let active_model = session::ActiveModel {
 			session_id: Set(session_id.clone()),
-			user_id: Set(user_id.to_string()),
+			user_id: Set(user_id),
 			expiry_time: Set(expiry_time),
 			created_at: Set(DateTimeWithTimeZone::from(Utc::now())),
 			..Default::default()
@@ -140,7 +142,8 @@ impl SessionStore for StumpSessionStore {
 					.map_err(|_| SessionError::DecodeFailed)?,
 				data: HashMap::from_iter([(
 					SESSION_USER_KEY.to_string(),
-					result.user_id.into(),
+					serde_json::to_value(result.user_id)
+						.map_err(|_| SessionError::DecodeFailed)?,
 				)]),
 				expiry_date: OffsetDateTime::from_unix_timestamp(
 					result.expiry_time.timestamp(),

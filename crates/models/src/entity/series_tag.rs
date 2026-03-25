@@ -6,7 +6,7 @@ pub struct Model {
 	#[sea_orm(primary_key)]
 	pub id: i32,
 	#[sea_orm(column_type = "Text")]
-	pub series_id: String,
+	pub series_id: Uuid,
 	pub tag_id: i32,
 }
 

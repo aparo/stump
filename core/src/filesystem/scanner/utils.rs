@@ -494,7 +494,6 @@ async fn build_book(
 	// Spawn a blocking task to handle the IO-intensive operations:
 	let handle = spawn_blocking({
 		let path = path.to_path_buf();
-		let series_id = series_id;
 		let library_config = library_config.clone();
 		let config = config.clone();
 
@@ -548,7 +547,6 @@ async fn handle_book(
 	// Spawn a blocking task to handle the IO-intensive operations:
 	let handle = spawn_blocking({
 		let path = path.to_path_buf();
-		let series_id = series_id;
 		let library_config = library_config.clone();
 		let config = config.clone();
 
@@ -647,7 +645,6 @@ pub(crate) async fn safely_build_and_insert_media(
 		);
 
 		for (book_index, path) in chunk.iter().enumerate() {
-			let series_id = series_id;
 			let library_config = library_config.clone();
 			let path = path.clone();
 
@@ -725,8 +722,8 @@ pub(crate) async fn safely_build_and_insert_media(
 					.into_worker_send(),
 					CoreEvent::CreatedMedia(CreatedMedia {
 						id: created_media.id,
-						series_id: series_id,
-						library_id: library_id,
+						series_id,
+						library_id,
 					})
 					.into_worker_send(),
 				]);
@@ -833,7 +830,7 @@ pub(crate) async fn visit_and_update_media(
 			let ctx = BookVisitCtx {
 				operation: *operation,
 				existing_book: Some(book),
-				series_id: series_id,
+				series_id,
 				path: PathBuf::from(path.as_str()),
 			};
 			let library_config = library_config.clone();

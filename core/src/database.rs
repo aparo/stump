@@ -11,10 +11,10 @@ pub const FORCE_RESET_KEY: &str = "FORCE_DB_RESET";
 
 pub async fn connect(config: &StumpConfig) -> Result<DatabaseConnection, CoreError> {
 	let config_dir = config.get_config_dir();
-	// let db_url = if let Some(dburl) = config.db_url.clone() {
-	// dburl
-	// } else {
-	let db_url = {
+	let db_url = if let Some(dburl) = config.db_url.clone() {
+		dburl
+	} else {
+		// let db_url = {
 		let sqlite_url = if let Some(path) = config.db_path.clone() {
 			format!("sqlite://{path}/stump.db?mode=rwc")
 		} else if cfg!(debug_assertions) {

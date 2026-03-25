@@ -677,7 +677,7 @@ impl JobExt for LibraryScanJob {
 						..
 					} = safely_build_and_insert_media(
 						MediaBuildOperation {
-							series_id: series_id,
+							series_id,
 							library_config: self.config.clone().ok_or(
 								JobError::TaskFailed(
 									"Library configuration is missing".to_string(),
@@ -715,7 +715,7 @@ impl JobExt for LibraryScanJob {
 						..
 					} = visit_and_update_media(
 						MediaBuildOperation {
-							series_id: series_id,
+							series_id,
 							library_config: self.config.clone().ok_or(
 								JobError::TaskFailed(
 									"Library configuration is missing".to_string(),

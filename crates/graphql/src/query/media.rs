@@ -778,7 +778,7 @@ mod tests {
 
 		assert_eq!(
 			query,
-			r#"SELECT  FROM "media" LEFT JOIN "media_metadata" ON "media"."id" = "media_metadata"."media_id" INNER JOIN "series" ON "media"."series_id" = "series"."id" LEFT JOIN "series_metadata" ON "series_metadata"."series_id" = "series"."id" WHERE "series"."library_id" NOT IN (SELECT "library_id" FROM "library_exclusions" WHERE "library_exclusions"."user_id" = '42') ORDER BY "media"."name" ASC, "media_metadata"."media_id" DESC"#
+			r#"SELECT  FROM "media" LEFT JOIN "media_metadata" ON "media"."id" = "media_metadata"."media_id" INNER JOIN "series" ON "media"."series_id" = "series"."id" LEFT JOIN "series_metadata" ON "series_metadata"."series_id" = "series"."id" WHERE "series"."library_id" NOT IN (SELECT "library_id" FROM "library_exclusions" WHERE "library_exclusions"."user_id" = '6d53ddf7-f0d4-4918-b559-9d0a950f2d43') ORDER BY "media"."name" ASC, "media_metadata"."media_id" DESC"#
 		);
 	}
 }

@@ -41,10 +41,10 @@ pub struct Model {
 	#[sea_orm(primary_key)]
 	pub id: i32,
 	pub role: SmartListAccessRole,
-	#[sea_orm(column_type = "Text")]
-	pub user_id: String,
-	#[sea_orm(column_type = "Text")]
-	pub smart_list_id: String,
+	#[sea_orm(column_type = "Uuid")]
+	pub user_id: Uuid,
+	#[sea_orm(column_type = "Uuid")]
+	pub smart_list_id: Uuid,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
