@@ -69,7 +69,7 @@ impl BookClubBook {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 
 		let discussions = book_club_discussion::Entity::find()
-			.filter(book_club_discussion::Column::BookClubBookId.eq(&self.model.id))
+			.filter(book_club_discussion::Column::BookClubBookId.eq(self.model.id))
 			.order_by_asc(book_club_discussion::Column::CreatedAt)
 			.all(conn)
 			.await?;

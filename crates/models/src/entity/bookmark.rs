@@ -9,8 +9,8 @@ use super::user::AuthUser;
 #[sea_orm(table_name = "bookmarks")]
 #[graphql(name = "BookmarkModel")]
 pub struct Model {
-	#[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
-	pub id: String,
+	#[sea_orm(primary_key, auto_increment = false)]
+	pub id: Uuid,
 	#[sea_orm(column_type = "Text", nullable)]
 	pub preview_content: Option<String>,
 	#[sea_orm(column_type = "Json", nullable)]
@@ -18,10 +18,8 @@ pub struct Model {
 	#[sea_orm(column_type = "Text", nullable)]
 	pub epubcfi: Option<String>,
 	pub page: Option<i32>,
-	#[sea_orm(column_type = "Text")]
-	pub media_id: String,
-	#[sea_orm(column_type = "Text")]
-	pub user_id: String,
+	pub media_id: Uuid,
+	pub user_id: Uuid,
 	pub created_at: DateTimeUtc,
 }
 
@@ -59,12 +57,12 @@ impl Related<super::user::Entity> for Entity {
 
 impl Entity {
 	pub fn find_for_user(user: &AuthUser) -> Select<Entity> {
-		Entity::find().filter(Column::UserId.eq(&user.id))
+		Entity::find().filter(Column::UserId.eq(user.id))
 	}
 
-	pub fn find_for_user_and_media_id(user: &AuthUser, media_id: &str) -> Select<Entity> {
+	pub fn find_for_user_and_media_id(user: &AuthUser, media_id: Uuid) -> Select<Entity> {
 		Entity::find()
-			.filter(Column::UserId.eq(&user.id))
+			.filter(Column::UserId.eq(user.id))
 			.filter(Column::MediaId.eq(media_id))
 	}
 }
@@ -78,7 +76,7 @@ impl ActiveModelBehavior for ActiveModel {
 		if insert {
 			self.created_at = ActiveValue::Set(chrono::Utc::now());
 			if self.id.is_not_set() {
-				self.id = ActiveValue::Set(Uuid::new_v4().to_string());
+				self.id = ActiveValue::Set(Uuid::new_v4());
 			}
 		}
 

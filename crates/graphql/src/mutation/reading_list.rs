@@ -32,7 +32,7 @@ impl ReadingListMutation {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 		let txn = conn.begin().await?;
 		let media_ids = input.media_ids.clone();
-		let reading_list = create_reading_list_for_user_id(&user_id, input, &txn).await?;
+		let reading_list = create_reading_list_for_user_id(user_id, input, &txn).await?;
 
 		create_reading_list_items(reading_list.id.clone(), media_ids, &txn).await?;
 		txn.commit().await?;
@@ -54,9 +54,9 @@ impl ReadingListMutation {
 	) -> Result<ReadingList> {
 		let user_id = ctx.data::<AuthContext>()?.id();
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
-		let reading_list_id = input.id.clone();
+		let reading_list_id = input.id;
 
-		let _ = get_for_owner(&reading_list_id, conn, user_id).await?;
+		let _ = get_for_owner(reading_list_id, conn, user_id).await?;
 
 		Err("Not implemented".to_string().into())
 	}
@@ -69,12 +69,12 @@ impl ReadingListMutation {
 	async fn delete_reading_list(
 		&self,
 		ctx: &Context<'_>,
-		id: String,
+		id: Uuid,
 	) -> Result<ReadingList> {
 		let user_id = ctx.data::<AuthContext>()?.id();
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 
-		let reading_list = get_for_owner(&id, conn, user_id).await?;
+		let reading_list = get_for_owner(id, conn, user_id).await?;
 
 		// Delete reading list
 		let _ = reading_list.clone().delete(conn).await?;
@@ -86,7 +86,7 @@ impl ReadingListMutation {
 }
 
 async fn create_reading_list_for_user_id(
-	user_id: &str,
+	user_id: uuid::Uuid,
 	input: ReadingListInput,
 	txn: &DatabaseTransaction,
 ) -> Result<reading_list::Model, DbErr> {
@@ -94,8 +94,8 @@ async fn create_reading_list_for_user_id(
 }
 
 async fn create_reading_list_items(
-	reading_list_id: String,
-	media_ids: Vec<String>,
+	reading_list_id: Uuid,
+	media_ids: Vec<Uuid>,
 	txn: &DatabaseTransaction,
 ) -> Result<Vec<reading_list_item::Model>, DbErr> {
 	let item_creates = media_ids
@@ -115,9 +115,9 @@ async fn create_reading_list_items(
 }
 
 async fn get_for_owner(
-	id: &str,
+	id: Uuid,
 	conn: &DbConn,
-	user_id: String,
+	user_id: Uuid,
 ) -> Result<reading_list::Model> {
 	// Check if reading list exists
 	let reading_list = reading_list::Entity::find()
@@ -138,16 +138,33 @@ async fn get_for_owner(
 
 #[cfg(test)]
 mod tests {
+	use crate::tests::common::*;
+
 	use super::*;
 	use models::shared::enums::EntityVisibility;
 	use sea_orm::MockDatabase;
 
+	fn get_uuid_123() -> Uuid {
+		Uuid::parse_str("585c0160-0fe5-4afb-b9e3-cdc3500a3835").unwrap()
+	}
+
+	fn get_uuid_media_1() -> Uuid {
+		Uuid::parse_str("51bb1d59-1236-4205-b7b5-bf1aada76211").unwrap()
+	}
+
+	fn get_uuid_media_2() -> Uuid {
+		Uuid::parse_str("82253212-0702-4192-bb84-36c4d85605fd").unwrap()
+	}
+	fn get_uuid_user_123() -> Uuid {
+		Uuid::parse_str("221a6c5b-21e1-4abe-91e1-743965c2796d").unwrap()
+	}
+
 	fn get_reading_list_test_object() -> reading_list::Model {
 		reading_list::Model {
-			id: "123".to_string(),
+			id: get_uuid_123(),
 			name: "hello".to_string(),
 			visibility: "PUBLIC".to_string(),
-			creating_user_id: "42".to_string(),
+			creating_user_id: get_default_user().id,
 			description: None,
 			updated_at: "2021-08-01T00:00:00Z".parse().unwrap(),
 			ordering: "MANUAL".to_string(),
@@ -160,7 +177,7 @@ mod tests {
 			.append_query_results(vec![vec![get_reading_list_test_object()]])
 			.into_connection();
 
-		let reading_list = get_for_owner("123", &mock_db, "42".to_string())
+		let reading_list = get_for_owner(get_uuid_123(), &mock_db, get_default_user().id)
 			.await
 			.unwrap();
 
@@ -170,12 +187,12 @@ mod tests {
 	#[tokio::test]
 	async fn test_get_for_not_owner() {
 		let mut test_model = get_reading_list_test_object();
-		test_model.creating_user_id = "123".to_string();
+		test_model.creating_user_id = get_uuid_123();
 		let mock_db = MockDatabase::new(sea_orm::DatabaseBackend::Sqlite)
 			.append_query_results(vec![vec![test_model]])
 			.into_connection();
 
-		let result = get_for_owner("123", &mock_db, "user".to_string()).await;
+		let result = get_for_owner(get_uuid_123(), &mock_db, get_uuid_user_123()).await;
 
 		assert!(result.is_err());
 	}
@@ -186,16 +203,16 @@ mod tests {
 			.append_query_results(vec![vec![get_reading_list_test_object()]])
 			.into_connection();
 
-		let user_id = "42".to_string();
+		let user_id = get_default_user().id;
 		let input = ReadingListInput {
-			id: "123".to_string(),
+			id: get_uuid_123(),
 			name: "hello".to_string(),
 			visibility: Some(EntityVisibility::Public),
-			media_ids: vec!["1".to_string(), "2".to_string()],
+			media_ids: vec![get_uuid_media_1(), get_uuid_media_2()],
 		};
 
 		let txn = mock_db.begin().await.unwrap();
-		let result = create_reading_list_for_user_id(&user_id, input, &txn)
+		let result = create_reading_list_for_user_id(user_id, input, &txn)
 			.await
 			.unwrap();
 
@@ -207,15 +224,15 @@ mod tests {
 		let mock_db = MockDatabase::new(sea_orm::DatabaseBackend::Sqlite)
 			.append_query_results(vec![vec![reading_list_item::Model {
 				id: 1,
-				reading_list_id: "123".to_string(),
-				media_id: "1".to_string(),
+				reading_list_id: get_uuid_123(),
+				media_id: get_uuid_media_1(),
 				display_order: 0,
 			}]])
 			.into_connection();
 
 		let txn = mock_db.begin().await.unwrap();
-		let media_ids = vec!["a".to_string(), "b".to_string()];
-		let result = create_reading_list_items("1".to_string(), media_ids, &txn)
+		let media_ids = vec![get_uuid_media_1(), get_uuid_media_2()];
+		let result = create_reading_list_items(get_uuid_media_1(), media_ids, &txn)
 			.await
 			.unwrap();
 
@@ -223,8 +240,8 @@ mod tests {
 			result,
 			vec![reading_list_item::Model {
 				id: 1,
-				reading_list_id: "123".to_string(),
-				media_id: "1".to_string(),
+				reading_list_id: get_uuid_123(),
+				media_id: get_uuid_media_1(),
 				display_order: 0,
 			}]
 		);

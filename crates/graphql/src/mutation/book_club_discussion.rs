@@ -1,4 +1,5 @@
 use async_graphql::{Context, Object, Result, ID};
+use axum::extract::ws::Message;
 use chrono::Utc;
 use models::{
 	entity::{
@@ -33,8 +34,9 @@ impl BookClubDiscussionMutation {
 	) -> Result<BookClubDiscussionMessage> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
+		let discussion_id = Uuid::parse_str(discussion_id.as_ref())?;
 
-		let discussion = book_club_discussion::Entity::find_by_id(discussion_id.as_ref())
+		let discussion = book_club_discussion::Entity::find_by_id(discussion_id)
 			.one(conn)
 			.await?
 			.ok_or("Discussion not found")?;
@@ -43,17 +45,19 @@ impl BookClubDiscussionMutation {
 			return Err("Discussion is locked".into());
 		}
 
-		let member = get_member_for_user(&discussion.book_club_id, user, conn).await?;
+		let member = get_member_for_user(discussion.book_club_id, user, conn).await?;
 
 		if let Some(ref parent_id) = input.parent_message_id {
-			let parent = book_club_discussion_message::Entity::find_by_id(parent_id)
-				.filter(
-					book_club_discussion_message::Column::DiscussionId.eq(&discussion.id),
-				)
-				.filter(book_club_discussion_message::Column::DeletedAt.is_null())
-				.one(conn)
-				.await?
-				.ok_or("Parent message not found or deleted")?;
+			let parent =
+				book_club_discussion_message::Entity::find_by_id(parent_id.clone())
+					.filter(
+						book_club_discussion_message::Column::DiscussionId
+							.eq(discussion.id),
+					)
+					.filter(book_club_discussion_message::Column::DeletedAt.is_null())
+					.one(conn)
+					.await?
+					.ok_or("Parent message not found or deleted")?;
 
 			if parent.parent_message_id.is_some() {
 				return Err(
@@ -65,10 +69,10 @@ impl BookClubDiscussionMutation {
 
 		if let Some(ref reply_to_id) = input.reply_to_message_id {
 			let reply_exists =
-				book_club_discussion_message::Entity::find_by_id(reply_to_id)
+				book_club_discussion_message::Entity::find_by_id(reply_to_id.clone())
 					.filter(
 						book_club_discussion_message::Column::DiscussionId
-							.eq(&discussion.id),
+							.eq(discussion.id),
 					)
 					.filter(book_club_discussion_message::Column::DeletedAt.is_null())
 					.one(conn)
@@ -81,7 +85,7 @@ impl BookClubDiscussionMutation {
 		}
 
 		let message = book_club_discussion_message::ActiveModel {
-			id: Set(Uuid::new_v4().to_string()),
+			id: Set(Uuid::new_v4()),
 			content: Set(input.content),
 			timestamp: Set(DateTimeWithTimeZone::from(Utc::now())),
 			parent_message_id: Set(input.parent_message_id),
@@ -109,18 +113,17 @@ impl BookClubDiscussionMutation {
 	) -> Result<BookClubDiscussionMessage> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
-
-		let message =
-			book_club_discussion_message::Entity::find_by_id(message_id.as_ref())
-				.one(conn)
-				.await?
-				.ok_or("Message not found")?;
+		let message_id = Uuid::parse_str(message_id.as_ref())?;
+		let message = book_club_discussion_message::Entity::find_by_id(message_id)
+			.one(conn)
+			.await?
+			.ok_or("Message not found")?;
 
 		if message.deleted_at.is_some() {
 			return Err("Cannot edit a deleted message".into());
 		}
 
-		let discussion = book_club_discussion::Entity::find_by_id(&message.discussion_id)
+		let discussion = book_club_discussion::Entity::find_by_id(message.discussion_id)
 			.one(conn)
 			.await?
 			.ok_or("Discussion not found")?;
@@ -129,7 +132,7 @@ impl BookClubDiscussionMutation {
 			return Err("Discussion is locked".into());
 		}
 
-		let member = get_member_for_user(&discussion.book_club_id, user, conn).await?;
+		let member = get_member_for_user(discussion.book_club_id, user, conn).await?;
 
 		let can_edit = message.member_id.as_ref() == Some(&member.id)
 			|| member.role >= BookClubMemberRole::Moderator
@@ -158,23 +161,23 @@ impl BookClubDiscussionMutation {
 	) -> Result<BookClubDiscussionMessage> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
+		let message_id = Uuid::parse_str(message_id.as_ref())?;
 
-		let message =
-			book_club_discussion_message::Entity::find_by_id(message_id.as_ref())
-				.one(conn)
-				.await?
-				.ok_or("Message not found")?;
+		let message = book_club_discussion_message::Entity::find_by_id(message_id)
+			.one(conn)
+			.await?
+			.ok_or("Message not found")?;
 
 		if message.deleted_at.is_some() {
 			return Err("Message is already deleted".into());
 		}
 
-		let discussion = book_club_discussion::Entity::find_by_id(&message.discussion_id)
+		let discussion = book_club_discussion::Entity::find_by_id(message.discussion_id)
 			.one(conn)
 			.await?
 			.ok_or("Discussion not found")?;
 
-		let member = get_member_for_user(&discussion.book_club_id, user, conn).await?;
+		let member = get_member_for_user(discussion.book_club_id, user, conn).await?;
 
 		let can_delete = message.member_id.as_ref() == Some(&member.id)
 			|| member.role >= BookClubMemberRole::Moderator
@@ -185,7 +188,7 @@ impl BookClubDiscussionMutation {
 		}
 
 		let mut active_model = message.into_active_model();
-		active_model.deleted_at = Set(Some(Utc::now().to_rfc3339()));
+		active_model.deleted_at = Set(Some(DateTimeWithTimeZone::from(Utc::now())));
 
 		let deleted_message = active_model.update(conn).await?;
 
@@ -213,22 +216,22 @@ impl BookClubDiscussionMutation {
 			);
 		}
 
-		let message =
-			book_club_discussion_message::Entity::find_by_id(message_id.as_ref())
-				.one(conn)
-				.await?
-				.ok_or("Message not found")?;
+		let message_id = Uuid::parse_str(message_id.as_ref())?;
+		let message = book_club_discussion_message::Entity::find_by_id(message_id)
+			.one(conn)
+			.await?
+			.ok_or("Message not found")?;
 
 		if message.deleted_at.is_some() {
 			return Err("Cannot react to a deleted message".into());
 		}
 
-		let discussion = book_club_discussion::Entity::find_by_id(&message.discussion_id)
+		let discussion = book_club_discussion::Entity::find_by_id(message.discussion_id)
 			.one(conn)
 			.await?
 			.ok_or("Discussion not found")?;
 
-		let member = get_member_for_user(&discussion.book_club_id, user, conn).await?;
+		let member = get_member_for_user(discussion.book_club_id, user, conn).await?;
 
 		if let Some(ce_id) = custom_emoji_id {
 			let exists = custom_emoji::Entity::find_by_id(ce_id)
@@ -243,11 +246,10 @@ impl BookClubDiscussionMutation {
 
 		let mut query = book_club_discussion_message_reaction::Entity::find()
 			.filter(
-				book_club_discussion_message_reaction::Column::MessageId
-					.eq(message_id.as_ref()),
+				book_club_discussion_message_reaction::Column::MessageId.eq(message_id),
 			)
 			.filter(
-				book_club_discussion_message_reaction::Column::MemberId.eq(&member.id),
+				book_club_discussion_message_reaction::Column::MemberId.eq(member.id),
 			);
 
 		if let Some(ref e) = emoji {
@@ -267,12 +269,12 @@ impl BookClubDiscussionMutation {
 			false
 		} else {
 			let reaction = book_club_discussion_message_reaction::ActiveModel {
-				id: Set(Uuid::new_v4().to_string()),
+				id: Set(Uuid::new_v4()),
 				created_at: Set(DateTimeWithTimeZone::from(Utc::now())),
 				emoji: Set(emoji),
 				custom_emoji_id: Set(custom_emoji_id),
 				member_id: Set(member.id.clone()),
-				message_id: Set(message_id.to_string()),
+				message_id: Set(message_id),
 			};
 			reaction.insert(conn).await?;
 			true
@@ -292,13 +294,14 @@ impl BookClubDiscussionMutation {
 	) -> Result<bool> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
+		let discussion_uuid = Uuid::parse_str(discussion_id.as_ref())?;
 
-		let discussion = book_club_discussion::Entity::find_by_id(discussion_id.as_ref())
+		let discussion = book_club_discussion::Entity::find_by_id(discussion_uuid)
 			.one(conn)
 			.await?
 			.ok_or("Discussion not found")?;
 
-		let member = get_member_for_user(&discussion.book_club_id, user, conn).await?;
+		let member = get_member_for_user(discussion.book_club_id, user, conn).await?;
 
 		if member.role < BookClubMemberRole::Moderator && !user.is_server_owner {
 			return Err("Only moderators and above can lock/unlock discussions".into());
@@ -323,23 +326,23 @@ impl BookClubDiscussionMutation {
 	) -> Result<bool> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
+		let message_id = Uuid::parse_str(message_id.as_ref())?;
 
-		let message =
-			book_club_discussion_message::Entity::find_by_id(message_id.as_ref())
-				.one(conn)
-				.await?
-				.ok_or("Message not found")?;
+		let message = book_club_discussion_message::Entity::find_by_id(message_id)
+			.one(conn)
+			.await?
+			.ok_or("Message not found")?;
 
 		if message.deleted_at.is_some() {
 			return Err("Cannot pin a deleted message".into());
 		}
 
-		let discussion = book_club_discussion::Entity::find_by_id(&message.discussion_id)
+		let discussion = book_club_discussion::Entity::find_by_id(message.discussion_id)
 			.one(conn)
 			.await?
 			.ok_or("Discussion not found")?;
 
-		let member = get_member_for_user(&discussion.book_club_id, user, conn).await?;
+		let member = get_member_for_user(discussion.book_club_id, user, conn).await?;
 
 		if member.role < BookClubMemberRole::Moderator && !user.is_server_owner {
 			return Err("Only moderators and above can pin/unpin messages".into());
@@ -364,25 +367,26 @@ impl BookClubDiscussionMutation {
 	) -> Result<BookClubDiscussion> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
-
-		let member = get_member_for_user(book_club_id.as_ref(), user, conn).await?;
+		let book_club_uuid = Uuid::parse_str(book_club_id.as_ref())?;
+		let member = get_member_for_user(book_club_uuid, user, conn).await?;
 
 		if member.role < BookClubMemberRole::Moderator && !user.is_server_owner {
 			return Err("Only moderators and above can create discussions".into());
 		}
 
 		if let Some(ref bcb_id) = input.book_club_book_id {
-			let book = book_club_book::Entity::find_by_id(bcb_id.as_ref())
+			let bcb_id = Uuid::parse_str(bcb_id.as_ref())?;
+			let book = book_club_book::Entity::find_by_id(bcb_id)
 				.one(conn)
 				.await?
 				.ok_or("Book not found")?;
 
-			if book.book_club_id != book_club_id.as_ref() {
+			if book.book_club_id != book_club_uuid {
 				return Err("Book does not belong to this book club".into());
 			}
 
 			let existing = book_club_discussion::Entity::find()
-				.filter(book_club_discussion::Column::BookClubBookId.eq(bcb_id.as_ref()))
+				.filter(book_club_discussion::Column::BookClubBookId.eq(bcb_id))
 				.one(conn)
 				.await?;
 
@@ -394,11 +398,14 @@ impl BookClubDiscussionMutation {
 		let discussion = book_club_discussion::ActiveModel {
 			is_locked: Set(false),
 			is_archived: Set(false),
-			book_club_book_id: Set(input.book_club_book_id.map(|id| id.to_string())),
+			book_club_book_id: Set(input
+				.book_club_book_id
+				.map(|id| Uuid::parse_str(&id).ok())
+				.flatten()),
 			title: Set(input.title),
 			is_pinned: Set(input.is_pinned),
 			created_at: Set(DateTimeWithTimeZone::from(Utc::now())),
-			book_club_id: Set(book_club_id.to_string()),
+			book_club_id: Set(book_club_uuid),
 			..Default::default()
 		};
 
@@ -416,13 +423,14 @@ impl BookClubDiscussionMutation {
 	) -> Result<bool> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
+		let discussion_id = Uuid::parse_str(discussion_id.as_ref())?;
 
-		let discussion = book_club_discussion::Entity::find_by_id(discussion_id.as_ref())
+		let discussion = book_club_discussion::Entity::find_by_id(discussion_id)
 			.one(conn)
 			.await?
 			.ok_or("Discussion not found")?;
 
-		let member = get_member_for_user(&discussion.book_club_id, user, conn).await?;
+		let member = get_member_for_user(discussion.book_club_id, user, conn).await?;
 
 		if member.role < BookClubMemberRole::Moderator && !user.is_server_owner {
 			return Err(
@@ -440,7 +448,7 @@ impl BookClubDiscussionMutation {
 }
 
 async fn get_member_for_user(
-	book_club_id: &str,
+	book_club_id: Uuid,
 	user: &AuthUser,
 	conn: &DatabaseConnection,
 ) -> Result<book_club_member::Model> {
@@ -451,7 +459,7 @@ async fn get_member_for_user(
 }
 
 pub async fn create_general_discussion<C>(
-	book_club_id: &str,
+	book_club_id: Uuid,
 	conn: &C,
 ) -> Result<book_club_discussion::Model>
 where
@@ -464,7 +472,7 @@ where
 		title: Set(Some("General".to_string())),
 		is_pinned: Set(true),
 		created_at: Set(DateTimeWithTimeZone::from(Utc::now())),
-		book_club_id: Set(book_club_id.to_string()),
+		book_club_id: Set(book_club_id),
 		..Default::default()
 	};
 

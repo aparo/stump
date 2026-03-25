@@ -9,26 +9,21 @@ use sea_orm::{
 #[sea_orm(table_name = "book_club_discussion_message")]
 pub struct Model {
 	#[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
-	pub id: String,
+	pub id: Uuid,
 	#[sea_orm(column_type = "Text")]
 	pub content: String,
-	#[sea_orm(column_type = "custom(\"DATETIME\")")]
 	pub timestamp: DateTimeWithTimeZone,
-	#[sea_orm(column_type = "custom(\"DATETIME\")", nullable)]
 	pub edited_at: Option<DateTimeWithTimeZone>,
 	pub is_pinned_message: bool,
-	#[sea_orm(column_type = "custom(\"DATETIME\")", nullable)]
-	pub deleted_at: Option<String>,
-	#[sea_orm(column_type = "Text", nullable)]
-	pub parent_message_id: Option<String>,
-	#[sea_orm(column_type = "Text", nullable)]
-	pub reply_to_message_id: Option<String>,
-	#[sea_orm(column_type = "Text")]
-	pub discussion_id: String,
-	#[sea_orm(column_type = "Text", nullable)]
-	pub member_id: Option<String>,
-	#[sea_orm(column_type = "Text")]
-	pub book_club_id: String,
+	pub deleted_at: Option<DateTimeWithTimeZone>,
+	#[sea_orm(nullable)]
+	pub parent_message_id: Option<Uuid>,
+	#[sea_orm(nullable)]
+	pub reply_to_message_id: Option<Uuid>,
+	pub discussion_id: Uuid,
+	#[sea_orm(nullable)]
+	pub member_id: Option<Uuid>,
+	pub book_club_id: Uuid,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

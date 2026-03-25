@@ -18,31 +18,21 @@ use super::{
 pub struct Model {
 	#[sea_orm(primary_key)]
 	pub id: i32,
-	#[sea_orm(column_type = "Text")]
 	pub name: String,
-	#[sea_orm(column_type = "Text")]
 	pub short_token: String,
-	#[sea_orm(column_type = "Text")]
 	pub long_token_hash: String,
 	#[sea_orm(column_type = "Json", nullable)]
 	#[graphql(skip)]
 	pub permissions: APIKeyPermissions,
-	#[sea_orm(
-		column_type = "custom(\"DATETIME\")",
-		default_value = "CURRENT_TIMESTAMP"
-	)]
 	pub created_at: DateTimeWithTimeZone,
-	#[sea_orm(column_type = "custom(\"DATETIME\")", nullable)]
 	pub last_used_at: Option<DateTimeWithTimeZone>,
-	#[sea_orm(column_type = "custom(\"DATETIME\")", nullable)]
 	pub expires_at: Option<DateTimeWithTimeZone>,
-	#[sea_orm(column_type = "Text")]
-	pub user_id: String,
+	pub user_id: Uuid,
 }
 
 impl Entity {
 	pub fn find_for_user(user: &AuthUser) -> Select<Entity> {
-		Entity::find().filter(Column::UserId.eq(user.id.clone()))
+		Entity::find().filter(Column::UserId.eq(user.id))
 	}
 }
 

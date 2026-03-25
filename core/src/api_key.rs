@@ -79,13 +79,14 @@ impl APIKeyController {
 #[cfg(test)]
 mod tests {
 	use models::shared::api_key::InheritPermissionValue;
+	use uuid::Uuid;
 
 	use super::*;
 
 	fn create_test_key() -> api_key::Model {
 		api_key::Model {
 			id: 1,
-			user_id: "oromei".to_string(),
+			user_id: Uuid::parse_str("0ad39398-ce6a-4bcc-b044-719163a07c53").unwrap(),
 			name: "Test Key".to_string(),
 			permissions: APIKeyPermissions::Inherit(InheritPermissionValue::Inherit),
 			created_at: Utc::now().into(),
@@ -117,7 +118,7 @@ mod tests {
 			..create_test_key()
 		};
 		let user = AuthUser {
-			id: "shadowfax".to_string(),
+			id: Uuid::parse_str("f35f3fb0-bb14-43e2-91b9-234b4503cff2").unwrap(),
 			permissions: vec![UserPermission::AccessAPIKeys],
 			..Default::default()
 		};
@@ -137,7 +138,7 @@ mod tests {
 			..create_test_key()
 		};
 		let user = AuthUser {
-			id: "oromei".to_string(),
+			id: Uuid::parse_str("0ad39398-ce6a-4bcc-b044-719163a07c53").unwrap(),
 			permissions: vec![UserPermission::AccessAPIKeys],
 			..Default::default()
 		};
@@ -160,7 +161,7 @@ mod tests {
 			..create_test_key()
 		};
 		let user = AuthUser {
-			id: "oromei".to_string(),
+			id: Uuid::parse_str("0ad39398-ce6a-4bcc-b044-719163a07c53").unwrap(),
 			permissions: vec![
 				UserPermission::AccessAPIKeys,
 				UserPermission::AccessBookClub,

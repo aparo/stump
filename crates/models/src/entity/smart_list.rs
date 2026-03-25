@@ -81,23 +81,18 @@ pub enum SmartListGrouping {
 #[graphql(name = "SmartListModel")]
 #[sea_orm(table_name = "smart_lists")]
 pub struct Model {
-	#[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
-	pub id: String,
-	#[sea_orm(column_type = "Text")]
+	#[sea_orm(primary_key, auto_increment = false)]
+	pub id: Uuid,
 	pub name: String,
 	#[sea_orm(column_type = "Text", nullable)]
 	pub description: Option<String>,
 	#[sea_orm(column_type = "Blob")]
 	#[graphql(skip)]
 	pub filters: Vec<u8>,
-	#[sea_orm(column_type = "Text")]
 	pub joiner: SmartListJoiner,
-	#[sea_orm(column_type = "Text")]
 	pub default_grouping: SmartListGrouping,
-	#[sea_orm(column_type = "Text")]
 	pub visibility: EntityVisibility,
-	#[sea_orm(column_type = "Text")]
-	pub creator_id: String,
+	pub creator_id: Uuid,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -143,7 +138,7 @@ fn get_access_condition_base_subquery(
 		.select_only()
 		.column(Column::Id)
 		.inner_join(Entity)
-		.filter(smart_list_access_rule::Column::UserId.eq(user.id.clone()))
+		.filter(smart_list_access_rule::Column::UserId.eq(user.id))
 }
 
 fn get_access_condition_base_rule(
@@ -177,7 +172,7 @@ fn get_access_condition_for_user_public(
 fn get_access_rule(user: &AuthUser, base_rule: Condition) -> Condition {
 	Condition::any()
 		// creator always has access
-		.add(Column::CreatorId.eq(user.id.clone()))
+		.add(Column::CreatorId.eq(user.id))
 		// condition where visibility is PUBLIC
 		.add(get_access_condition_for_user_public(
 			user,
@@ -193,7 +188,7 @@ fn get_access_rule(user: &AuthUser, base_rule: Condition) -> Condition {
 		.add(
 			Condition::all()
 				.add(Column::Visibility.eq(EntityVisibility::Private))
-				.add(Column::CreatorId.eq(user.id.clone())),
+				.add(Column::CreatorId.eq(user.id)),
 		)
 }
 
@@ -206,7 +201,7 @@ pub fn get_access_condition_for_user(
 		let base_rule = get_access_condition_base_rule(user, SmartListAccessRole::Reader);
 		Some(get_access_rule(user, base_rule))
 	} else if query_mine {
-		Some(Condition::all().add(Column::CreatorId.eq(user.id.clone())))
+		Some(Condition::all().add(Column::CreatorId.eq(user.id)))
 	} else {
 		None
 	}
@@ -240,11 +235,11 @@ impl Entity {
 		)
 	}
 
-	pub fn find_by_id(user: &AuthUser, id: ID) -> Select<Self> {
+	pub fn find_by_id(user: &AuthUser, id: Uuid) -> Select<Self> {
 		Entity::find().filter(
 			Condition::all()
 				.add_option(get_access_condition_for_user(user, false, false))
-				.add(Column::Id.eq(id.to_string())),
+				.add(Column::Id.eq(id)),
 		)
 	}
 }

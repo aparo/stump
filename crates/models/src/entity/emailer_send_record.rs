@@ -14,10 +14,9 @@ pub struct Model {
 	#[sea_orm(column_type = "Blob", nullable)]
 	#[graphql(skip)]
 	pub attachment_meta: Option<Vec<u8>>,
-	#[sea_orm(column_type = "custom(\"DATETIME\")")]
 	pub sent_at: DateTimeWithTimeZone,
-	#[sea_orm(column_type = "Text", nullable)]
-	pub sent_by_user_id: Option<String>,
+	#[sea_orm(column_type = "Uuid", nullable)]
+	pub sent_by_user_id: Option<Uuid>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -60,14 +59,14 @@ pub struct AttachmentMetaModel {
 	/// The filename of the attachment
 	pub filename: String,
 	/// The associated media ID of the attachment, if there is one
-	pub media_id: Option<String>,
+	pub media_id: Option<Uuid>,
 	/// The size of the attachment in bytes
 	pub size: i32,
 }
 
 impl AttachmentMetaModel {
 	/// Create a new attachment meta
-	pub fn new(filename: String, media_id: Option<String>, size: i32) -> Self {
+	pub fn new(filename: String, media_id: Option<Uuid>, size: i32) -> Self {
 		Self {
 			filename,
 			media_id,

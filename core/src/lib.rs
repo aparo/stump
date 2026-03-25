@@ -194,8 +194,8 @@ impl StumpCore {
 			.count(conn)
 			.await? > 0;
 
-		if wal_mode_setup_completed {
-			tracing::trace!("Initial WAL setup has already been completed, skipping");
+		if wal_mode_setup_completed || self.ctx.config.is_postgresql() {
+			tracing::trace!("Initial WAL setup has already been completed or using PostgreSQL, skipping");
 			Ok(false)
 		} else {
 			let journal_mode = match conn

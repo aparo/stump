@@ -34,7 +34,7 @@ impl BookClubInvitation {
 	async fn book_club(&self, ctx: &Context<'_>) -> Result<BookClub> {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 
-		let book_club = book_club::Entity::find_by_id(&self.model.book_club_id)
+		let book_club = book_club::Entity::find_by_id(self.model.book_club_id)
 			.one(conn)
 			.await?
 			.ok_or("Book club not found")?;
@@ -44,12 +44,12 @@ impl BookClubInvitation {
 
 	/// The user who was invited to the book club
 	#[graphql(
-		guard = "SelfGuard::new(&self.model.user_id).or(PermissionGuard::one(UserPermission::ReadUsers))"
+		guard = "SelfGuard::new(self.model.user_id).or(PermissionGuard::one(UserPermission::ReadUsers))"
 	)]
 	async fn user(&self, ctx: &Context<'_>) -> Result<User> {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 
-		let invitee = user::Entity::find_by_id(&self.model.user_id)
+		let invitee = user::Entity::find_by_id(self.model.user_id)
 			.one(conn)
 			.await?
 			.ok_or("User not found")?;

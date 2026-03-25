@@ -16,8 +16,9 @@ impl BookClubBookQuery {
 	async fn book_club_book(&self, ctx: &Context<'_>, id: ID) -> Result<BookClubBook> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
+		let id = Uuid::parse_str(id.as_str()).map_err(|_| "Invalid ID format")?;
 
-		let mut book = book_club_book::Entity::find_by_id(id.as_ref())
+		let mut book = book_club_book::Entity::find_by_id(id)
 			.one(conn)
 			.await?
 			.ok_or("Book not found")?;

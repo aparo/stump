@@ -44,7 +44,7 @@ pub struct WalkedLibrary {
 	/// The paths for series that need to be created
 	pub series_to_create: Vec<PathBuf>,
 	/// A list of series IDs that were previously marked as missing but have been found on disk
-	pub recovered_series: Vec<String>,
+	pub recovered_series: Vec<Uuid>,
 	/// The paths for series that need to be visited. This differs from [`WalkedSeries::media_to_visit`] because
 	/// All series will always be visited in order to determine what media need to be reconciled in the series walk
 	pub series_to_visit: Vec<PathBuf>,
@@ -175,7 +175,7 @@ pub async fn walk_library(
 					s.status.is_recovered_if_present() && PathBuf::from(path).exists()
 				})
 				.map(|s| s.id)
-				.collect::<Vec<String>>();
+				.collect::<Vec<Uuid>>();
 
 			let (series_to_create, series_to_visit) = valid_entries
 				.par_iter()
@@ -239,7 +239,7 @@ pub struct WalkedSeries {
 	/// The paths for media that need to be created
 	pub media_to_create: Vec<PathBuf>,
 	/// A list of media IDs that were previously marked as missing but have been found on disk
-	pub recovered_media: Vec<String>,
+	pub recovered_media: Vec<Uuid>,
 	/// The paths for media that need to be visited, i.e. the timestamp on disk has changed and
 	/// Stump will reconcile the media with the database
 	pub media_to_visit: Vec<(PathBuf, BookVisitOperation)>,
@@ -401,7 +401,7 @@ pub async fn walk_series(
 			media.status.is_recovered_if_present() && PathBuf::from(path).exists()
 		})
 		.map(|(_, media)| media.id)
-		.collect::<Vec<String>>();
+		.collect::<Vec<Uuid>>();
 
 	let to_create = media_to_create.len();
 	tracing::trace!(?media_to_create, "Found {to_create} media to create");

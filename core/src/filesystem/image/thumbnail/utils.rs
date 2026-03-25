@@ -2,11 +2,12 @@ use std::path::{Path, PathBuf};
 
 use tokio::fs;
 use tracing::{error, trace};
+use uuid::Uuid;
 
 use crate::{config::StumpConfig, filesystem::FileError};
 
 pub async fn place_thumbnail(
-	id: &str,
+	id: Uuid,
 	ext: &str,
 	bytes: &[u8],
 	config: &StumpConfig,
@@ -21,7 +22,7 @@ pub const THUMBNAIL_LOG_FREQUENCY: usize = 500;
 /// Deletes thumbnails and returns the number deleted if successful, returns
 /// [`FileError`] otherwise.
 pub async fn remove_thumbnails(
-	id_list: &[String],
+	id_list: &[Uuid],
 	thumbnails_dir: &Path,
 ) -> Result<u64, FileError> {
 	let mut read_dir = tokio::fs::read_dir(thumbnails_dir).await?;
@@ -31,7 +32,10 @@ pub async fn remove_thumbnails(
 	while let Some(entry) = read_dir.next_entry().await? {
 		let path = entry.path();
 		if let Some(filename) = path.file_name().and_then(|f| f.to_str()) {
-			if id_list.iter().any(|id| filename.starts_with(id)) {
+			if id_list
+				.iter()
+				.any(|id| filename.starts_with(&id.to_string()))
+			{
 				found_thumbnails.push(path);
 			}
 		}

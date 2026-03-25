@@ -70,17 +70,17 @@ pub struct SaveSmartListInput {
 impl SaveSmartListInput {
 	pub fn into_active_model(
 		self,
-		user_id: &str,
+		user_id: Uuid,
 	) -> Result<models::entity::smart_list::ActiveModel> {
 		Ok(models::entity::smart_list::ActiveModel {
-			id: Set(Uuid::new_v4().to_string()),
+			id: Set(Uuid::new_v4()),
 			name: Set(self.name),
 			description: Set(self.description),
 			filters: Set(serde_json::to_vec(&self.filters)?),
 			joiner: Set(self.joiner),
 			default_grouping: Set(self.default_grouping),
 			visibility: Set(self.visibility),
-			creator_id: Set(user_id.to_string()),
+			creator_id: Set(user_id),
 		})
 	}
 }

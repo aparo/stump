@@ -41,13 +41,14 @@ impl SeriesMutation {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let core = ctx.data::<CoreContext>()?;
 		let conn = core.conn.as_ref();
+		let id =
+			Uuid::parse_str(id.to_string().as_str()).map_err(|_| "Invalid series ID")?;
 
-		let model =
-			series::Entity::find_series_ident_for_user_and_id(user, id.to_string())
-				.into_model::<series::SeriesIdentSelect>()
-				.one(conn)
-				.await?
-				.ok_or("Series not found")?;
+		let model = series::Entity::find_series_ident_for_user_and_id(user, id)
+			.into_model::<series::SeriesIdentSelect>()
+			.one(conn)
+			.await?
+			.ok_or("Series not found")?;
 
 		core.enqueue_job(
 			AnalyzeMediaJob::new(AnalysisJobConfig {
@@ -84,7 +85,7 @@ impl SeriesMutation {
 		if is_favorite {
 			let last_insert_id =
 				favorite_series::Entity::insert(favorite_series::ActiveModel {
-					user_id: Set(user.id.clone()),
+					user_id: Set(user.id),
 					series_id: Set(model.series.id.clone()),
 					favorited_at: Set(DateTimeWithTimeZone::from(Utc::now())),
 				})
@@ -96,7 +97,7 @@ impl SeriesMutation {
 		} else {
 			let affected_rows =
 				favorite_series::Entity::delete_many()
-					.filter(favorite_series::Column::UserId.eq(user.id.clone()).and(
+					.filter(favorite_series::Column::UserId.eq(user.id).and(
 						favorite_series::Column::SeriesId.eq(model.series.id.clone()),
 					))
 					.exec(core.conn.as_ref())
@@ -312,13 +313,14 @@ impl SeriesMutation {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let core = ctx.data::<CoreContext>()?;
 		let conn = core.conn.as_ref();
+		let id =
+			Uuid::parse_str(id.to_string().as_str()).map_err(|_| "Invalid series ID")?;
 
-		let model =
-			series::Entity::find_series_ident_for_user_and_id(user, id.to_string())
-				.into_model::<series::SeriesIdentSelect>()
-				.one(conn)
-				.await?
-				.ok_or("Series not found")?;
+		let model = series::Entity::find_series_ident_for_user_and_id(user, id)
+			.into_model::<series::SeriesIdentSelect>()
+			.one(conn)
+			.await?
+			.ok_or("Series not found")?;
 
 		core.enqueue_job(SeriesScanJob::new(model.id, model.path, None))?;
 
@@ -342,9 +344,7 @@ async fn set_series_completed(
 					Query::select()
 						.column(finished_reading_session::Column::MediaId)
 						.from(finished_reading_session::Entity)
-						.and_where(
-							finished_reading_session::Column::UserId.eq(user.id.clone()),
-						)
+						.and_where(finished_reading_session::Column::UserId.eq(user.id))
 						.to_owned(),
 				),
 			),
@@ -353,7 +353,7 @@ async fn set_series_completed(
 		.await?
 		.into_iter()
 		.map(|m| m.id)
-		.collect::<Vec<String>>();
+		.collect::<Vec<Uuid>>();
 	tracing::debug!(
 		count = book_ids_without_completion.len(),
 		"Fetched unread/incomplete books for series"
@@ -362,7 +362,7 @@ async fn set_series_completed(
 	// Delete any active sessions for books in this series
 	let affected_rows = reading_session::Entity::delete_many()
 		.filter(
-			reading_session::Column::UserId.eq(user.id.clone()).and(
+			reading_session::Column::UserId.eq(user.id).and(
 				reading_session::Column::MediaId.in_subquery(
 					Query::select()
 						.column(media::Column::Id)
@@ -380,7 +380,7 @@ async fn set_series_completed(
 	let finished_sessions = book_ids_without_completion
 		.into_iter()
 		.map(|media_id| finished_reading_session::ActiveModel {
-			user_id: Set(user.id.clone()),
+			user_id: Set(user.id),
 			media_id: Set(media_id),
 			completed_at: Set(DateTimeWithTimeZone::from(Utc::now())),
 			..Default::default()
@@ -412,19 +412,15 @@ async fn unset_series_completed(
 
 	let affected_rows = finished_reading_session::Entity::delete_many()
 		.filter(
-			finished_reading_session::Column::UserId
-				.eq(user.id.clone())
-				.and(
-					finished_reading_session::Column::MediaId.in_subquery(
-						Query::select()
-							.column(media::Column::Id)
-							.from(media::Entity)
-							.and_where(
-								media::Column::SeriesId.eq(series.series.id.clone()),
-							)
-							.to_owned(),
-					),
+			finished_reading_session::Column::UserId.eq(user.id).and(
+				finished_reading_session::Column::MediaId.in_subquery(
+					Query::select()
+						.column(media::Column::Id)
+						.from(media::Entity)
+						.and_where(media::Column::SeriesId.eq(series.series.id.clone()))
+						.to_owned(),
 				),
+			),
 		)
 		.exec(&tx)
 		.await?

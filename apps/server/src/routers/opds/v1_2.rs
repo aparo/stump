@@ -123,7 +123,7 @@ where
 
 #[derive(Debug, Serialize, Deserialize)]
 struct OPDSPageURLParams {
-	id: String,
+	id: Uuid,
 	#[serde(deserialize_with = "number_or_string_deserializer")]
 	page: i32,
 }
@@ -159,7 +159,7 @@ fn service_url(req_ctx: &AuthContext) -> String {
 async fn catalog(Extension(req): Extension<AuthContext>) -> APIResult<Xml> {
 	let entries = vec![
 		OpdsEntry::new(
-			"keepReading".to_string(),
+			Uuid::new_v4(),
 			Utc::now().into(),
 			"Keep reading".to_string(),
 			None,
@@ -173,7 +173,7 @@ async fn catalog(Extension(req): Extension<AuthContext>) -> APIResult<Xml> {
 			None,
 		),
 		OpdsEntry::new(
-			"allSeries".to_string(),
+			Uuid::new_v4(),
 			Utc::now().into(),
 			"All series".to_string(),
 			None,
@@ -187,7 +187,7 @@ async fn catalog(Extension(req): Extension<AuthContext>) -> APIResult<Xml> {
 			None,
 		),
 		OpdsEntry::new(
-			"latestSeries".to_string(),
+			Uuid::new_v4(),
 			Utc::now().into(),
 			"Latest series".to_string(),
 			None,
@@ -201,7 +201,7 @@ async fn catalog(Extension(req): Extension<AuthContext>) -> APIResult<Xml> {
 			None,
 		),
 		OpdsEntry::new(
-			"allLibraries".to_string(),
+			Uuid::new_v4(),
 			Utc::now().into(),
 			"All libraries".to_string(),
 			None,
@@ -215,7 +215,7 @@ async fn catalog(Extension(req): Extension<AuthContext>) -> APIResult<Xml> {
 			None,
 		),
 		OpdsEntry::new(
-			"allBooks".to_string(),
+			Uuid::new_v4(),
 			Utc::now().into(),
 			"All books".to_string(),
 			None,
@@ -229,7 +229,7 @@ async fn catalog(Extension(req): Extension<AuthContext>) -> APIResult<Xml> {
 			None,
 		),
 		OpdsEntry::new(
-			"latestBooks".to_string(),
+			Uuid::new_v4(),
 			Utc::now().into(),
 			"Latest books".to_string(),
 			None,
@@ -561,7 +561,7 @@ async fn get_series_by_id(
 		.unwrap_or_else(|| series.name.clone());
 
 	let feed = OPDSFeedBuilder::new(req.api_key()).paginated(OPDSFeedBuilderParams {
-		id: series.id.clone(),
+		id: series.id.to_string(),
 		title,
 		entries,
 		href_postfix: format!("series/{}", &series.id),
@@ -876,7 +876,7 @@ async fn get_book_page(
 			let deleted_sessions = reading_session::Entity::delete_many()
 				.filter(
 					reading_session::Column::UserId
-						.eq(user.id.clone())
+						.eq(user.id)
 						.and(reading_session::Column::MediaId.eq(id.clone())),
 				)
 				.exec_with_returning(ctx.conn.as_ref())
@@ -890,7 +890,7 @@ async fn get_book_page(
 				deleted_session.as_ref().and_then(|s| s.elapsed_seconds);
 
 			let active_model = finished_reading_session::ActiveModel {
-				user_id: Set(user.id.clone()),
+				user_id: Set(user.id),
 				media_id: Set(id.clone()),
 				device_id: Set(device_id),
 				started_at: Set(started_at.unwrap_or_else(|| Utc::now().into())),
@@ -910,7 +910,7 @@ async fn get_book_page(
 				])
 				.to_owned();
 			let active_model = reading_session::ActiveModel {
-				user_id: Set(user.id.clone()),
+				user_id: Set(user.id),
 				media_id: Set(id.clone()),
 				device_id: Set(None),
 				page: Set(Some(correct_page)),

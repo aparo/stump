@@ -31,13 +31,13 @@ impl MigrationTrait for Migration {
 					.col(ColumnDef::new(MediaAnnotations::UserId).string().not_null())
 					.col(
 						ColumnDef::new(MediaAnnotations::CreatedAt)
-							.timestamp()
+							.timestamp_with_time_zone()
 							.not_null()
 							.default(Expr::current_timestamp()),
 					)
 					.col(
 						ColumnDef::new(MediaAnnotations::UpdatedAt)
-							.timestamp()
+							.timestamp_with_time_zone()
 							.not_null()
 							.default(Expr::current_timestamp()),
 					)
@@ -135,7 +135,7 @@ impl MigrationTrait for Migration {
 }
 
 #[derive(Iden)]
-enum MediaAnnotations {
+pub enum MediaAnnotations {
 	Table,
 	Id,
 	Locator,

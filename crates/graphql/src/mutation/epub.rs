@@ -95,7 +95,7 @@ impl EpubMutation {
 
 		let annotation = media_annotation::Entity::find()
 			.filter(media_annotation::Column::Id.eq(&input.id))
-			.filter(media_annotation::Column::UserId.eq(&user.id))
+			.filter(media_annotation::Column::UserId.eq(user.id))
 			.one(conn)
 			.await?
 			.ok_or("Annotation not found")?;
@@ -118,7 +118,7 @@ impl EpubMutation {
 
 		let annotation = media_annotation::Entity::find()
 			.filter(media_annotation::Column::Id.eq(&id))
-			.filter(media_annotation::Column::UserId.eq(&user.id))
+			.filter(media_annotation::Column::UserId.eq(user.id))
 			.one(conn)
 			.await?
 			.ok_or("Annotation not found")?;

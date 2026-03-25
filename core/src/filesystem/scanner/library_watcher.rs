@@ -140,7 +140,7 @@ impl LibrariesProvider for LibraryProvider {
 
 #[async_trait]
 trait SubmitScanJob {
-	async fn submit(&self, id: String, path: String) -> Result<(), ()>;
+	async fn submit(&self, id: Uuid, path: String) -> Result<(), ()>;
 }
 
 #[derive(Clone)]
@@ -150,7 +150,7 @@ struct JobControllerSubmitter {
 
 #[async_trait]
 impl SubmitScanJob for JobControllerSubmitter {
-	async fn submit(&self, id: String, path: String) -> Result<(), ()> {
+	async fn submit(&self, id: Uuid, path: String) -> Result<(), ()> {
 		self.job_controller
 			.push_command(JobControllerCommand::EnqueueJob(LibraryScanJob::new(
 				id, path, None,
@@ -271,7 +271,7 @@ impl LibraryWatcher {
 		for library in libraries {
 			for path in &paths {
 				if path.starts_with(&library.path) {
-					libraries_to_scan.insert(library.id.clone(), library.path.clone());
+					libraries_to_scan.insert(library.id, library.path.clone());
 				}
 			}
 		}
@@ -325,6 +325,8 @@ impl LibraryWatcher {
 }
 
 mod tests {
+	use std::str::FromStr;
+
 	use super::*;
 
 	#[allow(dead_code)]
@@ -346,8 +348,8 @@ mod tests {
 
 	#[async_trait]
 	impl SubmitScanJob for MockJobControllerSubmitter {
-		async fn submit(&self, id: String, path: String) -> Result<(), ()> {
-			let _ = self.tx.send((id, path)).map_err(|e| {
+		async fn submit(&self, id: Uuid, path: String) -> Result<(), ()> {
+			let _ = self.tx.send((id.to_string(), path)).map_err(|e| {
 				eprintln!("Error sending job: {:?}", e);
 			});
 			Ok(())
@@ -393,8 +395,9 @@ mod tests {
 
 	#[allow(dead_code)]
 	fn create_test_libraries(base_dir: String) -> Vec<library::LibraryIdentSelect> {
+		let uuid = Uuid::from_str("0254fa4e-e33c-4d9b-8c76-5baf81b2f346").unwrap();
 		vec![library::LibraryIdentSelect {
-			id: "42".to_string(),
+			id: uuid,
 			name: "Test Library".to_string(),
 			path: base_dir,
 		}]
@@ -422,7 +425,7 @@ mod tests {
 		// Wait for the background thread to trigger the flush
 		tokio::time::sleep(Duration::from_millis(100)).await;
 		let (id, path) = mock_objs.jobs_receiver.try_recv().expect("Expected a job");
-		assert_eq!(id, "42");
+		assert_eq!(id, "0254fa4e-e33c-4d9b-8c76-5baf81b2f346");
 		assert_eq!(path, tmp_dir.to_string_lossy().to_string());
 	}
 
@@ -512,7 +515,7 @@ mod tests {
 		.is_ok());
 
 		let (id, path) = mock_objs.jobs_receiver.try_recv().expect("Expected a job");
-		assert_eq!(id, "42");
+		assert_eq!(id, "0254fa4e-e33c-4d9b-8c76-5baf81b2f346");
 		assert_eq!(path, tmp_dir.to_string_lossy().to_string());
 	}
 

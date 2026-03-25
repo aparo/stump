@@ -19,7 +19,7 @@ impl LibraryLoader {
 }
 
 /// A type alias for the key used in the LibraryLoader, which represents the library ID
-pub type LibraryLoaderKey = String;
+pub type LibraryLoaderKey = Uuid;
 
 impl Loader<LibraryLoaderKey> for LibraryLoader {
 	type Value = Library;

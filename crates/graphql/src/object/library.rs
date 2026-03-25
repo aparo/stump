@@ -88,7 +88,7 @@ impl Library {
 
 		let is_favorite = loader
 			.load_one(FavoriteLibraryLoaderKey {
-				user_id: user.id.clone(),
+				user_id: user.id,
 				library_id: self.model.id.clone(),
 			})
 			.await?;
@@ -254,10 +254,11 @@ impl Library {
 	) -> Result<LibraryStats> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
+		let config = ctx.data::<CoreContext>()?.config.clone();
 
 		let result = conn
 			.query_one(Statement::from_sql_and_values(
-				DatabaseBackend::Sqlite,
+				config.database_backend(),
 				r"
 				WITH library_media AS (
 					SELECT media.id, media.size
@@ -268,14 +269,14 @@ impl Library {
 				base_counts AS (
 					SELECT
 						COUNT(*) AS book_count,
-						IFNULL(SUM(size), 0) AS total_bytes,
+						CAST(COALESCE(SUM(size), 0) AS BIGINT) AS total_bytes,
 						(SELECT COUNT(*) FROM series WHERE series.library_id = $1) AS series_count
 					FROM library_media
 				),
 				finished_stats AS (
 					SELECT
 						COUNT(DISTINCT frs.media_id) AS completed_books,
-						IFNULL(SUM(frs.elapsed_seconds), 0) AS finished_reading_time
+						COALESCE(SUM(frs.elapsed_seconds), 0) AS finished_reading_time
 					FROM finished_reading_sessions frs
 					WHERE frs.media_id IN (SELECT id FROM library_media)
 						AND ($2 IS TRUE OR frs.user_id = $3)
@@ -283,7 +284,7 @@ impl Library {
 				active_stats AS (
 					SELECT
 						COUNT(DISTINCT rs.media_id) AS in_progress_books,
-						IFNULL(SUM(rs.elapsed_seconds), 0) AS active_reading_time
+						COALESCE(SUM(rs.elapsed_seconds), 0) AS active_reading_time
 					FROM reading_sessions rs
 					WHERE rs.media_id IN (SELECT id FROM library_media)
 						AND ($2 IS TRUE OR rs.user_id = $3)
@@ -294,13 +295,13 @@ impl Library {
 					base_counts.series_count,
 					finished_stats.completed_books,
 					active_stats.in_progress_books,
-					(finished_stats.finished_reading_time + active_stats.active_reading_time) AS total_reading_time_seconds
+					CAST((finished_stats.finished_reading_time + active_stats.active_reading_time) AS BIGINT) AS total_reading_time_seconds
 				FROM base_counts, finished_stats, active_stats;
 				",
 				[
 					self.model.id.clone().into(),
 					all_users.unwrap_or(false).into(),
-					user.id.clone().into(),
+					user.id.into(),
 				],
 			))
 			.await?

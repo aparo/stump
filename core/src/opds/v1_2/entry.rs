@@ -8,6 +8,7 @@ use std::vec;
 use chrono::{self, DateTime, FixedOffset};
 use models::entity::{library, series};
 use urlencoding::encode;
+use uuid::Uuid;
 use xml::{writer::XmlEvent, EventWriter};
 
 use crate::error::CoreResult;
@@ -25,7 +26,7 @@ use super::{
 /// A struct for representing an OPDS catalogue entry as specified at
 /// https://specs.opds.io/opds-1.2#5-opds-catalog-entry-documents
 pub struct OpdsEntry {
-	id: String,
+	id: Uuid,
 	updated: DateTime<FixedOffset>,
 	title: String,
 	summary: Option<String>,
@@ -38,7 +39,7 @@ pub struct OpdsEntry {
 impl OpdsEntry {
 	#[allow(clippy::too_many_arguments)]
 	pub fn new(
-		id: String,
+		id: Uuid,
 		updated: DateTime<FixedOffset>,
 		title: String,
 		summary: Option<String>,
@@ -65,7 +66,7 @@ impl OpdsEntry {
 		writer.write(XmlEvent::start_element("entry"))?;
 
 		util::write_xml_element("title", self.title.as_str(), writer)?;
-		util::write_xml_element("id", self.id.as_str(), writer)?;
+		util::write_xml_element("id", &self.id.to_string(), writer)?;
 		util::write_xml_element("updated", &self.updated.to_rfc3339(), writer)?;
 
 		if let Some(summary) = &self.summary {
@@ -170,7 +171,7 @@ impl IntoOPDSEntry for OPDSEntryBuilder<series::Model> {
 		links.push(nav_link);
 
 		OpdsEntry {
-			id: self.data.id.to_string(),
+			id: self.data.id,
 			updated: self.data.updated_at.unwrap_or_default(),
 			title: self.data.name,
 			summary: None,
@@ -263,7 +264,7 @@ impl IntoOPDSEntry for OPDSEntryBuilder<OPDSPublicationEntity> {
 		];
 
 		let stream_link = OpdsStreamLink::new(
-			self.data.media.id.clone(),
+			self.data.media.id,
 			self.data.media.pages.to_string(),
 			current_page_link_type.to_string(),
 			current_page.map(|page| page.to_string()),
@@ -300,7 +301,7 @@ impl IntoOPDSEntry for OPDSEntryBuilder<OPDSPublicationEntity> {
 		};
 
 		OpdsEntry {
-			id: self.data.media.id.to_string(),
+			id: self.data.media.id,
 			title,
 			updated: chrono::Utc::now().into(),
 			summary,
@@ -317,6 +318,7 @@ mod tests {
 	use std::str::FromStr;
 
 	use models::shared::enums::FileStatus;
+	use uuid::Uuid;
 
 	use super::*;
 	use crate::opds::v1_2::tests::normalize_xml;
@@ -337,7 +339,7 @@ mod tests {
 		];
 
 		let stream_link = OpdsStreamLink::new(
-			"123".to_string(),
+			Uuid::parse_str("123e4567-e89b-12d3-a456-426614174000").unwrap(),
 			"35".to_string(),
 			"image/jpeg".to_string(),
 			Some("10".to_string()),
@@ -345,8 +347,9 @@ mod tests {
 		);
 
 		let updated = DateTime::from_str("2010-01-10T10:01:11Z").unwrap();
+		let entry_id = Uuid::parse_str("6409a00b-7bf2-405e-826c-3fdff0fd0734").unwrap();
 		let entry = OpdsEntry::new(
-			"urn:uuid:6409a00b-7bf2-405e-826c-3fdff0fd0734".to_string(),
+			entry_id,
 			updated,
 			"Modern Online Philately".to_string(),
 			Some("A summary of the book.".to_string()),
@@ -365,7 +368,7 @@ mod tests {
 			<?xml version="1.0" encoding="UTF-8"?>
 			<entry>
 				<title>Modern Online Philately</title>
-				<id>urn:uuid:6409a00b-7bf2-405e-826c-3fdff0fd0734</id>
+				<id>6409a00b-7bf2-405e-826c-3fdff0fd0734</id>
 				<updated>2010-01-10T10:01:11+00:00</updated>
 				<summary>A summary of the book.</summary>
 				<content type="html">The definitive reference for the web-curious philatelist.</content>
@@ -394,7 +397,7 @@ mod tests {
 
 	fn library() -> library::Model {
 		library::Model {
-			id: "123".to_string(),
+			id: Uuid::new_v4(),
 			name: "A library".to_string(),
 			created_at: chrono::Utc::now().into(),
 			updated_at: Some(chrono::Utc::now().into()),

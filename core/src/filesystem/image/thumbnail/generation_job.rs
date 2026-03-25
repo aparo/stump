@@ -19,7 +19,7 @@ use crate::{
 };
 
 // Note: I am type aliasing for the sake of clarity in what the provided Strings represent
-type Id = String;
+type Id = Uuid;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
@@ -175,7 +175,7 @@ impl JobExt for ThumbnailGenerationJob {
 					.select_only()
 					.columns(media::MediaThumbSelect::columns())
 					.inner_join(series::Entity)
-					.filter(series::Column::LibraryId.eq(id))
+					.filter(series::Column::LibraryId.eq(id.clone()))
 					.apply_if(truthy_thumb_filter, |query, f| query.filter(f))
 					.into_model::<media::MediaThumbSelect>()
 					.all(ctx.conn.as_ref())
@@ -216,7 +216,7 @@ impl JobExt for ThumbnailGenerationJob {
 				let books = media::Entity::find()
 					.select_only()
 					.columns(media::MediaThumbSelect::columns())
-					.filter(media::Column::SeriesId.eq(id))
+					.filter(media::Column::SeriesId.eq(id.clone()))
 					.apply_if(truthy_thumb_filter, |query, f| query.filter(f))
 					.into_model::<media::MediaIdentSelect>()
 					.all(ctx.conn.as_ref())

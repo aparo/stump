@@ -24,7 +24,7 @@ use sea_orm::{
 	prelude::*, ActiveValue::NotSet, ColumnTrait, DatabaseTransaction, IntoActiveModel,
 	Set, TransactionTrait, TryIntoModel,
 };
-use std::{io::Read, path::Path};
+use std::{io::Read, path::Path, str::FromStr};
 use stump_core::config::StumpConfig;
 use tower_sessions::Session;
 
@@ -62,12 +62,14 @@ impl UserMutation {
 
 		let target_id = match &id {
 			Some(id) => {
-				if id.as_str() != user.id && !user.is_server_owner {
+				let id =
+					Uuid::from_str(id.as_str()).map_err(|_| "Invalid user ID format")?;
+				if id != user.id && !user.is_server_owner {
 					return Err(FORBIDDEN_ACTION.into());
 				}
-				id.to_string()
+				id
 			},
-			None => user.id.clone(),
+			None => user.id,
 		};
 
 		let mut value = upload.value(ctx)?;
@@ -126,7 +128,7 @@ impl UserMutation {
 		let avatar_path_str = avatar_path.to_string_lossy().to_string();
 
 		let updated_user = user::Entity::find()
-			.filter(user::Column::Id.eq(&target_id))
+			.filter(user::Column::Id.eq(target_id))
 			.one(conn)
 			.await?
 			.ok_or("User not found")?
@@ -152,16 +154,18 @@ impl UserMutation {
 
 		let target_id = match &id {
 			Some(id) => {
-				if id.as_str() != user.id && !user.is_server_owner {
+				let id =
+					Uuid::parse_str(id.as_str()).map_err(|_| "Invalid user ID format")?;
+				if id != user.id && !user.is_server_owner {
 					return Err(FORBIDDEN_ACTION.into());
 				}
-				id.to_string()
+				id
 			},
-			None => user.id.clone(),
+			None => user.id,
 		};
 
 		let existing = user::Entity::find()
-			.filter(user::Column::Id.eq(&target_id))
+			.filter(user::Column::Id.eq(target_id))
 			.one(conn)
 			.await?
 			.ok_or("User not found")?;
@@ -263,8 +267,7 @@ impl UserMutation {
 		let config = core_ctx.config.as_ref();
 		let conn = core_ctx.conn.as_ref();
 
-		let updated_user =
-			update_user(user, user.id.clone(), conn, config, &input).await?;
+		let updated_user = update_user(user, user.id, conn, config, &input).await?;
 
 		Ok(updated_user)
 	}
@@ -280,7 +283,7 @@ impl UserMutation {
 		let conn = core_ctx.conn.as_ref();
 
 		let user_preferences = user_preferences::Entity::find()
-			.filter(user_preferences::Column::UserId.eq(user.id.clone()))
+			.filter(user_preferences::Column::UserId.eq(user.id))
 			.one(conn)
 			.await?;
 
@@ -289,7 +292,7 @@ impl UserMutation {
 
 			let updated_user_preferences = update_user_preferences_by_id(
 				user_preferences_model.id,
-				user.id.clone(),
+				user.id,
 				input,
 				conn,
 			)
@@ -320,19 +323,19 @@ impl UserMutation {
 		let core_ctx = ctx.data::<CoreContext>()?;
 		let config = core_ctx.config.as_ref();
 		let conn = core_ctx.conn.as_ref();
+		let id = Uuid::parse_str(id.as_str()).map_err(|_| "Invalid user ID format")?;
 
-		if user.id != id.to_string() && !user.is_server_owner {
+		if user.id != id && !user.is_server_owner {
 			return Err(FORBIDDEN_ACTION.into());
 		}
 
-		let updated_user =
-			update_user(user, id.to_string(), conn, config, &input).await?;
+		let updated_user = update_user(user, id, conn, config, &input).await?;
 		tracing::debug!(?updated_user, "Updated user");
 
-		if user.id != id.to_string() {
+		if user.id != id {
 			// When a server owner updates another user, we need to delete all sessions for that user
 			// because the user's permissions may have changed. This is a bit lazy but it works.
-			remove_all_session_for_user(id.to_string(), conn).await?;
+			remove_all_session_for_user(id, conn).await?;
 		}
 
 		Ok(updated_user)
@@ -348,15 +351,16 @@ impl UserMutation {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let core_ctx = ctx.data::<CoreContext>()?;
 		let conn = core_ctx.conn.as_ref();
+		let id = Uuid::parse_str(id.as_str()).map_err(|_| "Invalid user ID format")?;
 
-		if id.to_string() == user.id {
+		if id == user.id {
 			return Err("You cannot delete your own account".into());
 		}
 
 		let hard_delete = hard_delete.unwrap_or(false);
 
 		let existing_user = user::Entity::find()
-			.filter(user::Column::Id.eq(id.to_string()))
+			.filter(user::Column::Id.eq(id))
 			.one(conn)
 			.await?
 			.ok_or("User not found")?;
@@ -366,7 +370,7 @@ impl UserMutation {
 		}
 
 		let deleted_user = if hard_delete {
-			user::Entity::delete_by_id(id.to_string())
+			user::Entity::delete_by_id(id)
 				.exec_with_returning(conn)
 				.await?
 				.first()
@@ -387,7 +391,8 @@ impl UserMutation {
 		let core_ctx = ctx.data::<CoreContext>()?;
 		let conn = core_ctx.conn.as_ref();
 
-		let removed_sessions = remove_all_session_for_user(id.to_string(), conn).await?;
+		let id = Uuid::parse_str(id.as_str()).map_err(|_| "Invalid user ID format")?;
+		let removed_sessions = remove_all_session_for_user(id, conn).await?;
 		Ok(removed_sessions.len().try_into()?)
 	}
 
@@ -401,13 +406,14 @@ impl UserMutation {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let core_ctx = ctx.data::<CoreContext>()?;
 		let conn = core_ctx.conn.as_ref();
+		let id = Uuid::parse_str(id.as_str()).map_err(|_| "Invalid user ID format")?;
 
-		if id.to_string() == user.id {
+		if id == user.id {
 			return Err("You cannot lock your own account".into());
 		}
 
 		let model = user::Entity::find()
-			.filter(user::Column::Id.eq(id.to_string()))
+			.filter(user::Column::Id.eq(id))
 			.one(conn)
 			.await?
 			.ok_or("User not found")?;
@@ -416,7 +422,7 @@ impl UserMutation {
 
 		if lock {
 			// Delete all sessions for this user if they are being locked
-			remove_all_session_for_user(id.to_string(), conn).await?;
+			remove_all_session_for_user(id, conn).await?;
 		}
 
 		let updated_user = active_model.update(conn).await?;
@@ -433,7 +439,7 @@ impl UserMutation {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 
 		let preferences = user_preferences::Entity::find()
-			.filter(user_preferences::Column::UserId.eq(&user.id))
+			.filter(user_preferences::Column::UserId.eq(user.id))
 			.one(conn)
 			.await?
 			.ok_or("User preferences not found")?;
@@ -465,7 +471,7 @@ impl UserMutation {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 
 		let preferences = user_preferences::Entity::find()
-			.filter(user_preferences::Column::UserId.eq(&user.id))
+			.filter(user_preferences::Column::UserId.eq(user.id))
 			.one(conn)
 			.await?
 			.ok_or("User preferences not found")?;
@@ -494,11 +500,11 @@ impl UserMutation {
 }
 
 async fn remove_all_session_for_user(
-	id: String,
+	id: Uuid,
 	conn: &DatabaseConnection,
 ) -> Result<Vec<session::Model>> {
 	let removed_sessions = session::Entity::delete_many()
-		.filter(session::Column::UserId.eq(id.clone()))
+		.filter(session::Column::UserId.eq(id))
 		.exec_with_returning(conn)
 		.await?;
 
@@ -508,7 +514,7 @@ async fn remove_all_session_for_user(
 
 async fn update_user_preferences_by_id(
 	id: i32,
-	user_id: String,
+	user_id: Uuid,
 	user_preferences: UpdateUserPreferencesInput,
 	conn: &DatabaseConnection,
 ) -> Result<UserPreferences> {
@@ -551,7 +557,7 @@ async fn update_user_preferences_by_id(
 
 async fn update_user(
 	by_user: &AuthUser,
-	for_user_id: String,
+	for_user_id: Uuid,
 	conn: &DatabaseConnection,
 	config: &StumpConfig,
 	input: &UpdateUserInput,
@@ -569,7 +575,7 @@ async fn update_user(
 	}
 
 	let mut update_user = user::ActiveModel {
-		id: Set(for_user_id.clone()),
+		id: Set(for_user_id),
 		username: Set(input.username.clone()),
 		max_sessions_allowed: Set(input.max_sessions_allowed),
 		..Default::default()
@@ -584,7 +590,7 @@ async fn update_user(
 
 	let is_updating_server_owner = by_user.is_server_owner && by_user.id == for_user_id;
 	if !is_updating_server_owner {
-		update_user_age_restriction(&for_user_id, &input.age_restriction, &txn).await?;
+		update_user_age_restriction(for_user_id, &input.age_restriction, &txn).await?;
 
 		let permissions = PermissionSet::new(input.permissions.clone());
 		update_user.permissions = Set(permissions.resolve_into_string());
@@ -598,7 +604,7 @@ async fn update_user(
 }
 
 async fn update_user_age_restriction(
-	user_id: &str,
+	user_id: Uuid,
 	age_restriction: &Option<AgeRestrictionInput>,
 	txn: &DatabaseTransaction,
 ) -> Result<()> {
@@ -616,7 +622,7 @@ async fn update_user_age_restriction(
 
 		let _ = age_restriction::ActiveModel {
 			id: set_age_restriction_id,
-			user_id: Set(user_id.to_string()),
+			user_id: Set(user_id),
 			age: Set(age_restriction.age),
 			restrict_on_unset: Set(age_restriction.restrict_on_unset),
 		}
@@ -666,7 +672,7 @@ mod tests {
 			}])
 			.into_connection();
 		let txn = conn.begin().await.unwrap();
-		update_user_age_restriction("42", &None, &txn)
+		update_user_age_restriction(get_default_user().id, &None, &txn)
 			.await
 			.unwrap();
 		txn.commit().await.unwrap();
@@ -678,7 +684,10 @@ mod tests {
 		let stmt = &txn.statements()[1];
 		assert_eq!(
 			stmt.to_string(),
-			r#"SELECT "age_restrictions"."id", "age_restrictions"."age", "age_restrictions"."restrict_on_unset", "age_restrictions"."user_id" FROM "age_restrictions" WHERE "age_restrictions"."user_id" = '42' LIMIT 1"#.to_string()
+			format!(
+				r#"SELECT "age_restrictions"."id", "age_restrictions"."age", "age_restrictions"."restrict_on_unset", "age_restrictions"."user_id" FROM "age_restrictions" WHERE "age_restrictions"."user_id" = '{}' LIMIT 1"#,
+				get_default_user().id
+			)
 		);
 	}
 
@@ -688,7 +697,7 @@ mod tests {
 			.append_query_results::<age_restriction::Model, Vec<_>, Vec<Vec<_>>>(vec![
 				vec![age_restriction::Model {
 					id: 1337,
-					user_id: "42".to_string(),
+					user_id: get_default_user().id,
 					age: 18,
 					restrict_on_unset: true,
 				}],
@@ -699,7 +708,7 @@ mod tests {
 			}])
 			.into_connection();
 		let txn = conn.begin().await.unwrap();
-		update_user_age_restriction("42", &None, &txn)
+		update_user_age_restriction(get_default_user().id, &None, &txn)
 			.await
 			.unwrap();
 		txn.commit().await.unwrap();
@@ -707,8 +716,9 @@ mod tests {
 		let delete_stmt = conn.into_transaction_log()[0].statements()[2].clone();
 		assert_eq!(
 			delete_stmt.to_string(),
-			r#"DELETE FROM "age_restrictions" WHERE "age_restrictions"."id" = 1337"#
-				.to_string()
+			format!(
+				r#"DELETE FROM "age_restrictions" WHERE "age_restrictions"."id" = 1337"#
+			)
 		);
 	}
 
@@ -717,7 +727,7 @@ mod tests {
 		let conn = MockDatabase::new(Sqlite)
 			.append_query_results::<user::Model, Vec<_>, Vec<Vec<_>>>(vec![vec![
 				user::Model {
-					id: "42".to_string(),
+					id: get_default_user().id,
 					username: "test_user".to_string(),
 					hashed_password: "hashed_password".to_string(),
 					is_server_owner: false,
@@ -745,7 +755,7 @@ mod tests {
 
 		let user = get_default_user();
 
-		let updated_user = update_user(&user, user.id.clone(), &conn, &config, &input)
+		let updated_user = update_user(&user, user.id, &conn, &config, &input)
 			.await
 			.unwrap();
 
@@ -757,7 +767,10 @@ mod tests {
 		let stmt = &txn.statements()[1];
 		assert_eq!(
 			stmt.to_string(),
-			r#"UPDATE "users" SET "username" = 'test_user', "max_sessions_allowed" = 5 WHERE "users"."id" = '42' RETURNING "id", "username", "hashed_password", "is_server_owner", "avatar_path", "created_at", "deleted_at", "is_locked", "max_sessions_allowed", "permissions", "user_preferences_id", "oidc_issuer_id", "oidc_email""#
+			format!(
+				r#"UPDATE "users" SET "username" = 'test_user', "max_sessions_allowed" = 5 WHERE "users"."id" = '{}' RETURNING "id", "username", "hashed_password", "is_server_owner", "avatar_path", "created_at", "deleted_at", "is_locked", "max_sessions_allowed", "permissions", "user_preferences_id", "oidc_issuer_id", "oidc_email""#,
+				get_default_user().id
+			)
 		);
 	}
 }

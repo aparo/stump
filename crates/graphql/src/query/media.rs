@@ -17,6 +17,7 @@ use sea_orm::{
 	Condition, DatabaseBackend, FromQueryResult, JoinType, QueryOrder, QuerySelect,
 	Statement,
 };
+use stump_core::config::StumpConfig;
 
 use crate::{
 	data::{AuthContext, CoreContext},
@@ -49,7 +50,7 @@ pub fn add_sessions_join_for_filter(
 	let should_join_sessions = should_add_sessions_join_for_filter(filter);
 
 	if should_join_sessions {
-		let user_id = user.id.clone();
+		let user_id = user.id;
 		let user_id_cpy = user_id.clone();
 		query
 			.join_rev(
@@ -192,8 +193,8 @@ impl MediaQuery {
 					.await?;
 				let current_cursor = info
 					.after
-					.or_else(|| models.first().map(|m| m.media.id.clone()));
-				let next_cursor = match models.last().map(|m| m.media.id.clone()) {
+					.or_else(|| models.first().map(|m| m.media.id.to_string()));
+				let next_cursor = match models.last().map(|m| m.media.id.to_string()) {
 					Some(id) if models.len() == info.limit as usize => Some(id),
 					_ => None,
 				};
@@ -241,8 +242,9 @@ impl MediaQuery {
 	async fn media_by_id(&self, ctx: &Context<'_>, id: ID) -> Result<Option<Media>> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
+		let id = Uuid::parse_str(id.as_str())?;
 
-		let model = media::ModelWithMetadata::find_by_id_for_user(id.to_string(), user)
+		let model = media::ModelWithMetadata::find_by_id_for_user(id, user)
 			.filter(media::Column::DeletedAt.is_null())
 			.into_model::<media::ModelWithMetadata>()
 			.one(conn)
@@ -316,7 +318,7 @@ impl MediaQuery {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 
-		let user_id = user.id.clone();
+		let user_id = user.id;
 
 		let query = media::Entity::apply_for_user(user, media::Entity::find())
 			.select_also(reading_session::Entity)
@@ -338,7 +340,7 @@ impl MediaQuery {
 			Pagination::Cursor(_) => {
 				// FIXME: See https://github.com/SeaQL/sea-orm/issues/2407
 				Err("Cursor pagination not supported for keepReading at this time".into())
-				// let user_id = user.id.clone();
+				// let user_id = user.id;
 				// let mut cursor =
 				// 	query.cursor_by_other(reading_session::Column::UpdatedAt);
 
@@ -446,24 +448,25 @@ impl MediaQuery {
 	) -> Result<PaginatedResponse<Media>> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
+		let config: &StumpConfig = ctx.data::<CoreContext>()?.config.as_ref();
 
 		let offset_info = match pagination.resolve() {
 			Pagination::Offset(info) => info,
 			_ => return Err("Only offset pagination is supported for onDeck".into()),
 		};
 
-		let user_id = user.id.clone();
+		let user_id = user.id;
 		let limit = offset_info.limit();
 		let offset = offset_info.offset();
 
 		#[derive(Debug, FromQueryResult)]
 		struct OnDeckMediaId {
-			id: String,
+			id: Uuid,
 		}
 
 		let on_deck_media_ids =
 			OnDeckMediaId::find_by_statement(Statement::from_sql_and_values(
-				DatabaseBackend::Sqlite,
+				config.database_backend(),
 				r#"
 				WITH 
 				-- Find all series where the user has read at least one book
@@ -471,7 +474,7 @@ impl MediaQuery {
 					SELECT DISTINCT m.series_id 
 					FROM media m
 					JOIN finished_reading_sessions frs ON frs.media_id = m.id
-					WHERE frs.user_id = ?
+					WHERE frs.user_id = $1
 					AND m.series_id IS NOT NULL
 				),
 
@@ -479,13 +482,13 @@ impl MediaQuery {
 				user_read_or_reading_media AS (
 					SELECT media_id 
 					FROM finished_reading_sessions
-					WHERE user_id = ?
+					WHERE user_id = $1
 					
 					UNION
 					
 					SELECT media_id 
 					FROM reading_sessions
-					WHERE user_id = ?
+					WHERE user_id = $1
 				),
 
 				-- For each series, get last read date for sorting priority
@@ -495,7 +498,7 @@ impl MediaQuery {
 						MAX(frs.completed_at) as last_read_date
 					FROM finished_reading_sessions frs
 					JOIN media m ON m.id = frs.media_id
-					WHERE frs.user_id = ?
+					WHERE frs.user_id = $1
 					AND m.series_id IN (SELECT series_id FROM user_read_series)
 					GROUP BY m.series_id
 				),
@@ -532,22 +535,15 @@ impl MediaQuery {
 				ORDER BY
 					-- Most recently read series first
 					series_last_read_date DESC
-				LIMIT ?
-				OFFSET ?
+				LIMIT $2
+				OFFSET $3
 				"#,
-				[
-					user_id.clone().into(),
-					user_id.clone().into(),
-					user_id.clone().into(),
-					user_id.clone().into(),
-					limit.into(),
-					offset.into(),
-				],
+				[user_id.clone().into(), limit.into(), offset.into()],
 			))
 			.all(conn)
 			.await?;
 
-		let media_ids: Vec<String> =
+		let media_ids: Vec<Uuid> =
 			on_deck_media_ids.into_iter().map(|row| row.id).collect();
 
 		if media_ids.is_empty() {
@@ -557,7 +553,7 @@ impl MediaQuery {
 			});
 		}
 
-		let mut media_map: HashMap<String, media::ModelWithMetadata> = HashMap::new();
+		let mut media_map: HashMap<Uuid, media::ModelWithMetadata> = HashMap::new();
 
 		let models = media::ModelWithMetadata::find_for_user(user)
 			.filter(media::Column::Id.is_in(media_ids.clone()))
@@ -578,7 +574,7 @@ impl MediaQuery {
 
 		let total_count = conn
 			.query_one(Statement::from_sql_and_values(
-				DatabaseBackend::Sqlite,
+				config.database_backend(),
 				r#"
 					-- Count total number of on deck items (for pagination)
 					WITH 
@@ -587,7 +583,7 @@ impl MediaQuery {
 						SELECT DISTINCT m.series_id 
 						FROM media m
 						JOIN finished_reading_sessions frs ON frs.media_id = m.id
-						WHERE frs.user_id = ?
+						WHERE frs.user_id = $1
 						AND m.series_id IS NOT NULL
 					),
 
@@ -596,14 +592,14 @@ impl MediaQuery {
 						-- Media that user has finished
 						SELECT media_id 
 						FROM finished_reading_sessions
-						WHERE user_id = ?
+						WHERE user_id = $1
 						
 						UNION
 						
 						-- Media that user is currently reading
 						SELECT media_id 
 						FROM reading_sessions
-						WHERE user_id = ?
+						WHERE user_id = $1
 					),
 
 					-- Find the first unread book for each series
@@ -632,11 +628,7 @@ impl MediaQuery {
 					WHERE 
 						book_rank = 1
 					"#,
-				[
-					user_id.clone().into(),
-					user_id.clone().into(),
-					user_id.into(),
-				],
+				[user_id.into()],
 			))
 			.await?
 			.ok_or_else(|| async_graphql::Error::new("Failed to get count"))?
@@ -687,8 +679,8 @@ impl MediaQuery {
 					.await?;
 				let current_cursor = info
 					.after
-					.or_else(|| models.first().map(|m| m.media.id.clone()));
-				let next_cursor = match models.last().map(|m| m.media.id.clone()) {
+					.or_else(|| models.first().map(|m| m.media.id.to_string()));
+				let next_cursor = match models.last().map(|m| m.media.id.to_string()) {
 					Some(id) if models.len() == info.limit as usize => Some(id),
 					_ => None,
 				};

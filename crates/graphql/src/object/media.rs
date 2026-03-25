@@ -86,7 +86,7 @@ impl Media {
 
 		let is_favorite = loader
 			.load_one(FavoriteMediaLoaderKey {
-				user_id: user.id.clone(),
+				user_id: user.id,
 				media_id: self.model.id.clone(),
 			})
 			.await?;
@@ -97,7 +97,7 @@ impl Media {
 	/// The tags associated with the media
 	async fn tags(&self, ctx: &Context<'_>) -> Result<Vec<Tag>> {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
-		let model = tag::Entity::find_for_media_id(&self.model.id.clone())
+		let model = tag::Entity::find_for_media_id(self.model.id.clone())
 			.all(conn)
 			.await?;
 		Ok(model.into_iter().map(Tag::from).collect())
@@ -238,7 +238,7 @@ impl Media {
 
 		let progress = loader
 			.load_one(ActiveReadingSessionLoaderKey {
-				user_id: user.id.clone(),
+				user_id: user.id,
 				media_id: self.model.id.clone(),
 			})
 			.await?;
@@ -256,7 +256,7 @@ impl Media {
 
 		let history = loader
 			.load_one(FinishedReadingSessionLoaderKey {
-				user_id: user.id.clone(),
+				user_id: user.id,
 				media_id: self.model.id.clone(),
 			})
 			.await?
@@ -269,7 +269,7 @@ impl Media {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 
 		if let Some(position) = self.metadata.as_ref().and_then(|m| m.model.number) {
-			if position.fract().is_zero() {
+			if position == 0.0 {
 				return Ok(Some(position.to_i32().unwrap_or(0)));
 			}
 		}
@@ -330,7 +330,7 @@ impl Media {
 			.cursor_by(media::Column::Name);
 
 		let after = match pagination.after.clone() {
-			Some(after) if after != self.model.id => {
+			Some(after) if after != self.model.id.to_string() => {
 				let media =
 					media::Entity::find_for_user(user)
 						.select_only()
@@ -355,9 +355,9 @@ impl Media {
 			.await?;
 		let current_cursor = pagination
 			.after
-			.or_else(|| next.first().map(|m| m.media.id.clone()));
+			.or_else(|| next.first().map(|m| m.media.id.clone().to_string()));
 		let next_cursor = match next.last().map(|m| m.media.id.clone()) {
-			Some(id) if next.len() == pagination.limit as usize => Some(id),
+			Some(id) if next.len() == pagination.limit as usize => Some(id.to_string()),
 			_ => None,
 		};
 

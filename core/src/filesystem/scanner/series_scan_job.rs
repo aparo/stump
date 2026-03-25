@@ -39,14 +39,14 @@ use super::{
 #[derive(Serialize, Deserialize)]
 pub enum SeriesScanTask {
 	MarkMissingMedia(Vec<PathBuf>),
-	RestoreMedia(Vec<String>),
+	RestoreMedia(Vec<Uuid>),
 	CreateMedia(Vec<PathBuf>),
 	VisitMedia(Vec<(PathBuf, BookVisitOperation)>),
 }
 
 #[derive(Clone)]
 pub struct SeriesScanJob {
-	pub id: String,
+	pub id: Uuid,
 	pub path: String,
 	pub config: Option<library_config::Model>,
 	pub options: ScanOptions,
@@ -54,7 +54,7 @@ pub struct SeriesScanJob {
 
 impl SeriesScanJob {
 	pub fn new(
-		id: String,
+		id: Uuid,
 		path: String,
 		options: Option<ScanOptions>,
 	) -> Box<WrappedJob<SeriesScanJob>> {
@@ -66,7 +66,7 @@ impl SeriesScanJob {
 		})
 	}
 
-	fn library_id(&self) -> Option<String> {
+	fn library_id(&self) -> Option<Uuid> {
 		self.config.as_ref().and_then(|c| c.library_id.clone())
 	}
 }
@@ -285,7 +285,7 @@ impl JobExt for SeriesScanJob {
 					updated_media,
 					logs: new_logs,
 					..
-				} = handle_restored_media(ctx, &self.id, ids).await;
+				} = handle_restored_media(ctx, self.id, ids).await;
 				if let Some(library_id) = self.library_id() {
 					ctx.send_batch(vec![
 						JobProgress::msg("Restored media entities").into_worker_send(),
@@ -308,7 +308,7 @@ impl JobExt for SeriesScanJob {
 					updated_media,
 					logs: new_logs,
 					..
-				} = handle_missing_media(ctx, &self.id, paths).await;
+				} = handle_missing_media(ctx, self.id, paths).await;
 				if let Some(library_id) = self.library_id() {
 					ctx.send_batch(vec![
 						JobProgress::msg("Handled missing media").into_worker_send(),

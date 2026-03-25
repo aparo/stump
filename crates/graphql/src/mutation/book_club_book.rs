@@ -22,25 +22,22 @@ impl BookClubBookMutation {
 	async fn add_book_to_club(
 		&self,
 		ctx: &Context<'_>,
-		book_club_id: ID,
+		book_club_id: Uuid,
 		input: AddBookToClubInput,
 	) -> Result<BookClub> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 
-		let book_club = get_book_club_for_admin(user, &book_club_id, conn)
+		let book_club = get_book_club_for_admin(user, book_club_id, conn)
 			.await?
 			.ok_or("Book club not found or you lack permission to add books")?;
 
 		let txn = conn.begin().await?;
 
-		let next_position = book_club_book::Entity::get_max_position_for_club(
-			book_club_id.as_ref(),
-			&txn,
-		)
-		.await?;
+		let next_position =
+			book_club_book::Entity::get_max_position_for_club(book_club_id, &txn).await?;
 
-		let book_id = Uuid::new_v4().to_string();
+		let book_id = Uuid::new_v4();
 
 		let active_model = match input.book {
 			BookClubBookVariant::Stored(BookClubInternalBook { id }) => {
@@ -48,7 +45,7 @@ impl BookClubBookMutation {
 					id: Set(book_id.clone()),
 					position: Set(next_position),
 					book_entity_id: Set(Some(id)),
-					book_club_id: Set(book_club_id.to_string()),
+					book_club_id: Set(book_club_id),
 					..Default::default()
 				}
 			},
@@ -64,14 +61,14 @@ impl BookClubBookMutation {
 				author: Set(Some(author)),
 				url: Set(url),
 				image_url: Set(image_url),
-				book_club_id: Set(book_club_id.to_string()),
+				book_club_id: Set(book_club_id),
 				..Default::default()
 			},
 		};
 
 		active_model.insert(&txn).await?;
 
-		create_discussions_for_books(&[book_id], book_club_id.as_ref(), &txn).await?;
+		create_discussions_for_books(&[book_id], book_club_id, &txn).await?;
 
 		txn.commit().await?;
 
@@ -86,16 +83,16 @@ impl BookClubBookMutation {
 	) -> Result<BookClub> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
+		let book_club_book_id = Uuid::parse_str(book_club_book_id.as_ref())?;
 
-		let book = book_club_book::Entity::find_by_id(book_club_book_id.as_ref())
+		let book = book_club_book::Entity::find_by_id(book_club_book_id)
 			.one(conn)
 			.await?
 			.ok_or("Book not found")?;
 
-		let book_club =
-			get_book_club_for_admin(user, &ID::from(&book.book_club_id), conn)
-				.await?
-				.ok_or("Book club not found or you lack permission")?;
+		let book_club = get_book_club_for_admin(user, book.book_club_id, conn)
+			.await?
+			.ok_or("Book club not found or you lack permission")?;
 
 		let txn = conn.begin().await?;
 
@@ -105,10 +102,7 @@ impl BookClubBookMutation {
 
 		book_club_discussion::Entity::update_many()
 			.col_expr(book_club_discussion::Column::IsArchived, Expr::value(true))
-			.filter(
-				book_club_discussion::Column::BookClubBookId
-					.eq(book_club_book_id.as_ref()),
-			)
+			.filter(book_club_discussion::Column::BookClubBookId.eq(book_club_book_id))
 			.exec(&txn)
 			.await?;
 
@@ -126,8 +120,9 @@ impl BookClubBookMutation {
 	) -> Result<BookClub> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
+		let book_club_id = Uuid::parse_str(book_club_id.as_ref())?;
 
-		let book_club = get_book_club_for_admin(user, &book_club_id, conn)
+		let book_club = get_book_club_for_admin(user, book_club_id, conn)
 			.await?
 			.ok_or("Book club not found or you lack permission")?;
 
@@ -143,11 +138,9 @@ impl BookClubBookMutation {
 			return Err("Cannot reorder completed books".into());
 		}
 
-		let offset = book_club_book::Entity::get_next_position_after_completed(
-			book_club_id.as_ref(),
-			&txn,
-		)
-		.await?;
+		let offset =
+			book_club_book::Entity::get_next_position_after_completed(book_club_id, &txn)
+				.await?;
 
 		for (i, book_id) in book_ids.iter().enumerate() {
 			book_club_book::Entity::update_many()
@@ -156,7 +149,7 @@ impl BookClubBookMutation {
 					Expr::value(offset + i as i32),
 				)
 				.filter(book_club_book::Column::Id.eq(book_id))
-				.filter(book_club_book::Column::BookClubId.eq(book_club_id.as_ref()))
+				.filter(book_club_book::Column::BookClubId.eq(book_club_id))
 				.exec(&txn)
 				.await?;
 		}
@@ -169,8 +162,8 @@ impl BookClubBookMutation {
 
 /// Creates a discussion for each book in the list
 pub async fn create_discussions_for_books<C>(
-	book_ids: &[String],
-	book_club_id: &str,
+	book_ids: &[Uuid],
+	book_club_id: Uuid,
 	conn: &C,
 ) -> Result<()>
 where
@@ -183,14 +176,14 @@ where
 	let discussion_models: Vec<_> = book_ids
 		.iter()
 		.map(|book_id| book_club_discussion::ActiveModel {
-			id: Set(Uuid::new_v4().to_string()),
+			id: Set(Uuid::new_v4()),
 			is_locked: Set(false),
 			is_archived: Set(false),
 			book_club_book_id: Set(Some(book_id.clone())),
 			title: Set(None),
 			is_pinned: Set(false),
 			created_at: Set(DateTimeWithTimeZone::from(Utc::now())),
-			book_club_id: Set(book_club_id.to_string()),
+			book_club_id: Set(book_club_id),
 			..Default::default()
 		})
 		.collect();

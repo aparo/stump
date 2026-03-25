@@ -109,7 +109,7 @@ async fn set_account_lock_status(
 		progress.set_message("Removing active login sessions...");
 
 		let delete_sessions = session::Entity::delete_many()
-			.filter(session::Column::UserId.eq(updated_user.id.clone()))
+			.filter(session::Column::UserId.eq(updated_user.id))
 			.exec(&conn)
 			.await?
 			.rows_affected;
@@ -347,9 +347,9 @@ async fn migrate_oidc_account(
 	reading_session::Entity::update_many()
 		.col_expr(
 			reading_session::Column::UserId,
-			sea_orm::sea_query::Expr::value(oidc_user.id.clone()),
+			sea_orm::sea_query::Expr::value(oidc_user.id),
 		)
-		.filter(reading_session::Column::UserId.eq(local_user.id.clone()))
+		.filter(reading_session::Column::UserId.eq(local_user.id))
 		.exec(&txn)
 		.await?;
 
@@ -357,9 +357,9 @@ async fn migrate_oidc_account(
 	finished_reading_session::Entity::update_many()
 		.col_expr(
 			finished_reading_session::Column::UserId,
-			sea_orm::sea_query::Expr::value(oidc_user.id.clone()),
+			sea_orm::sea_query::Expr::value(oidc_user.id),
 		)
-		.filter(finished_reading_session::Column::UserId.eq(local_user.id.clone()))
+		.filter(finished_reading_session::Column::UserId.eq(local_user.id))
 		.exec(&txn)
 		.await?;
 
@@ -367,9 +367,9 @@ async fn migrate_oidc_account(
 	bookmark::Entity::update_many()
 		.col_expr(
 			bookmark::Column::UserId,
-			sea_orm::sea_query::Expr::value(oidc_user.id.clone()),
+			sea_orm::sea_query::Expr::value(oidc_user.id),
 		)
-		.filter(bookmark::Column::UserId.eq(local_user.id.clone()))
+		.filter(bookmark::Column::UserId.eq(local_user.id))
 		.exec(&txn)
 		.await?;
 

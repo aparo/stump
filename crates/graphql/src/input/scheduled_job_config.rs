@@ -1,4 +1,5 @@
 use async_graphql::{CustomValidator, InputObject, InputValueError, Result};
+use uuid::Uuid;
 
 // TODO(scheduler): Support more complex job configs:
 // enum ScheduledJobConfigType {
@@ -13,7 +14,7 @@ use async_graphql::{CustomValidator, InputObject, InputValueError, Result};
 #[derive(Debug, Clone, InputObject)]
 pub struct ScheduledJobConfigInput {
 	pub interval_secs: i32,
-	pub included_library_ids: Vec<String>,
+	pub included_library_ids: Vec<Uuid>,
 }
 
 /// A custom validator for the ScheduledJobConfigInput enum that ensures that the input is valid:

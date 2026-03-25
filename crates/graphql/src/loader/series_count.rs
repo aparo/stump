@@ -15,7 +15,7 @@ impl SeriesCountLoader {
 }
 
 /// A type alias for the key used in the SeriesLoader, which represents the series ID
-pub type SeriesCountLoaderKey = String;
+pub type SeriesCountLoaderKey = Uuid;
 
 impl Loader<SeriesCountLoaderKey> for SeriesCountLoader {
 	type Value = i64;
@@ -31,7 +31,7 @@ impl Loader<SeriesCountLoaderKey> for SeriesCountLoader {
 			.column(media::Column::SeriesId)
 			.column_as(media::Column::Id.count(), "count")
 			.group_by(media::Column::SeriesId)
-			.into_tuple::<(String, i64)>()
+			.into_tuple::<(Uuid, i64)>()
 			.all(self.conn.as_ref())
 			.await?;
 

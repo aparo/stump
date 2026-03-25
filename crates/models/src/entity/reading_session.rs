@@ -12,30 +12,23 @@ use crate::{
 
 use super::{registered_reading_device, user::AuthUser};
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, SimpleObject)]
+#[derive(Clone, Debug, PartialEq, DeriveEntityModel, SimpleObject)]
 #[graphql(name = "ReadingSessionModel")]
 #[sea_orm(table_name = "reading_sessions")]
 pub struct Model {
 	#[sea_orm(primary_key, auto_increment = true)]
 	pub id: i32,
 	pub page: Option<i32>,
-	pub percentage_completed: Option<Decimal>,
+	pub percentage_completed: Option<f64>,
 	#[sea_orm(column_type = "Json", nullable)]
 	pub locator: Option<ReadiumLocator>,
-	#[sea_orm(column_type = "Text", nullable)]
 	pub epubcfi: Option<String>,
-	#[sea_orm(column_type = "Text", nullable)]
 	pub koreader_progress: Option<String>,
-	#[sea_orm(column_type = "custom(\"DATETIME\")")]
 	pub started_at: DateTimeWithTimeZone,
-	#[sea_orm(column_type = "custom(\"DATETIME\")")]
 	pub updated_at: Option<DateTimeWithTimeZone>,
-	#[sea_orm(column_type = "Text")]
-	pub media_id: String,
-	#[sea_orm(column_type = "Text")]
-	pub user_id: String,
-	#[sea_orm(column_type = "Text", nullable)]
-	pub device_id: Option<String>,
+	pub media_id: Uuid,
+	pub user_id: Uuid,
+	pub device_id: Option<Uuid>,
 	pub elapsed_seconds: Option<i64>,
 }
 
@@ -132,27 +125,37 @@ impl ActiveModelBehavior for ActiveModel {
 }
 
 impl Entity {
-	pub fn find_for_user_and_media_id(user: &AuthUser, media_id: &str) -> Select<Entity> {
+	pub fn find_for_user_and_media_id(user: &AuthUser, media_id: Uuid) -> Select<Entity> {
 		Entity::find()
-			.filter(Column::UserId.eq(&user.id))
+			.filter(Column::UserId.eq(user.id))
 			.filter(Column::MediaId.eq(media_id))
 	}
 }
 
 #[cfg(test)]
 mod tests {
+	use std::str::FromStr;
+
 	use super::*;
 	use crate::tests::common::*;
 	use pretty_assertions::assert_eq;
 
+	fn get_default_media_id() -> uuid::Uuid {
+		uuid::Uuid::from_str("2b5e18ad-440b-4d04-83e5-db45d817355f").unwrap()
+	}
+
 	#[test]
 	fn test_find_for_user_and_media() {
 		let user = get_default_user();
-		let select = Entity::find_for_user_and_media_id(&user, "123");
+		let select = Entity::find_for_user_and_media_id(&user, get_default_media_id());
 		let stmt_str = select_no_cols_to_string(select);
 		assert_eq!(
 			stmt_str,
-			r#"SELECT  FROM "reading_sessions" WHERE "reading_sessions"."user_id" = '42' AND "reading_sessions"."media_id" = '123'"#.to_string()
+			format!(
+				r#"SELECT  FROM "reading_sessions" WHERE "reading_sessions"."user_id" = '{}' AND "reading_sessions"."media_id" = '{}'"#,
+				user.id,
+				get_default_media_id()
+			)
 		);
 	}
 }

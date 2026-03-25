@@ -8,10 +8,10 @@ pub struct Model {
 	#[sea_orm(primary_key)]
 	pub id: i32,
 	pub display_order: i32,
-	#[sea_orm(column_type = "Text")]
-	pub media_id: String,
-	#[sea_orm(column_type = "Text")]
-	pub reading_list_id: String,
+	#[sea_orm(column_type = "Uuid")]
+	pub media_id: Uuid,
+	#[sea_orm(column_type = "Uuid")]
+	pub reading_list_id: Uuid,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

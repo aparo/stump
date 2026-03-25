@@ -50,8 +50,12 @@ pub(crate) async fn get_library_thumbnail(
 		}
 	}
 
-	let generated_thumb =
-		get_thumbnail(config.get_thumbnails_dir(), &library.id, image_format).await?;
+	let generated_thumb = get_thumbnail(
+		config.get_thumbnails_dir(),
+		&library.id.to_string(),
+		image_format,
+	)
+	.await?;
 
 	match (generated_thumb, first_series) {
 		(Some(result), _) => Ok(result),
@@ -70,8 +74,12 @@ async fn get_library_thumbnail_handler(
 	Extension(req): Extension<AuthContext>,
 ) -> APIResult<ImageResponse> {
 	let user = req.user();
+	let id = Uuid::parse_str(&id).unwrap_or_else(|_| {
+		tracing::error!(id = ?id, "Invalid library ID format");
+		Uuid::nil()
+	});
 	let (library, library_config) = library::Entity::find_for_user(&user)
-		.filter(library::Column::Id.eq(id.clone()))
+		.filter(library::Column::Id.eq(id))
         .find_also_related(library_config::Entity)
 		.into_model::<library::LibraryThumbSelect, library_config::LibraryConfigThumbnailConfig>()
 		.one(ctx.conn.as_ref())

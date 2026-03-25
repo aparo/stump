@@ -46,8 +46,9 @@ impl JobQuery {
 				let models = cursor.into_model::<job::Model>().all(conn).await?;
 				let current_cursor = info
 					.after
-					.or_else(|| models.first().map(|result| result.id.clone()));
-				let next_cursor = match models.last().map(|result| result.id.clone()) {
+					.or_else(|| models.first().map(|result| result.id.to_string()));
+				let next_cursor = match models.last().map(|result| result.id.to_string())
+				{
 					Some(id) if models.len() == info.limit as usize => Some(id),
 					_ => None,
 				};
@@ -90,7 +91,8 @@ impl JobQuery {
 	#[graphql(guard = "PermissionGuard::one(UserPermission::ReadJobs)")]
 	async fn job_by_id(&self, ctx: &Context<'_>, id: ID) -> Result<Option<Job>> {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
-		let job = job::Entity::find_by_id(id.to_string()).one(conn).await?;
+		let id = Uuid::parse_str(id.as_str())?;
+		let job = job::Entity::find_by_id(id).one(conn).await?;
 		Ok(job.map(Job::from))
 	}
 

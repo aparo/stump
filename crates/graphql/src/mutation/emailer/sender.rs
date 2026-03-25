@@ -84,9 +84,9 @@ where
 	let media_ids = input
 		.media_ids
 		.iter()
-		.map(|id| id.to_string())
+		.map(|id| Uuid::parse_str(id.as_ref()).unwrap())
 		.collect::<Vec<_>>();
-	let books = get_books(user, conn, &media_ids).await?;
+	let books = get_books(user, conn, media_ids).await?;
 	let recipients = get_and_validate_recipients(user, conn, &input.send_to).await?;
 
 	let mut errors = Vec::new();
@@ -141,7 +141,7 @@ where
 					recipient_email: Set(recipient.clone()),
 					attachment_meta: Set(Some(attachments_meta_data.clone())),
 					sent_at: Set(chrono::Utc::now().into()),
-					sent_by_user_id: Set(Some(user.id.clone())),
+					sent_by_user_id: Set(Some(user.id)),
 				};
 				record_creates.push(active_model);
 			},
@@ -244,11 +244,8 @@ async fn book_to_attachment_with_content(
 			"Failed to parse content type".to_string()
 		})?;
 
-	let attachment_meta = AttachmentMetaModel::new(
-		file_name.clone(),
-		Some(book.id.clone()),
-		content.len() as i32,
-	);
+	let attachment_meta =
+		AttachmentMetaModel::new(file_name.clone(), Some(book.id), content.len() as i32);
 
 	let attachment = AttachmentPayload {
 		name: file_name.clone(),
@@ -298,10 +295,10 @@ async fn get_emailer(conn: &DatabaseConnection) -> Result<emailer::Model> {
 async fn get_books(
 	user: &AuthUser,
 	conn: &DatabaseConnection,
-	media_ids: &Vec<String>,
+	media_ids: Vec<Uuid>,
 ) -> Result<Vec<media::Model>> {
 	let books = media::Entity::find_for_user(user)
-		.filter(media::Column::Id.is_in(media_ids))
+		.filter(media::Column::Id.is_in(media_ids.clone()))
 		.all(conn)
 		.await?
 		.into_iter()
@@ -375,6 +372,8 @@ async fn get_device_email(conn: &DatabaseConnection, device_id: i32) -> Result<S
 
 #[cfg(test)]
 mod tests {
+	use std::str::FromStr;
+
 	use super::*;
 	use crate::{
 		input::emailer::{SendToDevice, SendToEmail},
@@ -386,9 +385,13 @@ mod tests {
 	use sea_orm::{DatabaseBackend::Sqlite, MockDatabase};
 	use stump_core::utils::encryption::encrypt_string;
 
+	fn get_default_media_id() -> Uuid {
+		Uuid::from_str("2b5e18ad-440b-4d04-83e5-db45d817355f").unwrap()
+	}
+
 	fn get_default_media() -> media::Model {
 		media::Model {
-			id: "1".to_string(),
+			id: get_default_media_id(),
 			name: "Book 1".to_string(),
 			size: 1234,
 			extension: "epub".to_string(),
@@ -469,7 +472,7 @@ mod tests {
 		let mut book1 = get_default_media();
 		book1.path = get_test_epub_path();
 		let mut book2 = book1.clone();
-		book2.id = "2".to_string();
+		book2.id = Uuid::new_v4();
 
 		let conn = MockDatabase::new(Sqlite)
 			.append_query_results(vec![vec![book1.clone(), book2.clone()]])
@@ -503,7 +506,7 @@ mod tests {
 		let sender = MockEmailerSender { is_error: false };
 		let user = get_default_user();
 		let input = SendAttachmentEmailsInput {
-			media_ids: vec!["1".to_string().into(), "2".to_string().into()],
+			media_ids: vec![Uuid::new_v4().into(), Uuid::new_v4().into()],
 			send_to: vec![
 				EmailerSendTo::Device(SendToDevice { id: 1 }),
 				EmailerSendTo::Anonymous(SendToEmail {
@@ -515,7 +518,7 @@ mod tests {
 		let mut book1 = get_default_media();
 		book1.path = get_test_epub_path();
 		let mut book2 = book1.clone();
-		book2.id = "2".to_string();
+		book2.id = Uuid::new_v4();
 
 		let conn = MockDatabase::new(Sqlite)
 			.append_query_results(vec![vec![book1.clone(), book2.clone()]])
@@ -561,7 +564,7 @@ mod tests {
 		let mut book1 = get_default_media();
 		book1.path = get_test_epub_path();
 		let mut book2 = book1.clone();
-		book2.id = "2".to_string();
+		book2.id = Uuid::new_v4();
 
 		let conn = MockDatabase::new(Sqlite)
 			.append_query_results(vec![vec![book1.clone(), book2.clone()]])
@@ -679,7 +682,7 @@ mod tests {
 		let meta = AttachmentMetaModel::vec_from_data(&meta_data).unwrap();
 		assert!(!payload.is_empty());
 		assert_eq!(meta.len(), 1);
-		assert_eq!(meta[0].media_id, Some("1".to_string()));
+		assert_eq!(meta[0].media_id, Some(get_default_media_id()));
 		assert_eq!(meta[0].filename, "book.epub");
 	}
 
@@ -701,7 +704,7 @@ mod tests {
 			emailer_id: Set(emailer.id),
 			attachment_meta: Set(None),
 			sent_at: Set(chrono::Utc::now().into()),
-			sent_by_user_id: Set(Some("42".to_string())),
+			sent_by_user_id: Set(Some(Uuid::new_v4())),
 		};
 
 		let (size, errors) = update_send_records(emailer, &conn, vec![send_record])
@@ -735,7 +738,7 @@ mod tests {
 			emailer_id: Set(emailer.id),
 			attachment_meta: Set(None),
 			sent_at: Set(chrono::Utc::now().into()),
-			sent_by_user_id: Set(Some("42".to_string())),
+			sent_by_user_id: Set(Some(Uuid::new_v4())),
 		};
 
 		let (size, errors) = update_send_records(emailer, &conn, vec![send_record])
@@ -772,7 +775,7 @@ mod tests {
 			.await
 			.unwrap();
 		assert_eq!(meta.filename, "book1.epub");
-		assert_eq!(meta.media_id, Some("1".to_string()));
+		assert_eq!(meta.media_id, Some(get_default_media_id()));
 		assert_eq!(meta.size, 10);
 		assert_eq!(payload.content.len(), 10);
 		assert_eq!(
@@ -833,7 +836,7 @@ mod tests {
 			.append_query_results::<media::Model, _, _>(vec![vec![]])
 			.into_connection();
 
-		let books = get_books(&user, &conn, &vec![]).await.unwrap();
+		let books = get_books(&user, &conn, vec![]).await.unwrap();
 		assert_eq!(books.len(), 0);
 	}
 
@@ -843,11 +846,12 @@ mod tests {
 		let conn = MockDatabase::new(Sqlite)
 			.append_query_results(vec![vec![get_default_media()]])
 			.into_connection();
+		let book_id = Uuid::new_v4();
 
-		let media_ids = vec!["1".to_string()];
-		let books = get_books(&user, &conn, &media_ids).await.unwrap();
+		let media_ids = vec![book_id];
+		let books = get_books(&user, &conn, media_ids).await.unwrap();
 		assert_eq!(books.len(), 1);
-		assert_eq!(books[0].id, "1");
+		assert_eq!(books[0].id, get_default_media_id());
 		assert_eq!(books[0].name, "Book 1");
 	}
 
@@ -855,15 +859,15 @@ mod tests {
 	async fn test_get_books_missing() {
 		let book1 = get_default_media();
 		let mut book2 = book1.clone();
-		book2.id = "2".to_string();
+		book2.id = Uuid::new_v4();
 		book2.name = "Book 2".to_string();
 		let user = get_default_user();
 		let conn = MockDatabase::new(Sqlite)
-			.append_query_results(vec![vec![book2]])
+			.append_query_results(vec![vec![book2.clone()]])
 			.into_connection();
 
-		let media_ids = vec!["1".to_string(), "2".to_string()];
-		let books = get_books(&user, &conn, &media_ids).await;
+		let media_ids = vec![book1.id, book2.id];
+		let books = get_books(&user, &conn, media_ids).await;
 		assert!(books.is_err());
 	}
 

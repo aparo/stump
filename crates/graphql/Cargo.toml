@@ -37,6 +37,7 @@ tower-sessions.workspace = true
 tracing.workspace = true
 zip.workspace = true
 bcrypt.workspace = true
+uuid.workspace = true
 
 [dev-dependencies]
 maplit.workspace = true

@@ -110,7 +110,7 @@ pub async fn generate_book_thumbnail(
 	}: GenerateThumbnailOptions,
 ) -> Result<GenerateOutput, ThumbnailGenerateError> {
 	let book_path = book.path.clone();
-	let file_name = filename.unwrap_or_else(|| book.id.clone());
+	let file_name = filename.unwrap_or_else(|| book.id.to_string());
 
 	let file_path = if let Some(stored_path) = &book.thumbnail_path {
 		PathBuf::from(stored_path.clone())
@@ -188,7 +188,7 @@ pub async fn generate_book_thumbnail(
 	};
 
 	let update_result = media::Entity::update_many()
-		.filter(media::Column::Id.eq(book.id.clone()))
+		.filter(media::Column::Id.eq(book.id))
 		.col_expr(
 			media::Column::ThumbnailPath,
 			Expr::value(Some(thumbnail_path.to_string_lossy().to_string())),
@@ -215,7 +215,7 @@ pub async fn generate_book_thumbnail(
 /// will attempt to generate the thumbnail from the book as a fallback.
 #[tracing::instrument(skip(ctx, update_fn, first_book))]
 async fn copy_thumbnail_to_entity<E>(
-	entity_id: &str,
+	entity_id: Uuid,
 	first_book: media::MediaThumbSelect,
 	ctx: &WorkerCtx,
 	options: GenerateThumbnailOptions,
@@ -264,7 +264,7 @@ where
 
 	fs::copy(&source_path, &dest_path).await?;
 	tracing::debug!(
-		entity_id,
+		entity_id = %entity_id,
 		?source_path,
 		?dest_path,
 		"Copied book thumbnail to destination"
@@ -322,7 +322,7 @@ async fn generate_series_thumbnail(
 	let first_book = media::Entity::find()
 		.select_only()
 		.columns(media::MediaThumbSelect::columns())
-		.filter(media::Column::SeriesId.eq(&series.id))
+		.filter(media::Column::SeriesId.eq(series.id))
 		.order_by_asc(media::Column::Name)
 		.into_model::<media::MediaThumbSelect>()
 		.one(ctx.conn.as_ref())
@@ -334,13 +334,13 @@ async fn generate_series_thumbnail(
 	};
 
 	copy_thumbnail_to_entity(
-		&series.id,
+		series.id,
 		first_book,
 		ctx,
 		options,
 		|thumbnail_path, thumbnail_metadata| {
 			series::Entity::update_many()
-				.filter(series::Column::Id.eq(&series.id))
+				.filter(series::Column::Id.eq(series.id))
 				.col_expr(
 					series::Column::ThumbnailPath,
 					Expr::value(Some(thumbnail_path)),
@@ -387,7 +387,7 @@ async fn generate_library_thumbnail(
 		.select_only()
 		.columns(media::MediaThumbSelect::columns())
 		.inner_join(series::Entity)
-		.filter(series::Column::LibraryId.eq(&library.id))
+		.filter(series::Column::LibraryId.eq(library.id))
 		.order_by_asc(series::Column::Name)
 		.order_by_asc(media::Column::Name)
 		.into_model::<media::MediaThumbSelect>()
@@ -400,13 +400,13 @@ async fn generate_library_thumbnail(
 	};
 
 	copy_thumbnail_to_entity(
-		&library.id,
+		library.id,
 		first_book,
 		ctx,
 		options,
 		|thumbnail_path, thumbnail_metadata| {
 			library::Entity::update_many()
-				.filter(library::Column::Id.eq(&library.id))
+				.filter(library::Column::Id.eq(library.id))
 				.col_expr(
 					library::Column::ThumbnailPath,
 					Expr::value(Some(thumbnail_path)),
@@ -560,7 +560,7 @@ pub async fn generate_book_placeholder(
 	};
 
 	media::Entity::update_many()
-		.filter(media::Column::Id.eq(&book.id))
+		.filter(media::Column::Id.eq(book.id))
 		.col_expr(
 			media::Column::ThumbnailMeta,
 			Expr::value(thumbnail_metadata),
@@ -635,7 +635,7 @@ async fn generate_series_placeholder(
 	};
 
 	series::Entity::update_many()
-		.filter(series::Column::Id.eq(&series.id))
+		.filter(series::Column::Id.eq(series.id))
 		.col_expr(
 			series::Column::ThumbnailMeta,
 			Expr::value(thumbnail_metadata),
@@ -723,7 +723,7 @@ async fn generate_library_placeholder(
 	};
 
 	library::Entity::update_many()
-		.filter(library::Column::Id.eq(&library.id))
+		.filter(library::Column::Id.eq(library.id))
 		.col_expr(
 			library::Column::ThumbnailMeta,
 			Expr::value(thumbnail_metadata),

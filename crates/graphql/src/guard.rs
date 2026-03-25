@@ -3,6 +3,7 @@ use models::{
 	entity::book_club_member,
 	shared::{book_club::BookClubMemberRole, enums::UserPermission},
 };
+use sea_orm::prelude::Uuid;
 
 use crate::{
 	data::{AuthContext, CoreContext},
@@ -28,14 +29,12 @@ impl Guard for ServerOwnerGuard {
 /// provided and compared with the ID of the current user. So be sure to provide
 /// the correct user ID.
 pub struct SelfGuard {
-	pub user_id: String,
+	pub user_id: Uuid,
 }
 
 impl SelfGuard {
-	pub fn new(user_id: &str) -> Self {
-		Self {
-			user_id: user_id.to_string(),
-		}
+	pub fn new(user_id: Uuid) -> Self {
+		Self { user_id }
 	}
 }
 
@@ -151,9 +150,10 @@ impl Guard for BookClubRoleGuard {
 		if user.is_server_owner {
 			return Ok(());
 		}
+		let club_id = Uuid::parse_str(self.club_id.as_ref())?;
 
 		let Some(membership) =
-			book_club_member::Entity::find_by_club_for_user(user, &self.club_id)
+			book_club_member::Entity::find_by_club_for_user(user, club_id)
 				.one(core.conn.as_ref())
 				.await?
 		else {

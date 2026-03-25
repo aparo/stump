@@ -44,8 +44,8 @@ async fn group_by_series(
 	books: Vec<Media>,
 	txn: &DatabaseTransaction,
 ) -> Result<SmartListItems> {
-	let mut series_ids: HashSet<String> = HashSet::new();
-	let mut series_map: HashMap<String, Vec<Media>> = HashMap::new();
+	let mut series_ids: HashSet<Uuid> = HashSet::new();
+	let mut series_map: HashMap<Uuid, Vec<Media>> = HashMap::new();
 
 	books.into_iter().for_each(|book| {
 		if let Some(series_id) = book.model.series_id.clone() {
@@ -86,31 +86,30 @@ async fn group_by_library(
 	books: Vec<Media>,
 	txn: &DatabaseTransaction,
 ) -> Result<SmartListItems> {
-	let mut series_ids: HashSet<String> = HashSet::new();
-	let mut series_map: HashMap<String, Vec<Media>> = HashMap::new();
+	let mut series_ids: HashSet<Uuid> = HashSet::new();
+	let mut series_map: HashMap<Uuid, Vec<Media>> = HashMap::new();
 
 	books.into_iter().for_each(|book| {
 		if let Some(series_id) = book.model.series_id.clone() {
-			series_ids.insert(series_id.clone());
+			series_ids.insert(series_id);
 		}
 
 		series_map
-			.entry(book.model.series_id.clone().unwrap_or_default())
+			.entry(book.model.series_id.unwrap_or_default())
 			.or_default()
 			.push(book);
 	});
 
 	// get all series for the books
-	let series_and_library_ids: Vec<(String, String)> =
-		series::Entity::find_for_user(user)
-			.select_only()
-			.columns(vec![series::Column::Id, series::Column::LibraryId])
-			.filter(series::Column::Id.is_in(series_ids))
-			.into_tuple()
-			.all(txn)
-			.await?;
+	let series_and_library_ids: Vec<(Uuid, Uuid)> = series::Entity::find_for_user(user)
+		.select_only()
+		.columns(vec![series::Column::Id, series::Column::LibraryId])
+		.filter(series::Column::Id.is_in(series_ids))
+		.into_tuple()
+		.all(txn)
+		.await?;
 
-	let library_to_series_ids: HashMap<String, Vec<String>> = series_and_library_ids
+	let library_to_series_ids: HashMap<Uuid, Vec<Uuid>> = series_and_library_ids
 		.into_iter()
 		.fold(HashMap::new(), |mut acc, (series_id, library_id)| {
 			acc.entry(library_id).or_default().push(series_id);
@@ -118,7 +117,9 @@ async fn group_by_library(
 		});
 
 	let library_models = library::Entity::find_for_user(user)
-		.filter(library::Column::Id.is_in(library_to_series_ids.keys()))
+		.filter(
+			library::Column::Id.is_in(library_to_series_ids.keys().map(|m| m.clone())),
+		)
 		.into_model::<library::Model>()
 		.all(txn)
 		.await?;

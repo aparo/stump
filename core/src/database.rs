@@ -11,16 +11,22 @@ pub const FORCE_RESET_KEY: &str = "FORCE_DB_RESET";
 
 pub async fn connect(config: &StumpConfig) -> Result<DatabaseConnection, CoreError> {
 	let config_dir = config.get_config_dir();
-
-	let sqlite_url = if let Some(path) = config.db_path.clone() {
-		format!("sqlite://{path}/stump.db?mode=rwc")
-	} else if cfg!(debug_assertions) {
-		format!("sqlite://{}/dev.db?mode=rwc", env!("CARGO_MANIFEST_DIR"))
-	} else {
-		format!("sqlite://{}/stump.db?mode=rwc", config_dir.display())
+	// let db_url = if let Some(dburl) = config.db_url.clone() {
+	// dburl
+	// } else {
+	let db_url = {
+		let sqlite_url = if let Some(path) = config.db_path.clone() {
+			format!("sqlite://{path}/stump.db?mode=rwc")
+		} else if cfg!(debug_assertions) {
+			format!("sqlite://{}/dev.db?mode=rwc", env!("CARGO_MANIFEST_DIR"))
+		} else {
+			format!("sqlite://{}/stump.db?mode=rwc", config_dir.display())
+		};
+		tracing::info!("Using SQLite database at `{sqlite_url}`");
+		sqlite_url
 	};
 
-	let connection = sea_orm::Database::connect(&sqlite_url).await?;
+	let connection = sea_orm::Database::connect(&db_url).await?;
 
 	let force_reset = match env::var(FORCE_RESET_KEY) {
 		Ok(value) => value == "true",

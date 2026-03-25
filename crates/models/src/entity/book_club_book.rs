@@ -8,24 +8,16 @@ use sea_orm::{
 #[graphql(name = "BookClubBookModel")]
 #[sea_orm(table_name = "book_club_books")]
 pub struct Model {
-	#[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
-	pub id: String,
+	#[sea_orm(primary_key, auto_increment = false)]
+	pub id: Uuid,
 	pub position: i32,
-	#[sea_orm(column_type = "custom(\"DATETIME\")", nullable)]
 	pub completed_at: Option<DateTimeWithTimeZone>,
-	#[sea_orm(column_type = "Text", nullable)]
 	pub title: Option<String>,
-	#[sea_orm(column_type = "Text", nullable)]
 	pub author: Option<String>,
-	#[sea_orm(column_type = "Text", nullable)]
 	pub url: Option<String>,
-	#[sea_orm(column_type = "Text", nullable)]
 	pub image_url: Option<String>,
-	#[sea_orm(column_type = "Text", nullable)]
-	pub book_entity_id: Option<String>,
-	#[sea_orm(column_type = "Text")]
-	pub book_club_id: String,
-	#[sea_orm(column_type = "custom(\"DATETIME\")")]
+	pub book_entity_id: Option<Uuid>,
+	pub book_club_id: Uuid,
 	pub added_at: DateTimeWithTimeZone,
 }
 
@@ -98,14 +90,14 @@ impl ActiveModelBehavior for ActiveModel {
 
 impl Entity {
 	/// Find all books for a book club, ordered by position
-	pub fn find_for_book_club_id(book_club_id: &str) -> Select<Entity> {
+	pub fn find_for_book_club_id(book_club_id: Uuid) -> Select<Entity> {
 		Entity::find()
 			.filter(Column::BookClubId.eq(book_club_id))
 			.order_by_asc(Column::Position)
 	}
 
 	/// Find the current (uncompleted) book with the lowest position
-	pub fn find_current_for_book_club_id(book_club_id: &str) -> Select<Entity> {
+	pub fn find_current_for_book_club_id(book_club_id: Uuid) -> Select<Entity> {
 		Entity::find()
 			.filter(Column::BookClubId.eq(book_club_id))
 			.filter(Column::CompletedAt.is_null())
@@ -114,7 +106,7 @@ impl Entity {
 
 	/// Get the next available position for a new book in a club (max position + 1)
 	pub async fn get_max_position_for_club<C: ConnectionTrait>(
-		book_club_id: &str,
+		book_club_id: Uuid,
 		conn: &C,
 	) -> Result<i32, DbErr> {
 		let result: Option<(Option<i32>,)> = Entity::find()
@@ -135,7 +127,7 @@ impl Entity {
 	/// - `Some(max_position + 1)` if all books are completed (so `position < value` matches all books)
 	/// - `None` if no books exist at all
 	pub async fn get_current_or_next_position<C: ConnectionTrait>(
-		book_club_id: &str,
+		book_club_id: Uuid,
 		conn: &C,
 	) -> Result<Option<i32>, DbErr> {
 		let current_book = Entity::find_current_for_book_club_id(book_club_id)
@@ -162,7 +154,7 @@ impl Entity {
 
 	/// Get the next position after all completed books in a club
 	pub async fn get_next_position_after_completed<C: ConnectionTrait>(
-		book_club_id: &str,
+		book_club_id: Uuid,
 		conn: &C,
 	) -> Result<i32, DbErr> {
 		let result: Option<(Option<i32>,)> = Entity::find()
@@ -186,19 +178,23 @@ mod tests {
 
 	#[test]
 	fn test_find_for_book_club_id() {
-		let select = Entity::find_for_book_club_id("314");
+		let book_club_id =
+			Uuid::parse_str("f458a8d0-270f-447f-b70b-7bd65d03b08e").unwrap();
+		let select = Entity::find_for_book_club_id(book_club_id);
 		assert_eq!(
 			select_no_cols_to_string(select),
-			r#"SELECT  FROM "book_club_books" WHERE "book_club_books"."book_club_id" = '314' ORDER BY "book_club_books"."position" ASC"#
+			r#"SELECT  FROM "book_club_books" WHERE "book_club_books"."book_club_id" = 'f458a8d0-270f-447f-b70b-7bd65d03b08e' ORDER BY "book_club_books"."position" ASC"#
 		);
 	}
 
 	#[test]
 	fn test_find_current_for_book_club_id() {
-		let select = Entity::find_current_for_book_club_id("314");
+		let book_club_id =
+			Uuid::parse_str("f458a8d0-270f-447f-b70b-7bd65d03b08e").unwrap();
+		let select = Entity::find_current_for_book_club_id(book_club_id);
 		assert_eq!(
 			select_no_cols_to_string(select),
-			r#"SELECT  FROM "book_club_books" WHERE "book_club_books"."book_club_id" = '314' AND "book_club_books"."completed_at" IS NULL ORDER BY "book_club_books"."position" ASC"#
+			r#"SELECT  FROM "book_club_books" WHERE "book_club_books"."book_club_id" = 'f458a8d0-270f-447f-b70b-7bd65d03b08e' AND "book_club_books"."completed_at" IS NULL ORDER BY "book_club_books"."position" ASC"#
 		);
 	}
 }

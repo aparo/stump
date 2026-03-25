@@ -9,10 +9,10 @@ use sea_orm::{
 pub struct Model {
 	#[sea_orm(primary_key)]
 	pub id: i32,
-	#[sea_orm(column_type = "Text")]
-	pub user_id: String,
-	#[sea_orm(column_type = "Text")]
-	pub library_id: String,
+	#[sea_orm(column_type = "Uuid")]
+	pub user_id: Uuid,
+	#[sea_orm(column_type = "Uuid")]
+	pub library_id: Uuid,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -54,7 +54,7 @@ impl Entity {
 		Query::select()
 			.column(Column::LibraryId)
 			.from(Entity)
-			.and_where(Column::UserId.eq(user.id.clone()))
+			.and_where(Column::UserId.eq(user.id))
 			.to_owned()
 	}
 }
@@ -72,7 +72,7 @@ mod tests {
 			.to_string(sea_orm::sea_query::SqliteQueryBuilder);
 		assert_eq!(
 			stmt_str,
-			r#"SELECT "library_id" FROM "library_exclusions" WHERE "library_exclusions"."user_id" = '42'"#
+			r#"SELECT "library_id" FROM "library_exclusions" WHERE "library_exclusions"."user_id" = '2b5e18ad-440b-4d04-83e5-db45d817355f'"#
 		);
 	}
 }

@@ -25,10 +25,8 @@ impl BookClubMemberMutation {
 		input: CreateBookClubMemberInput,
 	) -> Result<BookClubMember> {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
-		let created_member = input
-			.into_active_model(book_club_id.as_ref())
-			.insert(conn)
-			.await?;
+		let book_club_id = Uuid::parse_str(book_club_id.as_ref())?;
+		let created_member = input.into_active_model(book_club_id).insert(conn).await?;
 
 		Ok(BookClubMember::from(created_member))
 	}
@@ -45,7 +43,8 @@ impl BookClubMemberMutation {
 		member_id: ID,
 	) -> Result<BookClubMember> {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
-		let member = book_club_member::Entity::find_by_id(member_id.as_ref())
+		let member_id = Uuid::parse_str(member_id.as_ref())?;
+		let member = book_club_member::Entity::find_by_id(member_id)
 			.one(conn)
 			.await?
 			.ok_or("Member not found")?;
@@ -67,12 +66,12 @@ impl BookClubMemberMutation {
 	) -> Result<BookClubMember> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
+		let book_club_id = Uuid::parse_str(book_club_id.as_ref())?;
 
-		let member =
-			book_club_member::Entity::find_by_club_for_user(user, book_club_id.as_ref())
-				.one(conn)
-				.await?
-				.ok_or("You are not a member of this club or it does not exist")?;
+		let member = book_club_member::Entity::find_by_club_for_user(user, book_club_id)
+			.one(conn)
+			.await?
+			.ok_or("You are not a member of this club or it does not exist")?;
 
 		member.clone().delete(conn).await?;
 

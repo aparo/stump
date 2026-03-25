@@ -9,8 +9,7 @@ pub struct Model {
 	pub name: String,
 	#[sea_orm(column_type = "Text", nullable)]
 	pub description: Option<String>,
-	#[sea_orm(column_type = "custom(\"DATETIME\")")]
-	pub updated_at: String,
+	pub updated_at: DateTimeWithTimeZone,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

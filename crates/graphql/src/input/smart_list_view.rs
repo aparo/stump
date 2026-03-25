@@ -1,7 +1,8 @@
-use async_graphql::{InputObject, Result, SimpleObject, ID};
+use async_graphql::{InputObject, Result, SimpleObject};
 use models::entity::smart_list_view;
 use sea_orm::{NotSet, Set};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 #[derive(Debug, Clone, SimpleObject, InputObject, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -34,7 +35,7 @@ pub struct SmartListViewConfig {
 #[derive(Clone, InputObject)]
 pub struct SaveSmartListView {
 	pub name: String,
-	pub list_id: ID,
+	pub list_id: Uuid,
 	#[graphql(flatten)]
 	pub config: SmartListViewConfig,
 }
@@ -45,7 +46,7 @@ impl SaveSmartListView {
 			.map_err(|_| "Failed to serialize view".to_string())?;
 		Ok(smart_list_view::ActiveModel {
 			id: NotSet,
-			list_id: Set(self.list_id.to_string()),
+			list_id: Set(self.list_id),
 			name: Set(self.name),
 			data: Set(value),
 		})

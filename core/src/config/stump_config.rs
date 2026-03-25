@@ -10,6 +10,7 @@ use std::{env, path::PathBuf};
 
 use async_graphql::SimpleObject;
 use itertools::Itertools;
+use sea_orm::DatabaseBackend;
 use serde::{Deserialize, Serialize};
 
 use super::oidc_config::OidcConfig;
@@ -24,6 +25,7 @@ pub mod env_keys {
 	pub const VERBOSITY_KEY: &str = "STUMP_VERBOSITY";
 	pub const PRETTY_LOGS_KEY: &str = "STUMP_PRETTY_LOGS";
 	pub const DB_PATH_KEY: &str = "STUMP_DB_PATH";
+	pub const DB_URL_KEY: &str = "STUMP_DB_URL";
 	pub const CLIENT_KEY: &str = "STUMP_CLIENT_DIR";
 	pub const ORIGINS_KEY: &str = "STUMP_ALLOWED_ORIGINS";
 	pub const PDFIUM_KEY: &str = "PDFIUM_PATH";
@@ -133,6 +135,11 @@ pub struct StumpConfig {
 	#[default_value(None)]
 	#[env_key(DB_PATH_KEY)]
 	pub db_path: Option<String>,
+
+	/// An optional custom database URL for the database.
+	#[default_value(None)]
+	#[env_key(DB_URL_KEY)]
+	pub db_url: Option<String>,
 
 	/// The client directory.
 	#[default_value("./client".to_string())]
@@ -404,6 +411,23 @@ impl StumpConfig {
 			},
 		}
 	}
+
+	/// Returns true if the configured database URL is for a PostgreSQL database, and false otherwise.
+	pub fn is_postgresql(&self) -> bool {
+		if let Some(db_url) = &self.db_url {
+			db_url.starts_with("postgres://") || db_url.starts_with("postgresql://")
+		} else {
+			false
+		}
+	}
+
+	pub fn database_backend(&self) -> DatabaseBackend {
+		if self.is_postgresql() {
+			DatabaseBackend::Postgres
+		} else {
+			DatabaseBackend::Sqlite
+		}
+	}
 }
 
 fn do_validate_profile(profile: &String) -> bool {
@@ -436,6 +460,7 @@ mod tests {
 			verbosity: Some(3),
 			pretty_logs: Some(true),
 			db_path: Some("not_a_real_path".to_string()),
+			db_url: Some("not_a_real_db_url".to_string()),
 			client_dir: Some("not_a_real_dir".to_string()),
 			custom_templates_dir: None,
 			enable_opds_progression: Some(false),
@@ -482,6 +507,7 @@ mod tests {
 				verbosity: Some(3),
 				pretty_logs: Some(true),
 				db_path: Some("not_a_real_path".to_string()),
+				db_url: Some("not_a_real_db_url".to_string()),
 				client_dir: Some("not_a_real_dir".to_string()),
 				config_dir: Some(config_dir),
 				custom_templates_dir: None,
@@ -546,6 +572,7 @@ mod tests {
 						verbosity: 2,
 						pretty_logs: true,
 						db_path: None,
+						db_url: None,
 						client_dir: "./client".to_string(),
 						config_dir,
 						allowed_origins: vec![],

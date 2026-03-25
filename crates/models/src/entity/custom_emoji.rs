@@ -12,10 +12,8 @@ pub struct Model {
 	pub is_animated: bool,
 	#[sea_orm(column_type = "Text")]
 	pub file_extension: String,
-	#[sea_orm(column_type = "custom(\"DATETIME\")")]
 	pub created_at: DateTimeWithTimeZone,
-	#[sea_orm(column_type = "Text")]
-	pub created_by_id: String,
+	pub created_by_id: Uuid,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

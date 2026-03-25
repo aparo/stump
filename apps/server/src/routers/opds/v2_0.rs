@@ -353,7 +353,7 @@ async fn catalog(
 		.build()?;
 
 	let in_progress_filter = Condition::all()
-		.add(reading_session::Column::UserId.eq(user.id.clone()))
+		.add(reading_session::Column::UserId.eq(user.id))
 		.add(
 			Condition::any()
 				.add(reading_session::Column::Page.gt(0))
@@ -854,7 +854,7 @@ where
 	let take = pagination.limit();
 
 	let order_by_entity = order.0.entity_name().deref().to_string();
-	let for_user_id = for_user.id.clone();
+	let for_user_id = for_user.id;
 	let books = OPDSPublicationEntity::find_for_user(for_user)
 		.apply_if(condition.clone(), |query, condition| {
 			query.filter(condition)
@@ -871,7 +871,7 @@ where
 		.into_model::<OPDSPublicationEntity>()
 		.all(ctx.conn.as_ref())
 		.await?;
-	let for_user_id = for_user.id.clone();
+	let for_user_id = for_user.id;
 	let books_count = OPDSPublicationEntity::find_for_user(for_user)
 		.apply_if(condition, |query, condition| query.filter(condition))
 		.apply_if(
@@ -1199,7 +1199,7 @@ async fn keep_reading(
 		&user,
 		Some(
 			Condition::all()
-				.add(reading_session::Column::UserId.eq(user.id.clone()))
+				.add(reading_session::Column::UserId.eq(user.id))
 				.add(
 					Condition::any()
 						.add(reading_session::Column::Page.gt(0))
@@ -1290,7 +1290,7 @@ async fn get_book_progression(
 	let active_reading_session = OPDSProgressionEntity::find()
 		.filter(
 			reading_session::Column::UserId
-				.eq(user.id.clone())
+				.eq(user.id)
 				.and(reading_session::Column::MediaId.eq(id.clone())),
 		)
 		.filter(
@@ -1324,6 +1324,8 @@ async fn update_book_progression(
 
 	let user = req.user();
 	let conn = ctx.conn.as_ref();
+	let id = Uuid::parse_str(&id)
+		.map_err(|_| APIError::BadRequest("Invalid book ID".to_string()))?;
 
 	let book = media::Entity::find_for_user(&user)
 		.filter(media::Column::Id.eq(id.clone()))
@@ -1331,10 +1333,9 @@ async fn update_book_progression(
 		.await?
 		.ok_or(APIError::NotFound("Book not found".to_string()))?;
 
-	let existing_session =
-		reading_session::Entity::find_for_user_and_media_id(&user, &id)
-			.one(conn)
-			.await?;
+	let existing_session = reading_session::Entity::find_for_user_and_media_id(&user, id)
+		.one(conn)
+		.await?;
 
 	if let Some(ref session) = existing_session {
 		if let Some(existing_updated_at) = session.updated_at {
@@ -1348,14 +1349,15 @@ async fn update_book_progression(
 	}
 
 	let device_id = if let Some(input_device) = input.device() {
-		let existing_device =
-			registered_reading_device::Entity::find_by_id(&input_device.id)
-				.one(conn)
-				.await?;
+		let device_uuid = Uuid::parse_str(&input_device.id)
+			.map_err(|_| APIError::BadRequest("Invalid device ID".to_string()))?;
+		let existing_device = registered_reading_device::Entity::find_by_id(device_uuid)
+			.one(conn)
+			.await?;
 
 		if existing_device.is_none() {
 			let new_device = registered_reading_device::ActiveModel {
-				id: Set(input_device.id.clone()),
+				id: Set(device_uuid),
 				name: Set(input_device.name.clone()),
 				kind: Set(None),
 			};
@@ -1364,7 +1366,7 @@ async fn update_book_progression(
 				.await?;
 		}
 
-		Some(input_device.id.clone())
+		Some(device_uuid)
 	} else {
 		None
 	};
@@ -1388,7 +1390,7 @@ async fn update_book_progression(
 	let now = Utc::now();
 
 	let active_session = reading_session::ActiveModel {
-		user_id: Set(user.id.clone()),
+		user_id: Set(user.id),
 		media_id: Set(id),
 		page: Set(page),
 		percentage_completed: Set(percentage_completed),

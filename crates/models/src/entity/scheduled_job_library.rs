@@ -6,8 +6,8 @@ pub struct Model {
 	#[sea_orm(primary_key)]
 	pub id: i32,
 	pub schedule_id: i32,
-	#[sea_orm(column_type = "Text")]
-	pub library_id: String,
+	#[sea_orm(column_type = "Uuid")]
+	pub library_id: Uuid,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

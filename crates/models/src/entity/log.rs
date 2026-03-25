@@ -17,10 +17,9 @@ pub struct Model {
 	pub level: LogLevel,
 	#[sea_orm(column_type = "Text")]
 	pub message: String,
-	#[sea_orm(column_type = "custom(\"DATETIME\")")]
 	pub timestamp: DateTimeWithTimeZone,
-	#[sea_orm(column_type = "Text", nullable)]
-	pub job_id: Option<String>,
+	#[sea_orm(column_type = "Uuid", nullable)]
+	pub job_id: Option<Uuid>,
 	#[sea_orm(column_type = "Text", nullable)]
 	pub context: Option<String>,
 }

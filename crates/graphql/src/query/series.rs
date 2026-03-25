@@ -67,11 +67,11 @@ impl SeriesQuery {
 					.into_model::<series::ModelWithMetadata>()
 					.all(conn)
 					.await?;
-				let current_cursor = info
-					.after
-					.or_else(|| models.first().map(|result| result.series.id.clone()));
+				let current_cursor = info.after.or_else(|| {
+					models.first().map(|result| result.series.id.to_string())
+				});
 				let next_cursor =
-					match models.last().map(|result| result.series.id.clone()) {
+					match models.last().map(|result| result.series.id.to_string()) {
 						Some(id) if models.len() == info.limit as usize => Some(id),
 						_ => None,
 					};
@@ -200,9 +200,9 @@ impl SeriesQuery {
 					.await?;
 				let current_cursor = info
 					.after
-					.or_else(|| models.first().map(|m| m.series.id.clone()));
+					.or_else(|| models.first().map(|m| m.series.id.to_string()));
 				let next_cursor =
-					match models.last().map(|result| result.series.id.clone()) {
+					match models.last().map(|result| result.series.id.to_string()) {
 						Some(id) if models.len() == info.limit as usize => Some(id),
 						_ => None,
 					};

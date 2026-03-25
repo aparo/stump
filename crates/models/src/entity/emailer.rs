@@ -25,7 +25,6 @@ pub struct Model {
 	pub tls_enabled: bool,
 	pub max_attachment_size_bytes: Option<i32>,
 	pub max_num_attachments: Option<i32>,
-	#[sea_orm(column_type = "custom(\"DATETIME\")", nullable)]
 	pub last_used_at: Option<DateTimeWithTimeZone>,
 }
 

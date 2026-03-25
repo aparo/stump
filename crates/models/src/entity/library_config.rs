@@ -44,7 +44,7 @@ pub struct Model {
 	#[graphql(skip)]
 	pub ignore_rules: Option<IgnoreRules>,
 	#[sea_orm(column_type = "Text", nullable)]
-	pub library_id: Option<String>,
+	pub library_id: Option<Uuid>,
 }
 
 impl Model {

@@ -79,9 +79,10 @@ impl LibraryQuery {
 				cursor.first(info.limit);
 
 				let models = cursor.all(conn).await?;
-				let current_cursor =
-					info.after.or_else(|| models.first().map(|l| l.id.clone()));
-				let next_cursor = match models.last().map(|l| l.id.clone()) {
+				let current_cursor = info
+					.after
+					.or_else(|| models.first().map(|l| l.id.to_string()));
+				let next_cursor = match models.last().map(|l| l.id.to_string()) {
 					Some(id) if models.len() == info.limit as usize => Some(id),
 					_ => None,
 				};

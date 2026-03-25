@@ -7,11 +7,8 @@ use sea_orm::{entity::prelude::*, ActiveValue};
 pub struct Model {
 	#[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
 	pub id: String,
-	#[sea_orm(column_type = "Text")]
-	pub user_id: String,
-	#[sea_orm(column_type = "custom(\"DATETIME\")")]
+	pub user_id: Uuid,
 	pub created_at: DateTimeWithTimeZone,
-	#[sea_orm(column_type = "custom(\"DATETIME\")")]
 	pub expires_at: DateTimeWithTimeZone,
 }
 

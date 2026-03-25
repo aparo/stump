@@ -132,7 +132,11 @@ impl MigrationTrait for Migration {
 					.col(ColumnDef::new(BookClubs::Description).text())
 					.col(ColumnDef::new(BookClubs::IsPrivate).boolean().not_null())
 					.col(ColumnDef::new(BookClubs::MemberRoleSpec).json())
-					.col(ColumnDef::new(BookClubs::CreatedAt).date_time().not_null())
+					.col(
+						ColumnDef::new(BookClubs::CreatedAt)
+							.timestamp_with_time_zone()
+							.not_null(),
+					)
 					.col(ColumnDef::new(BookClubs::Emoji).text())
 					.to_owned(),
 			)
@@ -159,7 +163,7 @@ impl MigrationTrait for Migration {
 					.col(ColumnDef::new(BookClubMembers::Role).integer().not_null())
 					.col(
 						ColumnDef::new(BookClubMembers::JoinedAt)
-							.date_time()
+							.timestamp_with_time_zone()
 							.not_null(),
 					)
 					.col(ColumnDef::new(BookClubMembers::UserId).text().not_null())
@@ -298,7 +302,10 @@ impl MigrationTrait for Migration {
 							.primary_key(),
 					)
 					.col(ColumnDef::new(BookClubBooks::Position).integer().not_null())
-					.col(ColumnDef::new(BookClubBooks::CompletedAt).date_time())
+					.col(
+						ColumnDef::new(BookClubBooks::CompletedAt)
+							.timestamp_with_time_zone(),
+					)
 					.col(ColumnDef::new(BookClubBooks::Title).text())
 					.col(ColumnDef::new(BookClubBooks::Author).text())
 					.col(ColumnDef::new(BookClubBooks::Url).text())
@@ -307,7 +314,7 @@ impl MigrationTrait for Migration {
 					.col(ColumnDef::new(BookClubBooks::BookClubId).text().not_null())
 					.col(
 						ColumnDef::new(BookClubBooks::AddedAt)
-							.date_time()
+							.timestamp_with_time_zone()
 							.not_null(),
 					)
 					.foreign_key(
@@ -356,11 +363,14 @@ impl MigrationTrait for Migration {
 							.not_null()
 							.default("PENDING"),
 					)
-					.col(ColumnDef::new(BookClubBookSuggestions::ResolvedAt).date_time())
+					.col(
+						ColumnDef::new(BookClubBookSuggestions::ResolvedAt)
+							.timestamp_with_time_zone(),
+					)
 					.col(ColumnDef::new(BookClubBookSuggestions::ResolvedById).text())
 					.col(
 						ColumnDef::new(BookClubBookSuggestions::CreatedAt)
-							.date_time()
+							.timestamp_with_time_zone()
 							.not_null()
 							.default(Expr::current_timestamp()),
 					)
@@ -432,7 +442,7 @@ impl MigrationTrait for Migration {
 					)
 					.col(
 						ColumnDef::new(BookClubBookSuggestionLikes::Timestamp)
-							.date_time()
+							.timestamp_with_time_zone()
 							.not_null()
 							.default(Expr::current_timestamp()),
 					)
@@ -506,7 +516,7 @@ impl MigrationTrait for Migration {
 					.col(ColumnDef::new(BookClubDiscussions::Emoji).text())
 					.col(
 						ColumnDef::new(BookClubDiscussions::CreatedAt)
-							.date_time()
+							.timestamp_with_time_zone()
 							.not_null()
 							.default(Expr::current_timestamp()),
 					)
@@ -559,10 +569,13 @@ impl MigrationTrait for Migration {
 					)
 					.col(
 						ColumnDef::new(BookClubDiscussionMessage::Timestamp)
-							.date_time()
+							.timestamp_with_time_zone()
 							.not_null(),
 					)
-					.col(ColumnDef::new(BookClubDiscussionMessage::EditedAt).date_time())
+					.col(
+						ColumnDef::new(BookClubDiscussionMessage::EditedAt)
+							.timestamp_with_time_zone(),
+					)
 					.col(
 						ColumnDef::new(BookClubDiscussionMessage::IsPinnedMessage)
 							.boolean()
@@ -670,7 +683,7 @@ impl MigrationTrait for Migration {
 					)
 					.col(
 						ColumnDef::new(BookClubDiscussionMessageReactions::CreatedAt)
-							.date_time()
+							.timestamp_with_time_zone()
 							.not_null()
 							.default(Expr::current_timestamp()),
 					)
@@ -745,7 +758,7 @@ impl MigrationTrait for Migration {
 					)
 					.col(
 						ColumnDef::new(CustomEmojis::CreatedAt)
-							.date_time()
+							.timestamp_with_time_zone()
 							.not_null()
 							.default(Expr::current_timestamp()),
 					)
@@ -1031,7 +1044,11 @@ impl MigrationTrait for Migration {
 					.col(ColumnDef::new(BookClubs::Description).text())
 					.col(ColumnDef::new(BookClubs::IsPrivate).boolean().not_null())
 					.col(ColumnDef::new(BookClubs::MemberRoleSpec).json())
-					.col(ColumnDef::new(BookClubs::CreatedAt).date_time().not_null())
+					.col(
+						ColumnDef::new(BookClubs::CreatedAt)
+							.timestamp_with_time_zone()
+							.not_null(),
+					)
 					.col(ColumnDef::new(BookClubs::Emoji).text())
 					.to_owned(),
 			)
@@ -1279,12 +1296,12 @@ impl MigrationTrait for Migration {
 					)
 					.col(
 						ColumnDef::new(OldBookClubBooks::StartAt)
-							.date_time()
+							.timestamp_with_time_zone()
 							.not_null(),
 					)
 					.col(
 						ColumnDef::new(OldBookClubBooks::EndAt)
-							.date_time()
+							.timestamp_with_time_zone()
 							.not_null(),
 					)
 					.col(
@@ -1420,12 +1437,12 @@ impl MigrationTrait for Migration {
 					)
 					.col(
 						ColumnDef::new(OldBookClubDiscussionMessage::CreatedAt)
-							.date_time()
+							.timestamp_with_time_zone()
 							.not_null(),
 					)
 					.col(
 						ColumnDef::new(OldBookClubDiscussionMessage::UpdatedAt)
-							.date_time()
+							.timestamp_with_time_zone()
 							.not_null(),
 					)
 					.col(
@@ -1549,7 +1566,7 @@ enum BookClubs {
 }
 
 #[derive(DeriveIden)]
-enum BookClubMembers {
+pub enum BookClubMembers {
 	Table,
 	Id,
 	DisplayName,
@@ -1584,7 +1601,7 @@ enum BookClubMemberFavoriteBooks {
 }
 
 #[derive(DeriveIden)]
-enum BookClubBooks {
+pub enum BookClubBooks {
 	Table,
 	Id,
 	Position,
@@ -1599,7 +1616,7 @@ enum BookClubBooks {
 }
 
 #[derive(DeriveIden)]
-enum BookClubBookSuggestions {
+pub enum BookClubBookSuggestions {
 	Table,
 	Id,
 	BookClubId,
@@ -1616,7 +1633,7 @@ enum BookClubBookSuggestions {
 }
 
 #[derive(DeriveIden)]
-enum BookClubBookSuggestionLikes {
+pub enum BookClubBookSuggestionLikes {
 	Table,
 	Id,
 	Timestamp,
@@ -1625,7 +1642,7 @@ enum BookClubBookSuggestionLikes {
 }
 
 #[derive(DeriveIden)]
-enum BookClubDiscussions {
+pub enum BookClubDiscussions {
 	Table,
 	Id,
 	IsLocked,
@@ -1639,7 +1656,7 @@ enum BookClubDiscussions {
 }
 
 #[derive(DeriveIden)]
-enum BookClubDiscussionMessage {
+pub enum BookClubDiscussionMessage {
 	Table,
 	Id,
 	Content,
@@ -1665,7 +1682,7 @@ enum BookClubDiscussionMessageLikes {
 }
 
 #[derive(DeriveIden)]
-enum BookClubDiscussionMessageReactions {
+pub enum BookClubDiscussionMessageReactions {
 	Table,
 	Id,
 	Emoji,
@@ -1676,7 +1693,7 @@ enum BookClubDiscussionMessageReactions {
 }
 
 #[derive(DeriveIden)]
-enum CustomEmojis {
+pub enum CustomEmojis {
 	Table,
 	Id,
 	Name,
@@ -1703,7 +1720,7 @@ enum OldBookClubMembers {
 }
 
 #[derive(DeriveIden)]
-enum OldBookClubBooks {
+pub enum OldBookClubBooks {
 	StartAt,
 	EndAt,
 	DiscussionDurationDays,
@@ -1721,7 +1738,7 @@ enum OldBookClubDiscussions {
 }
 
 #[derive(DeriveIden)]
-enum OldBookClubDiscussionMessage {
+pub enum OldBookClubDiscussionMessage {
 	CreatedAt,
 	UpdatedAt,
 }

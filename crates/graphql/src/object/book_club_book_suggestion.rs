@@ -26,7 +26,7 @@ impl BookClubBookSuggestion {
 	async fn suggested_by(&self, ctx: &Context<'_>) -> Result<BookClubMember> {
 		let core = ctx.data::<CoreContext>()?;
 
-		let member = book_club_member::Entity::find_by_id(&self.model.suggested_by_id)
+		let member = book_club_member::Entity::find_by_id(self.model.suggested_by_id)
 			.one(core.conn.as_ref())
 			.await?
 			.ok_or("Member not found")?;
@@ -39,7 +39,7 @@ impl BookClubBookSuggestion {
 		let core = ctx.data::<CoreContext>()?;
 
 		if let Some(ref resolved_by_id) = self.model.resolved_by_id {
-			let member = book_club_member::Entity::find_by_id(resolved_by_id)
+			let member = book_club_member::Entity::find_by_id(resolved_by_id.clone())
 				.one(core.conn.as_ref())
 				.await?;
 
@@ -56,7 +56,7 @@ impl BookClubBookSuggestion {
 
 		let count = book_club_book_suggestion_like::Entity::find()
 			.filter(
-				book_club_book_suggestion_like::Column::SuggestionId.eq(&self.model.id),
+				book_club_book_suggestion_like::Column::SuggestionId.eq(self.model.id),
 			)
 			.count(core.conn.as_ref())
 			.await?;
@@ -71,7 +71,7 @@ impl BookClubBookSuggestion {
 
 		let member = book_club_member::Entity::find_by_club_for_user(
 			&auth_ctx.user,
-			&self.model.book_club_id,
+			self.model.book_club_id,
 		)
 		.one(core.conn.as_ref())
 		.await?;
@@ -80,9 +80,9 @@ impl BookClubBookSuggestion {
 			let like = book_club_book_suggestion_like::Entity::find()
 				.filter(
 					book_club_book_suggestion_like::Column::SuggestionId
-						.eq(&self.model.id),
+						.eq(self.model.id),
 				)
-				.filter(book_club_book_suggestion_like::Column::LikedById.eq(&member.id))
+				.filter(book_club_book_suggestion_like::Column::LikedById.eq(member.id))
 				.one(core.conn.as_ref())
 				.await?;
 

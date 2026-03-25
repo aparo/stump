@@ -37,7 +37,7 @@ impl CreateOrUpdateLibraryInput {
 			..
 		} = self;
 
-		let id = Uuid::new_v4().to_string();
+		let id = Uuid::new_v4();
 		let library = library::ActiveModel {
 			id: Set(id.clone()),
 			name: Set(name),

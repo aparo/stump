@@ -20,13 +20,11 @@ impl JobMutation {
 	#[graphql(guard = "PermissionGuard::one(UserPermission::ManageJobs)")]
 	async fn cancel_job(&self, ctx: &Context<'_>, id: ID) -> Result<bool> {
 		let (task_tx, task_rx) = oneshot::channel();
+		let id = Uuid::parse_str(id.as_ref())?;
 
 		let core = ctx.data::<CoreContext>()?;
 		if let Err(error) = core.send_job_controller_command(
-			JobControllerCommand::CancelJob(AcknowledgeableCommand {
-				id: id.to_string(),
-				ack: task_tx,
-			}),
+			JobControllerCommand::CancelJob(AcknowledgeableCommand { id, ack: task_tx }),
 		) {
 			tracing::error!(?error, "Failed to send cancel job command");
 			return Err(Error::new("Failed to send cancel job command").extend_with(
@@ -67,8 +65,9 @@ impl JobMutation {
 		#[graphql(default)] force: bool,
 	) -> Result<bool> {
 		let core = ctx.data::<CoreContext>()?;
+		let id = Uuid::parse_str(id.as_ref())?;
 
-		let job = job::Entity::find_by_id(id.to_string())
+		let job = job::Entity::find_by_id(id)
 			.select_only()
 			.columns([job::Column::Id, job::Column::Status])
 			.into_model::<job::JobStatusSelect>()
@@ -81,7 +80,7 @@ impl JobMutation {
 			})?;
 
 		if job.status.is_resolved() || force {
-			job::Entity::delete_by_id(id.to_string())
+			job::Entity::delete_by_id(id)
 				.exec(core.conn.as_ref())
 				.await?;
 			return Ok(true);
@@ -92,12 +91,12 @@ impl JobMutation {
 			"Job is not resolved, attempting to cancel before deletion"
 		);
 
-		if let Err(error) = JobMutation::cancel_job(self, ctx, id.clone()).await {
+		if let Err(error) = JobMutation::cancel_job(self, ctx, id.into()).await {
 			tracing::error!(?error, "Failed to cancel job before deletion");
 			return Err(Error::new("Failed to cancel job before deletion"));
 		}
 
-		job::Entity::delete_by_id(id.to_string())
+		job::Entity::delete_by_id(id)
 			.exec(core.conn.as_ref())
 			.await?;
 
@@ -132,9 +131,10 @@ impl JobMutation {
 		id: ID,
 	) -> Result<DeleteJobAssociatedLogs> {
 		let core = ctx.data::<CoreContext>()?;
+		let id = Uuid::parse_str(id.as_ref())?;
 
 		let affected_rows = log::Entity::delete_many()
-			.filter(log::Column::JobId.eq(id.to_string()))
+			.filter(log::Column::JobId.eq(id))
 			.exec(core.conn.as_ref())
 			.await
 			.map_err(|err| {

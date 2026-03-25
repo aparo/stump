@@ -56,7 +56,7 @@ impl SmartList {
 
 	async fn views(&self, ctx: &Context<'_>) -> Result<Vec<SmartListView>> {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
-		let views = smart_list_view::Entity::find_by_list_id(&self.model.id)
+		let views = smart_list_view::Entity::find_by_list_id(self.model.id)
 			.all(conn)
 			.await?;
 		views

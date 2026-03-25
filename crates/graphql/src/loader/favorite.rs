@@ -16,8 +16,8 @@ impl FavoritesLoader {
 
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct FavoriteMediaLoaderKey {
-	pub user_id: String,
-	pub media_id: String,
+	pub user_id: Uuid,
+	pub media_id: Uuid,
 }
 
 impl Loader<FavoriteMediaLoaderKey> for FavoritesLoader {
@@ -28,24 +28,17 @@ impl Loader<FavoriteMediaLoaderKey> for FavoritesLoader {
 		&self,
 		keys: &[FavoriteMediaLoaderKey],
 	) -> Result<HashMap<FavoriteMediaLoaderKey, Self::Value>, Self::Error> {
-		let favorite_records = favorite_media::Entity::find()
-			.filter(
-				favorite_media::Column::MediaId
-					.is_in(
-						keys.iter()
-							.map(|key| key.media_id.clone())
-							.collect::<Vec<_>>(),
-					)
-					.and(
-						favorite_media::Column::UserId.is_in(
-							keys.iter()
-								.map(|key| key.user_id.clone())
-								.collect::<Vec<_>>(),
-						),
-					),
-			)
-			.all(self.conn.as_ref())
-			.await?;
+		let favorite_records =
+			favorite_media::Entity::find()
+				.filter(
+					favorite_media::Column::MediaId
+						.is_in(keys.iter().map(|key| key.media_id).collect::<Vec<_>>())
+						.and(favorite_media::Column::UserId.is_in(
+							keys.iter().map(|key| key.user_id).collect::<Vec<_>>(),
+						)),
+				)
+				.all(self.conn.as_ref())
+				.await?;
 
 		let mut result = HashMap::new();
 
@@ -66,8 +59,8 @@ impl Loader<FavoriteMediaLoaderKey> for FavoritesLoader {
 
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct FavoriteSeriesLoaderKey {
-	pub user_id: String,
-	pub series_id: String,
+	pub user_id: Uuid,
+	pub series_id: Uuid,
 }
 
 impl Loader<FavoriteSeriesLoaderKey> for FavoritesLoader {
@@ -78,24 +71,17 @@ impl Loader<FavoriteSeriesLoaderKey> for FavoritesLoader {
 		&self,
 		keys: &[FavoriteSeriesLoaderKey],
 	) -> Result<HashMap<FavoriteSeriesLoaderKey, Self::Value>, Self::Error> {
-		let favorite_records = favorite_series::Entity::find()
-			.filter(
-				favorite_series::Column::SeriesId
-					.is_in(
-						keys.iter()
-							.map(|key| key.series_id.clone())
-							.collect::<Vec<_>>(),
-					)
-					.and(
-						favorite_series::Column::UserId.is_in(
-							keys.iter()
-								.map(|key| key.user_id.clone())
-								.collect::<Vec<_>>(),
-						),
-					),
-			)
-			.all(self.conn.as_ref())
-			.await?;
+		let favorite_records =
+			favorite_series::Entity::find()
+				.filter(
+					favorite_series::Column::SeriesId
+						.is_in(keys.iter().map(|key| key.series_id).collect::<Vec<_>>())
+						.and(favorite_series::Column::UserId.is_in(
+							keys.iter().map(|key| key.user_id).collect::<Vec<_>>(),
+						)),
+				)
+				.all(self.conn.as_ref())
+				.await?;
 
 		let mut result = HashMap::new();
 
@@ -116,8 +102,8 @@ impl Loader<FavoriteSeriesLoaderKey> for FavoritesLoader {
 
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct FavoriteLibraryLoaderKey {
-	pub user_id: String,
-	pub library_id: String,
+	pub user_id: Uuid,
+	pub library_id: Uuid,
 }
 
 impl Loader<FavoriteLibraryLoaderKey> for FavoritesLoader {
@@ -128,24 +114,17 @@ impl Loader<FavoriteLibraryLoaderKey> for FavoritesLoader {
 		&self,
 		keys: &[FavoriteLibraryLoaderKey],
 	) -> Result<HashMap<FavoriteLibraryLoaderKey, Self::Value>, Self::Error> {
-		let favorite_records = favorite_library::Entity::find()
-			.filter(
-				favorite_library::Column::LibraryId
-					.is_in(
-						keys.iter()
-							.map(|key| key.library_id.clone())
-							.collect::<Vec<_>>(),
-					)
-					.and(
-						favorite_library::Column::UserId.is_in(
-							keys.iter()
-								.map(|key| key.user_id.clone())
-								.collect::<Vec<_>>(),
-						),
-					),
-			)
-			.all(self.conn.as_ref())
-			.await?;
+		let favorite_records =
+			favorite_library::Entity::find()
+				.filter(
+					favorite_library::Column::LibraryId
+						.is_in(keys.iter().map(|key| key.library_id).collect::<Vec<_>>())
+						.and(favorite_library::Column::UserId.is_in(
+							keys.iter().map(|key| key.user_id).collect::<Vec<_>>(),
+						)),
+				)
+				.all(self.conn.as_ref())
+				.await?;
 
 		let mut result = HashMap::new();
 

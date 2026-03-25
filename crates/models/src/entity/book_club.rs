@@ -19,11 +19,10 @@ use super::user::AuthUser;
 #[graphql(name = "BookClubModel")]
 #[sea_orm(table_name = "book_clubs")]
 pub struct Model {
-	#[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
-	pub id: String,
-	#[sea_orm(column_type = "Text")]
+	#[sea_orm(primary_key, auto_increment = false)]
+	pub id: Uuid,
 	pub name: String,
-	#[sea_orm(column_type = "Text", unique)]
+	#[sea_orm(unique)]
 	pub slug: String,
 	#[sea_orm(column_type = "Text", nullable)]
 	pub description: Option<String>,
@@ -31,9 +30,7 @@ pub struct Model {
 	#[graphql(skip)]
 	#[sea_orm(column_type = "Json", nullable)]
 	pub member_role_spec: Option<BookClubMemberRoleSpec>,
-	#[sea_orm(column_type = "custom(\"DATETIME\")")]
 	pub created_at: DateTimeWithTimeZone,
-	#[sea_orm(column_type = "Text", nullable)]
 	pub emoji: Option<String>,
 }
 
@@ -51,7 +48,7 @@ impl Entity {
 							Query::select()
 								.column(book_club_member::Column::BookClubId)
 								.from(book_club_member::Entity)
-								.and_where(book_club_member::Column::UserId.eq(&user.id))
+								.and_where(book_club_member::Column::UserId.eq(user.id))
 								.to_owned(),
 						),
 					),
@@ -69,11 +66,11 @@ impl Entity {
 		Query::select()
 			.column(book_club_member::Column::BookClubId)
 			.from(book_club_member::Entity)
-			.and_where(book_club_member::Column::UserId.eq(user.id.clone()))
+			.and_where(book_club_member::Column::UserId.eq(user.id))
 			.to_owned()
 	}
 
-	pub fn find_by_id_and_user(id: &str, user: &AuthUser) -> Select<Entity> {
+	pub fn find_by_id_and_user(id: Uuid, user: &AuthUser) -> Select<Entity> {
 		Entity::find()
 			.filter(Self::filter_for_user(user))
 			.filter(book_club::Column::Id.eq(id))
@@ -126,7 +123,7 @@ impl Entity {
 	pub fn find_for_member_enforce_role_and_id(
 		user: &AuthUser,
 		role: BookClubMemberRole,
-		id: &str,
+		id: Uuid,
 	) -> Select<Entity> {
 		Self::find_for_member_enforce_role(user, role).filter(Column::Id.eq(id))
 	}
@@ -168,7 +165,7 @@ impl ActiveModelBehavior for ActiveModel {
 	{
 		if insert {
 			if self.id.is_not_set() {
-				self.id = Set(uuid::Uuid::new_v4().to_string());
+				self.id = Set(uuid::Uuid::new_v4());
 			}
 			if self.slug.is_not_set() {
 				let slug = slugify!(self.name.as_ref().as_str());
@@ -210,7 +207,7 @@ mod tests {
 
 		let select = Entity::find_all_for_user(true, &user);
 		let stmt_str = select_no_cols_to_string(select);
-		assert_eq!(stmt_str, r#"SELECT  FROM "book_clubs" WHERE "book_clubs"."is_private" = FALSE OR "book_clubs"."id" IN (SELECT "book_club_id" FROM "book_club_members" WHERE "book_club_members"."user_id" = '42')"#.to_string());
+		assert_eq!(stmt_str, r#"SELECT  FROM "book_clubs" WHERE "book_clubs"."is_private" = FALSE OR "book_clubs"."id" IN (SELECT "book_club_id" FROM "book_club_members" WHERE "book_club_members"."user_id" = '0ad39398-ce6a-4bcc-b044-719163a07c53')"#.to_string());
 	}
 
 	#[test]
@@ -220,17 +217,19 @@ mod tests {
 
 		let select = Entity::find_all_for_user(false, &user);
 		let stmt_str = select_no_cols_to_string(select);
-		assert_eq!(stmt_str, r#"SELECT  FROM "book_clubs" WHERE "book_clubs"."id" IN (SELECT "book_club_id" FROM "book_club_members" WHERE "book_club_members"."user_id" = '42')"#.to_string());
+		assert_eq!(stmt_str, r#"SELECT  FROM "book_clubs" WHERE "book_clubs"."id" IN (SELECT "book_club_id" FROM "book_club_members" WHERE "book_club_members"."user_id" = '0ad39398-ce6a-4bcc-b044-719163a07c53')"#.to_string());
 	}
 
 	#[test]
 	fn test_for_id_and_user() {
 		let mut user = get_default_user();
 		user.is_server_owner = false;
+		let book_club_id =
+			Uuid::parse_str("2b6b279b-3ec7-453b-86ca-b65279a13603").unwrap();
 
-		let select = Entity::find_by_id_and_user("314", &user);
+		let select = Entity::find_by_id_and_user(book_club_id, &user);
 		let stmt_str = select_no_cols_to_string(select);
-		assert_eq!(stmt_str, r#"SELECT  FROM "book_clubs" WHERE ("book_clubs"."is_private" = FALSE OR "book_clubs"."id" IN (SELECT "book_club_id" FROM "book_club_members" WHERE "book_club_members"."user_id" = '42')) AND "book_clubs"."id" = '314'"#.to_string());
+		assert_eq!(stmt_str, r#"SELECT  FROM "book_clubs" WHERE ("book_clubs"."is_private" = FALSE OR "book_clubs"."id" IN (SELECT "book_club_id" FROM "book_club_members" WHERE "book_club_members"."user_id" = '0ad39398-ce6a-4bcc-b044-719163a07c53')) AND "book_clubs"."id" = '2b6b279b-3ec7-453b-86ca-b65279a13603'"#.to_string());
 	}
 
 	#[test]
@@ -241,7 +240,7 @@ mod tests {
 		let select =
 			Entity::find_for_member_enforce_role(&user, BookClubMemberRole::Moderator);
 		let stmt_str = select_no_cols_to_string(select);
-		assert_eq!(stmt_str, r#"SELECT  FROM "book_clubs" WHERE "book_clubs"."id" IN (SELECT "book_club_id" FROM "book_club_members" WHERE "book_club_members"."user_id" = '42' AND "book_club_members"."role" >= 1)"#.to_string());
+		assert_eq!(stmt_str, r#"SELECT  FROM "book_clubs" WHERE "book_clubs"."id" IN (SELECT "book_club_id" FROM "book_club_members" WHERE "book_club_members"."user_id" = '0ad39398-ce6a-4bcc-b044-719163a07c53' AND "book_club_members"."role" >= 1)"#.to_string());
 	}
 
 	#[test]

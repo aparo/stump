@@ -13,7 +13,7 @@ use sea_orm::{entity::prelude::*, Condition, FromQueryResult, JoinType, QuerySel
 
 #[derive(Clone, Debug)]
 pub struct OPDSSeries {
-	pub id: String,
+	pub id: Uuid,
 	pub name: String,
 	pub metadata: Option<series_metadata::Model>,
 }
@@ -52,7 +52,7 @@ impl OPDSPublicationEntity {
 			.as_ref()
 			.map(|res| get_age_restriction_filter(res.age, res.restrict_on_unset));
 
-		let for_user_id = user.id.clone();
+		let for_user_id = user.id;
 		Prefixer::new(media::Entity::find().select_only())
 			.add_columns(media::Entity)
 			.add_columns(media_metadata::Entity)

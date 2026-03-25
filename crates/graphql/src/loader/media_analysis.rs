@@ -16,7 +16,7 @@ impl MediaAnalysisLoader {
 
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct PageDimensionLoaderKey {
-	pub media_id: String,
+	pub media_id: Uuid,
 }
 
 impl Loader<PageDimensionLoaderKey> for MediaAnalysisLoader {

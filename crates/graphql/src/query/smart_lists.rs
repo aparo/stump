@@ -19,6 +19,7 @@ use models::{
 };
 use sea_orm::{QuerySelect, TransactionTrait};
 use std::collections::HashSet;
+use uuid::Uuid;
 
 #[derive(Default, Clone, Copy)]
 pub struct SmartListsQuery;
@@ -66,6 +67,7 @@ impl SmartListsQuery {
 	) -> Result<Option<SmartList>> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
+		let id = Uuid::parse_str(id.as_str())?;
 
 		let smart_list = smart_list::Entity::find_by_id(user, id).one(conn).await?;
 
@@ -81,6 +83,7 @@ impl SmartListsQuery {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 		let txn = conn.begin().await?;
+		let id = Uuid::parse_str(id.as_str())?;
 
 		let smart_list = smart_list::Entity::find_by_id(user, id)
 			.one(&txn)
@@ -131,6 +134,7 @@ impl SmartListsQuery {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 		let txn = conn.begin().await?;
+		let id = Uuid::parse_str(id.as_str())?;
 
 		let smart_list = smart_list::Entity::find_by_id(user, id)
 			.one(&txn)

@@ -9,7 +9,7 @@ use models::entity::{media, media_analysis, media_metadata, series};
 use sea_orm::{prelude::*, QuerySelect};
 use serde::{Deserialize, Serialize};
 
-type Id = String;
+type Id = Uuid;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum MediaAnalysisJobScope {
@@ -105,7 +105,7 @@ impl JobExt for AnalyzeMediaJob {
 					.select_only()
 					.columns(media::MediaIdentSelect::columns())
 					.inner_join(series::Entity)
-					.filter(series::Column::LibraryId.eq(id))
+					.filter(series::Column::LibraryId.eq(id.clone()))
 					.into_model::<media::MediaIdentSelect>()
 					.all(ctx.conn.as_ref())
 					.await
@@ -120,7 +120,7 @@ impl JobExt for AnalyzeMediaJob {
 				let books = media::Entity::find()
 					.select_only()
 					.columns(media::MediaIdentSelect::columns())
-					.filter(media::Column::SeriesId.eq(id))
+					.filter(media::Column::SeriesId.eq(id.clone()))
 					.into_model::<media::MediaIdentSelect>()
 					.all(ctx.conn.as_ref())
 					.await?;

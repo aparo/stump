@@ -54,7 +54,7 @@ struct RefreshTokenClaims {
 }
 
 pub(crate) async fn create_jwt_auth(
-	user_id: &str,
+	user_id: Uuid,
 	conn: &DatabaseConnection,
 	config: &StumpConfig,
 ) -> APIResult<JwtTokenPair> {
@@ -73,7 +73,7 @@ pub(crate) async fn create_jwt_auth(
 
 	let active_model = refresh_token::ActiveModel {
 		id: ActiveValue::Set(jti),
-		user_id: ActiveValue::Set(user_id.to_string()),
+		user_id: ActiveValue::Set(user_id),
 		expires_at: ActiveValue::Set(refresh_expiry),
 		..Default::default()
 	};
@@ -100,7 +100,7 @@ pub(crate) fn extract_jti_from_refresh_token(token: &str) -> APIResult<String> {
 	Ok(token_data.claims.jti)
 }
 
-fn generate_access_token(user_id: &str, config: &StumpConfig) -> APIResult<CreatedToken> {
+fn generate_access_token(user_id: Uuid, config: &StumpConfig) -> APIResult<CreatedToken> {
 	let now = Utc::now();
 	let iat = now.timestamp() as usize;
 	let exp = (now + Duration::seconds(config.access_token_ttl)).timestamp() as usize;
@@ -125,7 +125,7 @@ fn generate_access_token(user_id: &str, config: &StumpConfig) -> APIResult<Creat
 }
 
 fn generate_refresh_token(
-	user_id: &str,
+	user_id: Uuid,
 	config: &StumpConfig,
 ) -> APIResult<(String, CreatedToken)> {
 	let now = Utc::now();
@@ -185,7 +185,7 @@ pub(crate) async fn exchange_refresh_token(
 		return Err(APIError::Unauthorized);
 	}
 
-	let user_id = &refresh_token.user_id;
+	let user_id = refresh_token.user_id;
 	let jwt_pair = create_jwt_auth(user_id, &state.conn, &state.config).await?;
 	tracing::debug!(?user_id, "Exchanged refresh token for new JWT");
 

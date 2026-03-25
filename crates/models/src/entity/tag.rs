@@ -27,7 +27,7 @@ pub enum Relation {
 impl ActiveModelBehavior for ActiveModel {}
 
 impl Entity {
-	pub fn find_for_media_id(media_id: &str) -> sea_orm::Select<Entity> {
+	pub fn find_for_media_id(media_id: Uuid) -> sea_orm::Select<Entity> {
 		Entity::find()
 			.join(JoinType::InnerJoin, Relation::MediaTags.def())
 			.filter(media_tag::Column::MediaId.eq(media_id))
@@ -42,10 +42,11 @@ mod tests {
 
 	#[test]
 	fn test_find_for_media_id() {
-		let query = Entity::find_for_media_id("123");
+		let media_id = Uuid::parse_str("123e4567-e89b-12d3-a456-426614174000").unwrap();
+		let query = Entity::find_for_media_id(media_id);
 		assert_eq!(
 			select_no_cols_to_string(query),
-			r#"SELECT  FROM "tags" INNER JOIN "media_tags" ON "tags"."id" = "media_tags"."tag_id" WHERE "media_tags"."media_id" = '123'"#
+			r#"SELECT  FROM "tags" INNER JOIN "media_tags" ON "tags"."id" = "media_tags"."tag_id" WHERE "media_tags"."media_id" = '123e4567-e89b-12d3-a456-426614174000'"#
 		);
 	}
 }

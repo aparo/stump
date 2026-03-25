@@ -56,7 +56,7 @@ impl Series {
 
 		let is_favorite = loader
 			.load_one(FavoriteSeriesLoaderKey {
-				user_id: user.id.clone(),
+				user_id: user.id,
 				series_id: self.model.id.clone(),
 			})
 			.await?;
@@ -166,7 +166,7 @@ impl Series {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 
-		let user_id = user.id.clone();
+		let user_id = user.id;
 
 		let name_cmp = if let Some(id) = cursor {
 			let media = media::Entity::find_for_user(user)
@@ -203,7 +203,7 @@ impl Series {
 					.add(reading_session::Column::Id.is_null())
 					.add(
 						Condition::all()
-							.add(reading_session::Column::UserId.eq(&user.id))
+							.add(reading_session::Column::UserId.eq(user.id))
 							.add(
 								Condition::any()
 									.add(reading_session::Column::Epubcfi.is_not_null())
@@ -246,14 +246,14 @@ impl Series {
 
 	async fn is_complete(&self, ctx: &Context<'_>) -> Result<bool> {
 		let (media_count, finished_count) =
-			get_series_progress(ctx, self.model.id.clone()).await?;
+			get_series_progress(ctx, self.model.id).await?;
 
 		Ok(finished_count >= media_count)
 	}
 
 	async fn percentage_completed(&self, ctx: &Context<'_>) -> Result<f32> {
 		let (media_count, finished_count) =
-			get_series_progress(ctx, self.model.id.clone()).await?;
+			get_series_progress(ctx, self.model.id).await?;
 
 		if media_count == 0 {
 			return Ok(0.0);
@@ -269,7 +269,7 @@ impl Series {
 		let finished_loader = ctx.data::<DataLoader<SeriesFinishedCountLoader>>()?;
 		let finished_count = finished_loader
 			.load_one(FinishedCountLoaderKey {
-				user_id: user.id.clone(),
+				user_id: user.id,
 				series_id: self.model.id.clone(),
 			})
 			.await?
@@ -332,22 +332,23 @@ impl Series {
 	) -> Result<SeriesStats> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
+		let config = ctx.data::<CoreContext>()?.config.clone();
 
 		let result = conn
 			.query_one(Statement::from_sql_and_values(
-				DatabaseBackend::Sqlite,
+				config.database_backend(),
 				r"
 				WITH base_counts AS (
 					SELECT
 						COUNT(*) AS book_count,
-						IFNULL(SUM(media.size), 0) AS total_bytes
+						COALESCE(SUM(media.size), 0) AS total_bytes
 					FROM media
 					WHERE media.series_id = $1
 				),
 				finished_stats AS (
 					SELECT
 						COUNT(DISTINCT frs.media_id) AS completed_books,
-						IFNULL(SUM(frs.elapsed_seconds), 0) AS finished_reading_time
+						COALESCE(SUM(frs.elapsed_seconds), 0) AS finished_reading_time
 					FROM finished_reading_sessions frs
 					WHERE frs.media_id IN (SELECT id FROM media WHERE series_id = $1)
 						AND ($2 IS TRUE OR frs.user_id = $3)
@@ -355,7 +356,7 @@ impl Series {
 				active_stats AS (
 					SELECT
 						COUNT(DISTINCT rs.media_id) AS in_progress_books,
-						IFNULL(SUM(rs.elapsed_seconds), 0) AS active_reading_time
+						COALESCE(SUM(rs.elapsed_seconds), 0) AS active_reading_time
 					FROM reading_sessions rs
 					WHERE rs.media_id IN (SELECT id FROM media WHERE series_id = $1)
 						AND ($2 IS TRUE OR rs.user_id = $3)
@@ -371,7 +372,7 @@ impl Series {
 				[
 					self.model.id.clone().into(),
 					all_users.unwrap_or(false).into(),
-					user.id.clone().into(),
+					user.id.into(),
 				],
 			))
 			.await?
@@ -381,16 +382,16 @@ impl Series {
 	}
 }
 
-async fn get_series_progress(ctx: &Context<'_>, series_id: String) -> Result<(i64, i64)> {
+async fn get_series_progress(ctx: &Context<'_>, series_id: Uuid) -> Result<(i64, i64)> {
 	let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 
 	let loader = ctx.data::<DataLoader<SeriesCountLoader>>()?;
-	let media_count = loader.load_one(series_id.clone()).await?.unwrap_or(0i64);
+	let media_count = loader.load_one(series_id).await?.unwrap_or(0i64);
 
 	let finished_loader = ctx.data::<DataLoader<SeriesFinishedCountLoader>>()?;
 	let finished_count = finished_loader
 		.load_one(FinishedCountLoaderKey {
-			user_id: user.id.clone(),
+			user_id: user.id,
 			series_id,
 		})
 		.await?

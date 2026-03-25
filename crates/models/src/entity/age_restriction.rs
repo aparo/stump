@@ -13,8 +13,8 @@ pub struct Model {
 	pub id: i32,
 	pub age: i32,
 	pub restrict_on_unset: bool,
-	#[sea_orm(column_type = "Text", unique)]
-	pub user_id: String,
+	#[sea_orm(unique)]
+	pub user_id: Uuid,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

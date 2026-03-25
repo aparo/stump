@@ -1,6 +1,7 @@
 use models::error::EntityError;
 use sea_orm;
 use tokio::sync::oneshot;
+use uuid::Uuid;
 
 use crate::{filesystem::error::FileError, CoreError};
 
@@ -48,9 +49,9 @@ pub enum JobManagerError {
 	#[error("Worker spawn failed")]
 	WorkerSpawnFailed,
 	#[error("Job with ID already exists: {0}")]
-	JobAlreadyExists(String),
+	JobAlreadyExists(Uuid),
 	#[error("Job with ID not found: {0}")]
-	JobNotFound(String),
+	JobNotFound(Uuid),
 	#[error("Job missing ID")]
 	JobMissingId,
 	#[error("Job failed to be persisted: {0}")]

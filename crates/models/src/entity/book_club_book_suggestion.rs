@@ -8,9 +8,9 @@ use crate::shared::book_club::BookClubSuggestionStatus;
 #[sea_orm(table_name = "book_club_book_suggestions")]
 pub struct Model {
 	#[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
-	pub id: String,
+	pub id: Uuid,
 	#[sea_orm(column_type = "Text")]
-	pub book_club_id: String,
+	pub book_club_id: Uuid,
 	#[sea_orm(column_type = "Text", nullable)]
 	pub title: Option<String>,
 	#[sea_orm(column_type = "Text", nullable)]
@@ -20,16 +20,13 @@ pub struct Model {
 	#[sea_orm(column_type = "Text", nullable)]
 	pub notes: Option<String>,
 	pub status: BookClubSuggestionStatus,
-	#[sea_orm(column_type = "custom(\"DATETIME\")", nullable)]
 	pub resolved_at: Option<DateTimeWithTimeZone>,
-	#[sea_orm(column_type = "Text", nullable)]
-	pub resolved_by_id: Option<String>,
-	#[sea_orm(column_type = "custom(\"DATETIME\")")]
+	pub resolved_by_id: Option<Uuid>,
 	pub created_at: DateTimeWithTimeZone,
 	#[sea_orm(column_type = "Text")]
-	pub suggested_by_id: String,
+	pub suggested_by_id: Uuid,
 	#[sea_orm(column_type = "Text", nullable)]
-	pub book_id: Option<String>,
+	pub book_id: Option<Uuid>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

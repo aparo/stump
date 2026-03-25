@@ -164,7 +164,7 @@ impl OPDSPublication {
 		let images = OPDSPublication::images_for_book(&book, &finalizer).await?;
 
 		let positions = conn
-			.book_positions_in_series(vec![book.media.id.clone()], book.series.id.clone())
+			.book_positions_in_series(vec![book.media.id], book.series.id)
 			.await?;
 		let position = positions.get(&book.media.id).copied();
 
@@ -222,7 +222,7 @@ impl OPDSPublication {
 
 		let metadata = OPDSMetadataBuilder::default()
 			.title(title)
-			.identifier(book.media.id.clone())
+			.identifier(book.media.id)
 			.modified(OPDSMetadata::generate_modified())
 			.description(description)
 			.belongs_to(OPDSEntryBelongsTo::Series(
@@ -314,7 +314,7 @@ impl OPDSPublication {
 					)
 					.build()?,
 			),
-			OPDSLink::progression(book.media.id.clone(), finalizer),
+			OPDSLink::progression(book.media.id, finalizer),
 		]))
 	}
 }
@@ -341,9 +341,10 @@ mod tests {
 	use super::*;
 
 	fn mock_book() -> OPDSPublicationEntity {
+		let id = Uuid::new_v4();
 		OPDSPublicationEntity {
 			media: media::Model {
-				id: "1".to_string(),
+				id,
 				name: "Book 1".to_string(),
 				created_at: Utc::now().into(),
 				updated_at: Some(Utc::now().into()),
@@ -353,7 +354,7 @@ mod tests {
 				status: FileStatus::Ready,
 				hash: Some("hash".to_string()),
 				koreader_hash: None,
-				series_id: Some("1".to_string()),
+				series_id: Some(id),
 				pages: 3,
 				modified_at: None,
 				size: 2000,
@@ -361,13 +362,13 @@ mod tests {
 				thumbnail_path: None,
 			},
 			metadata: Some(media_metadata::Model {
-				media_id: Some("1".to_string()),
+				media_id: Some(id),
 				title: Some("Book 1 Title".to_string()),
 				summary: Some("A cool book".to_string()),
 				..Default::default()
 			}),
 			series: OPDSSeries {
-				id: "1".to_string(),
+				id,
 				name: "Series 1".to_string(),
 				metadata: None,
 			},
@@ -412,7 +413,7 @@ mod tests {
 			mock_book(),
 			OPDSPublicationEntity {
 				media: media::Model {
-					id: "2".to_string(),
+					id: Uuid::new_v4(),
 					name: "Book 2".to_string(),
 					..mock_book().media
 				},
@@ -472,7 +473,7 @@ mod tests {
 		// Mock the page analysis query result
 		let page_analysis_results = vec![media_analysis::Model {
 			id: 1,
-			media_id: "1".to_string(),
+			media_id: Uuid::new_v4(),
 			data: MediaAnalysisData {
 				dimensions: vec![
 					PageDimension {

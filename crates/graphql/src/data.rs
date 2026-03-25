@@ -5,6 +5,7 @@ use models::{
 	entity::user::AuthUser,
 	shared::{enums::UserPermission, permission_set::user_has_all_permissions},
 };
+use sea_orm::prelude::Uuid;
 use stump_core::Ctx;
 
 use crate::error_message;
@@ -65,8 +66,8 @@ impl AuthContext {
 	}
 
 	/// Get the ID of the current user
-	pub fn id(&self) -> String {
-		self.user.id.clone()
+	pub fn id(&self) -> Uuid {
+		self.user.id
 	}
 
 	pub fn api_key(&self) -> Option<String> {

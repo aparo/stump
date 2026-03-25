@@ -39,18 +39,18 @@ pub trait OPDSV2QueryExt {
 	/// but it will not cause an error.
 	async fn book_positions_in_series(
 		&self,
-		book_ids: Vec<String>,
-		series_id: String,
-	) -> CoreResult<HashMap<String, i64>>;
+		book_ids: Vec<Uuid>,
+		series_id: Uuid,
+	) -> CoreResult<HashMap<Uuid, i64>>;
 }
 
 #[async_trait::async_trait]
 impl OPDSV2QueryExt for DatabaseConnection {
 	async fn book_positions_in_series(
 		&self,
-		book_ids: Vec<String>,
-		series_id: String,
-	) -> CoreResult<HashMap<String, i64>> {
+		book_ids: Vec<Uuid>,
+		series_id: Uuid,
+	) -> CoreResult<HashMap<Uuid, i64>> {
 		let result: Vec<QueryResult> = self
 			.query_all(Statement::from_sql_and_values(
 				DatabaseBackend::Sqlite,
@@ -80,6 +80,9 @@ impl OPDSV2QueryExt for DatabaseConnection {
 			.map(|row| EntityPosition::from_query_result(&row, ""))
 			.collect::<Result<Vec<_>, _>>()?;
 
-		Ok(ranked.into_iter().map(|ep| (ep.id, ep.position)).collect())
+		Ok(ranked
+			.into_iter()
+			.map(|ep| (Uuid::parse_str(&ep.id).unwrap(), ep.position))
+			.collect())
 	}
 }

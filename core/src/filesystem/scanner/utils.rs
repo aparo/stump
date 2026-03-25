@@ -240,7 +240,7 @@ pub(crate) struct MediaOperationOutput {
 /// considered missing if it was previously marked as ready and is no longer found on disk.
 pub(crate) async fn handle_missing_media(
 	ctx: &WorkerCtx,
-	series_id: &str,
+	series_id: Uuid,
 	paths: Vec<PathBuf>,
 ) -> MediaOperationOutput {
 	let mut output = MediaOperationOutput::default();
@@ -251,7 +251,7 @@ pub(crate) async fn handle_missing_media(
 	}
 
 	let _affected_rows = media::Entity::update_many()
-		.filter(media::Column::SeriesId.eq(series_id.to_string()))
+		.filter(media::Column::SeriesId.eq(series_id))
 		.filter(
 			media::Column::Path.is_in(
 				paths
@@ -289,8 +289,8 @@ pub(crate) async fn handle_missing_media(
 /// found on disk.
 pub(crate) async fn handle_restored_media(
 	ctx: &WorkerCtx,
-	series_id: &str,
-	ids: Vec<String>,
+	series_id: Uuid,
+	ids: Vec<Uuid>,
 ) -> MediaOperationOutput {
 	let mut output = MediaOperationOutput::default();
 
@@ -300,11 +300,8 @@ pub(crate) async fn handle_restored_media(
 	}
 
 	let _affected_series = media::Entity::update_many()
-		.filter(media::Column::SeriesId.eq(series_id.to_string()))
-		.filter(
-			media::Column::Id
-				.is_in(ids.iter().map(|id| id.to_string()).collect::<Vec<String>>()),
-		)
+		.filter(media::Column::SeriesId.eq(series_id))
+		.filter(media::Column::Id.is_in(ids))
 		.col_expr(
 			media::Column::Status,
 			Expr::value(FileStatus::Ready.to_string()),
@@ -334,16 +331,15 @@ pub(crate) async fn handle_restored_media(
 /// # Arguments
 /// * `for_library` - The library ID to associate the series with
 /// * `path` - The path to the series on disk
-async fn build_series(for_library: &str, path: &Path) -> CoreResult<BuiltSeries> {
+async fn build_series(for_library: Uuid, path: &Path) -> CoreResult<BuiltSeries> {
 	let (tx, rx) = oneshot::channel();
 
 	// Spawn a blocking task to handle the IO-intensive operations:
 	let handle = spawn_blocking({
 		let path = path.to_path_buf();
-		let for_library = for_library.to_string();
 
 		move || {
-			let send_result = tx.send(SeriesBuilder::new(&path, &for_library).build());
+			let send_result = tx.send(SeriesBuilder::new(&path, for_library).build());
 			tracing::trace!(
 				is_err = send_result.is_err(),
 				"Sending build result to channel"
@@ -374,7 +370,7 @@ async fn build_series(for_library: &str, path: &Path) -> CoreResult<BuiltSeries>
 /// * `core_config` - The core configuration
 /// * `reporter` - A function to report progress to the UI
 pub(crate) async fn safely_build_series(
-	for_library: &str,
+	for_library: Uuid,
 	paths: Vec<PathBuf>,
 	core_config: &StumpConfig,
 	reporter: impl Fn(usize),
@@ -403,11 +399,10 @@ pub(crate) async fn safely_build_series(
 
 		for (series_index, path) in chunk.iter().enumerate() {
 			let path = path.clone();
-			let for_library = for_library.to_string();
 
 			let future = async move {
 				tracing::trace!(?path, "(Chunk {chunk_index}, Series {series_index}) Starting thumbnail generation");
-				build_series(&for_library, &path)
+				build_series(for_library, &path)
 					.await
 					.map_err(|e| (e, path.clone()))
 			};
@@ -458,7 +453,7 @@ pub(crate) async fn safely_insert_series(
 		// is a best-effort operation and we can always try again later after fixing a bad
 		// metadata entry vs killing the entire series creation process over a single bad entry
 		if let Some(mut meta) = metadata {
-			meta.series_id = Set(created_series.id.clone());
+			meta.series_id = Set(created_series.id);
 			if let Err(error) = meta.insert(&txn).await {
 				tracing::error!(?error, "Failed to insert series metadata");
 			}
@@ -474,7 +469,7 @@ pub(crate) async fn safely_insert_series(
 
 // TODO(granular-scans): intake ScanOptions
 pub(crate) struct MediaBuildOperation {
-	pub series_id: String,
+	pub series_id: Uuid,
 	pub library_config: library_config::Model,
 	pub max_concurrency: usize,
 }
@@ -489,7 +484,7 @@ pub(crate) struct MediaBuildOperation {
 /// * `config` - The core configuration
 async fn build_book(
 	path: &Path,
-	series_id: &str,
+	series_id: Uuid,
 	existing_book: Option<media::ModelWithMetadata>,
 	library_config: library_config::Model,
 	config: &StumpConfig,
@@ -499,12 +494,12 @@ async fn build_book(
 	// Spawn a blocking task to handle the IO-intensive operations:
 	let handle = spawn_blocking({
 		let path = path.to_path_buf();
-		let series_id = series_id.to_string();
+		let series_id = series_id;
 		let library_config = library_config.clone();
 		let config = config.clone();
 
 		move || {
-			let builder = MediaBuilder::new(&path, &series_id, library_config, &config);
+			let builder = MediaBuilder::new(&path, series_id, library_config, &config);
 			let send_result = tx.send(if let Some(existing_book) = existing_book {
 				builder.rebuild(&existing_book)
 			} else {
@@ -534,7 +529,7 @@ async fn build_book(
 struct BookVisitCtx {
 	operation: BookVisitOperation,
 	path: PathBuf,
-	series_id: String,
+	series_id: Uuid,
 	existing_book: Option<media::ModelWithMetadata>,
 }
 
@@ -553,12 +548,12 @@ async fn handle_book(
 	// Spawn a blocking task to handle the IO-intensive operations:
 	let handle = spawn_blocking({
 		let path = path.to_path_buf();
-		let series_id = series_id.to_string();
+		let series_id = series_id;
 		let library_config = library_config.clone();
 		let config = config.clone();
 
 		move || {
-			let builder = MediaBuilder::new(&path, &series_id, library_config, &config);
+			let builder = MediaBuilder::new(&path, series_id, library_config, &config);
 			let send_result = tx.send(match (operation, existing_book) {
 				(BookVisitOperation::Rebuild, Some(book)) => builder
 					.rebuild(&book)
@@ -661,7 +656,7 @@ pub(crate) async fn safely_build_and_insert_media(
 					?path,
 					"(Chunk {chunk_index}, Book {book_index}) Starting media build"
 				);
-				build_book(&path, &series_id, None, library_config, &worker_ctx.config)
+				build_book(&path, series_id, None, library_config, &worker_ctx.config)
 					.await
 					.map_err(|e| (e, path.clone()))
 			};

@@ -39,7 +39,7 @@ impl BookClubDiscussionMessage {
 		let core = ctx.data::<CoreContext>()?;
 
 		if let Some(ref member_id) = self.model.member_id {
-			let member = book_club_member::Entity::find_by_id(member_id)
+			let member = book_club_member::Entity::find_by_id(member_id.clone())
 				.one(core.conn.as_ref())
 				.await?;
 
@@ -58,7 +58,7 @@ impl BookClubDiscussionMessage {
 
 		let my_member_id = book_club_member::Entity::find_by_club_for_user(
 			&auth_ctx.user,
-			&self.model.book_club_id,
+			self.model.book_club_id,
 		)
 		.one(core.conn.as_ref())
 		.await?
@@ -68,7 +68,7 @@ impl BookClubDiscussionMessage {
 		let all_reactions = book_club_discussion_message_reaction::Entity::find()
 			.filter(
 				book_club_discussion_message_reaction::Column::MessageId
-					.eq(&self.model.id),
+					.eq(self.model.id),
 			)
 			.all(core.conn.as_ref())
 			.await?;
@@ -134,9 +134,10 @@ impl BookClubDiscussionMessage {
 
 		let core = ctx.data::<CoreContext>()?;
 
-		let message = book_club_discussion_message::Entity::find_by_id(reply_to_id)
-			.one(core.conn.as_ref())
-			.await?;
+		let message =
+			book_club_discussion_message::Entity::find_by_id(reply_to_id.clone())
+				.one(core.conn.as_ref())
+				.await?;
 
 		Ok(message.map(BookClubDiscussionMessage::from))
 	}
@@ -151,7 +152,7 @@ impl BookClubDiscussionMessage {
 
 		let children = book_club_discussion_message::Entity::find()
 			.filter(
-				book_club_discussion_message::Column::ParentMessageId.eq(&self.model.id),
+				book_club_discussion_message::Column::ParentMessageId.eq(self.model.id),
 			)
 			.filter(book_club_discussion_message::Column::DeletedAt.is_null())
 			.all(core.conn.as_ref())
@@ -170,7 +171,7 @@ impl BookClubDiscussionMessage {
 
 		let count = book_club_discussion_message::Entity::find()
 			.filter(
-				book_club_discussion_message::Column::ParentMessageId.eq(&self.model.id),
+				book_club_discussion_message::Column::ParentMessageId.eq(self.model.id),
 			)
 			.filter(book_club_discussion_message::Column::DeletedAt.is_null())
 			.count(core.conn.as_ref())

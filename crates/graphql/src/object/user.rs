@@ -48,7 +48,7 @@ impl User {
 	}
 
 	#[graphql(
-		guard = "SelfGuard::new(&self.model.id).or(PermissionGuard::one(UserPermission::ManageUsers)).or(ServerOwnerGuard)"
+		guard = "SelfGuard::new(self.model.id).or(PermissionGuard::one(UserPermission::ManageUsers)).or(ServerOwnerGuard)"
 	)]
 	async fn age_restriction(
 		&self,
@@ -57,14 +57,14 @@ impl User {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 
 		let age_restriction = age_restriction::Entity::find()
-			.filter(age_restriction::Column::UserId.eq(&self.model.id))
+			.filter(age_restriction::Column::UserId.eq(self.model.id))
 			.one(conn)
 			.await?;
 
 		Ok(age_restriction)
 	}
 
-	#[graphql(guard = "SelfGuard::new(&self.model.id).or(ServerOwnerGuard)")]
+	#[graphql(guard = "SelfGuard::new(self.model.id).or(ServerOwnerGuard)")]
 	async fn continue_reading(
 		&self,
 		ctx: &Context<'_>,
@@ -75,19 +75,19 @@ impl User {
 	}
 
 	#[graphql(
-		guard = "SelfGuard::new(&self.model.id).or(PermissionGuard::one(UserPermission::ManageUsers))"
+		guard = "SelfGuard::new(self.model.id).or(PermissionGuard::one(UserPermission::ManageUsers))"
 	)]
 	async fn permissions(&self) -> Vec<UserPermission> {
 		PermissionSet::from(self.model.permissions.clone().unwrap_or_default())
 			.resolve_into_vec()
 	}
 
-	#[graphql(guard = "SelfGuard::new(&self.model.id).or(ServerOwnerGuard)")]
+	#[graphql(guard = "SelfGuard::new(self.model.id).or(ServerOwnerGuard)")]
 	async fn preferences(&self, ctx: &Context<'_>) -> Result<UserPreferences> {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 
 		let preferences = user_preferences::Entity::find()
-			.filter(user_preferences::Column::UserId.eq(&self.model.id))
+			.filter(user_preferences::Column::UserId.eq(self.model.id))
 			.one(conn)
 			.await?
 			.ok_or("User preferences not found")?;
@@ -97,7 +97,7 @@ impl User {
 
 	// TODO: loader for this
 	#[graphql(
-		guard = "SelfGuard::new(&self.model.id).or(PermissionGuard::one(UserPermission::ReadUsers))"
+		guard = "SelfGuard::new(self.model.id).or(PermissionGuard::one(UserPermission::ReadUsers))"
 	)]
 	async fn last_login(
 		&self,
@@ -106,7 +106,7 @@ impl User {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 
 		let record = user_login_activity::Entity::find()
-			.filter(user_login_activity::Column::UserId.eq(&self.model.id))
+			.filter(user_login_activity::Column::UserId.eq(self.model.id))
 			.order_by_desc(user_login_activity::Column::Timestamp)
 			.one(conn)
 			.await?;
@@ -115,13 +115,13 @@ impl User {
 	}
 
 	#[graphql(
-		guard = "SelfGuard::new(&self.model.id).or(PermissionGuard::one(UserPermission::ReadUsers))"
+		guard = "SelfGuard::new(self.model.id).or(PermissionGuard::one(UserPermission::ReadUsers))"
 	)]
 	async fn login_sessions_count(&self, ctx: &Context<'_>) -> Result<i64> {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 
 		let count = session::Entity::find()
-			.filter(session::Column::UserId.eq(&self.model.id).and(
+			.filter(session::Column::UserId.eq(self.model.id).and(
 				session::Column::ExpiryTime.gt(DateTimeWithTimeZone::from(Utc::now())),
 			))
 			.count(conn)
@@ -131,13 +131,13 @@ impl User {
 	}
 
 	#[graphql(
-		guard = "SelfGuard::new(&self.model.id).or(PermissionGuard::one(UserPermission::ReadUsers))"
+		guard = "SelfGuard::new(self.model.id).or(PermissionGuard::one(UserPermission::ReadUsers))"
 	)]
 	async fn finished_reading_sessions_count(&self, ctx: &Context<'_>) -> Result<i64> {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 
 		let count = finished_reading_session::Entity::find()
-			.filter(finished_reading_session::Column::UserId.eq(&self.model.id))
+			.filter(finished_reading_session::Column::UserId.eq(self.model.id))
 			.count(conn)
 			.await?;
 

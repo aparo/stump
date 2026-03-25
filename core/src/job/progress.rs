@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
+use uuid::Uuid;
 
 use super::{JobStatus, WorkerSend, WorkerSendExt};
 use async_graphql::SimpleObject;
@@ -7,7 +8,7 @@ use async_graphql::SimpleObject;
 /// An update event that is emitted by a job
 #[derive(Debug, Clone, Deserialize, Serialize, SimpleObject)]
 pub struct JobUpdate {
-	pub id: String,
+	pub id: Uuid,
 	#[serde(flatten)]
 	#[graphql(flatten)]
 	pub payload: JobProgress,

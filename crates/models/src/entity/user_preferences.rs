@@ -53,8 +53,8 @@ pub struct Model {
 	#[graphql(skip)]
 	#[serde(default = "Model::default_home_arrangement")]
 	pub home_arrangement: Option<Arrangement>,
-	#[sea_orm(column_type = "Text", nullable, unique)]
-	pub user_id: Option<String>,
+	#[sea_orm(column_type = "Uuid", nullable, unique)]
+	pub user_id: Option<Uuid>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

@@ -13,7 +13,7 @@ pub struct Model {
 	#[sea_orm(column_type = "Text")]
 	pub name: String,
 	#[sea_orm(column_type = "Text")]
-	pub list_id: String,
+	pub list_id: Uuid,
 	#[sea_orm(column_type = "Blob")]
 	#[graphql(skip)]
 	pub data: Vec<u8>,
@@ -40,17 +40,17 @@ impl Related<super::smart_list::Entity> for Entity {
 impl ActiveModelBehavior for ActiveModel {}
 
 impl Entity {
-	pub fn find_by_list_id(list_id: &String) -> Select<Self> {
+	pub fn find_by_list_id(list_id: Uuid) -> Select<Self> {
 		Self::find().filter(Column::ListId.eq(list_id))
 	}
 
 	pub fn find_by_user_list_id_name(
 		user: &AuthUser,
-		list_id: &ID,
+		list_id: Uuid,
 		name: &String,
 	) -> Select<Self> {
 		Self::find_by_user(user)
-			.filter(Column::ListId.eq(list_id.to_string()))
+			.filter(Column::ListId.eq(list_id))
 			.filter(Column::Name.eq(name))
 	}
 

@@ -9,13 +9,10 @@ use crate::shared::enums::JobStatus;
 #[graphql(name = "JobModel")]
 #[sea_orm(table_name = "jobs")]
 pub struct Model {
-	#[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
-	pub id: String,
-	#[sea_orm(column_type = "Text")]
+	#[sea_orm(primary_key, auto_increment = false)]
+	pub id: Uuid,
 	pub name: String,
-	#[sea_orm(column_type = "Text", nullable)]
 	pub description: Option<String>,
-	#[sea_orm(column_type = "Text")]
 	pub status: JobStatus,
 	#[sea_orm(column_type = "Blob", nullable)]
 	#[graphql(skip)]
@@ -24,21 +21,19 @@ pub struct Model {
 	#[graphql(skip)]
 	pub output_data: Option<Vec<u8>>,
 	pub ms_elapsed: i64,
-	#[sea_orm(column_type = "custom(\"DATETIME\")")]
 	pub created_at: DateTimeWithTimeZone,
-	#[sea_orm(column_type = "custom(\"DATETIME\")", nullable)]
 	pub completed_at: Option<DateTimeWithTimeZone>,
 }
 
 #[derive(FromQueryResult)]
 pub struct JobCreatedAtSelect {
-	pub id: String,
+	pub id: Uuid,
 	pub created_at: DateTimeWithTimeZone,
 }
 
 #[derive(FromQueryResult)]
 pub struct JobStatusSelect {
-	pub id: String,
+	pub id: Uuid,
 	pub status: JobStatus,
 }
 
@@ -75,7 +70,7 @@ impl ActiveModelBehavior for ActiveModel {
 	{
 		if insert {
 			if self.id.is_not_set() {
-				self.id = Set(uuid::Uuid::new_v4().to_string());
+				self.id = Set(uuid::Uuid::new_v4());
 			}
 			self.ms_elapsed = Set(0);
 			self.created_at = Set(DateTimeWithTimeZone::from(Utc::now()));

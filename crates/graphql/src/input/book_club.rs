@@ -25,7 +25,7 @@ impl CreateBookClubInput {
 		self,
 		user: &AuthUser,
 	) -> (book_club::ActiveModel, book_club_member::ActiveModel) {
-		let id = Uuid::new_v4().to_string();
+		let id = Uuid::new_v4();
 		let slug = self
 			.slug
 			.map(|s| slugify!(s.as_str()))
@@ -42,11 +42,11 @@ impl CreateBookClubInput {
 		};
 
 		let owning_member = book_club_member::ActiveModel {
-			id: Set(Uuid::new_v4().to_string()),
+			id: Set(Uuid::new_v4()),
 			role: Set(BookClubMemberRole::Creator),
 			hide_progress: Set(self.creator_hide_progress),
 			display_name: Set(self.creator_display_name),
-			user_id: Set(user.id.clone()),
+			user_id: Set(user.id),
 			book_club_id: Set(id),
 			bio: Set(None),
 			joined_at: Set(chrono::Utc::now().into()),
@@ -107,13 +107,13 @@ impl UpdateBookClubInput {
 
 #[derive(Debug, InputObject)]
 pub struct BookClubInvitationInput {
-	pub user_id: String,
+	pub user_id: Uuid,
 	pub role: Option<BookClubMemberRole>,
 }
 
 #[derive(Debug, Clone, InputObject)]
 pub struct BookClubMemberInput {
-	pub user_id: String,
+	pub user_id: Uuid,
 	pub display_name: Option<String>,
 }
 
@@ -158,17 +158,17 @@ pub struct AddBookToClubInput {
 
 #[derive(Debug, InputObject)]
 pub struct CreateBookClubMemberInput {
-	pub user_id: String,
+	pub user_id: Uuid,
 	pub display_name: Option<String>,
 	pub role: BookClubMemberRole,
 }
 
 impl CreateBookClubMemberInput {
-	pub fn into_active_model(self, book_club_id: &str) -> book_club_member::ActiveModel {
+	pub fn into_active_model(self, book_club_id: Uuid) -> book_club_member::ActiveModel {
 		book_club_member::ActiveModel {
-			id: Set(Uuid::new_v4().to_string()),
+			id: Set(Uuid::new_v4()),
 			display_name: Set(self.display_name),
-			book_club_id: Set(book_club_id.to_string()),
+			book_club_id: Set(book_club_id),
 			hide_progress: Set(false),
 			user_id: Set(self.user_id),
 			role: Set(self.role),
@@ -181,9 +181,9 @@ impl CreateBookClubMemberInput {
 pub struct SendMessageInput {
 	pub content: String,
 	/// The parent message inside a thread, denoting this message as a child
-	pub parent_message_id: Option<String>,
+	pub parent_message_id: Option<Uuid>,
 	/// An inline reply reference, NOT a child of a thread
-	pub reply_to_message_id: Option<String>,
+	pub reply_to_message_id: Option<Uuid>,
 }
 
 #[derive(Debug, InputObject)]
@@ -204,7 +204,7 @@ pub struct UpdateCustomEmojiInput {
 
 #[derive(Debug, InputObject)]
 pub struct SuggestBookInput {
-	pub book_id: Option<String>,
+	pub book_id: Option<Uuid>,
 	pub title: Option<String>,
 	pub author: Option<String>,
 	pub url: Option<String>,
@@ -249,6 +249,6 @@ mod tests {
 		assert_eq!(member.hide_progress, Set(false));
 		assert_eq!(member.display_name, Set(None));
 		assert_eq!(member.user_id, Set(user.id));
-		assert!(Uuid::parse_str(&member.id.unwrap()).is_ok());
+		assert!(Uuid::parse_str(&member.id.unwrap().to_string()).is_ok());
 	}
 }

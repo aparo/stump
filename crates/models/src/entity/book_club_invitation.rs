@@ -7,13 +7,11 @@ use crate::{entity::user::AuthUser, shared::book_club::BookClubMemberRole};
 #[graphql(name = "BookClubInvitationModel")]
 #[sea_orm(table_name = "book_club_invitations")]
 pub struct Model {
-	#[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
-	pub id: String,
+	#[sea_orm(primary_key, auto_increment = false)]
+	pub id: Uuid,
 	pub role: BookClubMemberRole,
-	#[sea_orm(column_type = "Text")]
-	pub user_id: String,
-	#[sea_orm(column_type = "Text")]
-	pub book_club_id: String,
+	pub user_id: Uuid,
+	pub book_club_id: Uuid,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -55,7 +53,7 @@ impl ActiveModelBehavior for ActiveModel {
 		C: ConnectionTrait,
 	{
 		if insert && self.id.is_not_set() {
-			self.id = ActiveValue::Set(Uuid::new_v4().to_string());
+			self.id = ActiveValue::Set(Uuid::new_v4());
 		}
 
 		Ok(self)
@@ -63,16 +61,16 @@ impl ActiveModelBehavior for ActiveModel {
 }
 
 impl Entity {
-	pub fn find_for_book_club_id(book_club_id: &str) -> Select<Entity> {
+	pub fn find_for_book_club_id(book_club_id: Uuid) -> Select<Entity> {
 		Self::find().filter(Column::BookClubId.eq(book_club_id))
 	}
 
 	pub fn find_for_user(user: &AuthUser) -> Select<Entity> {
-		Self::find().filter(Column::UserId.eq(&user.id))
+		Self::find().filter(Column::UserId.eq(user.id))
 	}
 
-	pub fn find_for_user_and_id(user: &AuthUser, id: &str) -> Select<Entity> {
-		Self::find_by_id(id).filter(Column::UserId.eq(&user.id))
+	pub fn find_for_user_and_id(user: &AuthUser, id: Uuid) -> Select<Entity> {
+		Self::find_by_id(id).filter(Column::UserId.eq(user.id))
 	}
 }
 
@@ -87,10 +85,13 @@ mod tests {
 	#[test]
 	fn test_find_for_user_and_id() {
 		let user = get_default_user();
-		let select = Entity::find_for_user_and_id(&user, "123");
+		let select = Entity::find_for_user_and_id(
+			&user,
+			Uuid::parse_str("f35f3fb0-bb14-43e2-91b9-234b4503cff2").unwrap(),
+		);
 		assert_eq!(
 			select_no_cols_to_string(select),
-			r#"SELECT  FROM "book_club_invitations" WHERE "book_club_invitations"."id" = '123' AND "book_club_invitations"."user_id" = '42'"#.to_string()
+			r#"SELECT  FROM "book_club_invitations" WHERE "book_club_invitations"."id" = 'f35f3fb0-bb14-43e2-91b9-234b4503cff2' AND "book_club_invitations"."user_id" = '42'"#.to_string()
 		);
 	}
 
@@ -100,16 +101,17 @@ mod tests {
 		let select = Entity::find_for_user(&user);
 		assert_eq!(
 			select_no_cols_to_string(select),
-			r#"SELECT  FROM "book_club_invitations" WHERE "book_club_invitations"."user_id" = '42'"#.to_string()
+			r#"SELECT  FROM "book_club_invitations" WHERE "book_club_invitations"."user_id" = '0ad39398-ce6a-4bcc-b044-719163a07c53'"#.to_string()
 		);
 	}
 
 	#[test]
 	fn test_find_for_book_club_id() {
-		let select = Entity::find_for_book_club_id("314");
+		let id = Uuid::parse_str("ba2f52af-0939-459b-85cc-263bf0855f44").unwrap();
+		let select = Entity::find_for_book_club_id(id);
 		assert_eq!(
 			select_no_cols_to_string(select),
-			r#"SELECT  FROM "book_club_invitations" WHERE "book_club_invitations"."book_club_id" = '314'"#.to_string()
+			r#"SELECT  FROM "book_club_invitations" WHERE "book_club_invitations"."book_club_id" = 'ba2f52af-0939-459b-85cc-263bf0855f44'"#.to_string()
 		);
 	}
 
@@ -119,13 +121,15 @@ mod tests {
 		let conn = db.into_connection();
 
 		let model = ActiveModel {
-			id: Set("123".to_owned()),
+			id: Set(Uuid::parse_str("6f6d2e63-1532-4f85-9d3c-c19f9f915b38").unwrap()),
 			role: Set(BookClubMemberRole::Member),
-			user_id: Set("456".to_owned()),
-			book_club_id: Set("789".to_owned()),
+			user_id: Set(Uuid::parse_str("6f6d2e63-1532-4f85-9d3c-c19f9f915b38").unwrap()),
+			book_club_id: Set(
+				Uuid::parse_str("6f6d2e63-1532-4f85-9d3c-c19f9f915b38").unwrap()
+			),
 		};
 
 		let model = tokio_test::block_on(model.before_save(&conn, true)).unwrap();
-		assert!(!model.id.unwrap().is_empty());
+		assert!(!model.id.unwrap().is_nil());
 	}
 }

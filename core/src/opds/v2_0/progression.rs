@@ -35,7 +35,7 @@ impl OPDSProgression {
 
 		let device = match data.device {
 			Some(device) => OPDSProgressionDevice {
-				id: device.id,
+				id: device.id.to_string(),
 				name: device.name,
 			},
 			_ => OPDSProgressionDevice::default(),
@@ -205,12 +205,12 @@ impl OPDSProgressionInput {
 		self.locator.locations.as_ref().and_then(|l| l.position)
 	}
 
-	pub fn percentage_completed(&self) -> Option<Decimal> {
+	pub fn percentage_completed(&self) -> Option<f64> {
 		self.locator
 			.locations
 			.as_ref()
 			.and_then(|l| l.total_progression)
-			.and_then(|p| Decimal::try_from(p).ok())
+		// .and_then(|p| Decimal::try_from(p).ok())
 	}
 
 	pub fn locator(&self) -> Option<ReadiumLocator> {

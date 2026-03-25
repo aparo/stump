@@ -7,10 +7,11 @@ use models::{
 };
 use sea_orm::Set;
 use std::path::{Path, PathBuf};
+use uuid::Uuid;
 
 pub struct SeriesBuilder {
 	path: PathBuf,
-	library_id: String,
+	library_id: Uuid,
 }
 
 #[derive(Debug, Clone)]
@@ -20,10 +21,10 @@ pub struct BuiltSeries {
 }
 
 impl SeriesBuilder {
-	pub fn new(path: &Path, library_id: &str) -> Self {
+	pub fn new(path: &Path, library_id: Uuid) -> Self {
 		Self {
 			path: path.to_path_buf(),
-			library_id: library_id.to_string(),
+			library_id,
 		}
 	}
 

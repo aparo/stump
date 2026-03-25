@@ -5,11 +5,10 @@ use sea_orm::entity::prelude::*;
 pub struct Model {
 	#[sea_orm(primary_key)]
 	pub id: i32,
-	#[sea_orm(column_type = "Text")]
-	pub user_id: String,
-	#[sea_orm(column_type = "Text")]
-	pub library_id: String,
-	#[sea_orm(column_type = "custom(\"DATETIME\")")]
+	#[sea_orm(column_type = "Uuid")]
+	pub user_id: Uuid,
+	#[sea_orm(column_type = "Uuid")]
+	pub library_id: Uuid,
 	pub timestamp: DateTimeWithTimeZone,
 }
 

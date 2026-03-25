@@ -18,7 +18,7 @@ impl JobAssociatedLogLoader {
 }
 
 /// A type alias for the key used in the JobAssociatedLogLoader, which represents the job ID
-pub type JobAssociatedLogLoaderKey = String;
+pub type JobAssociatedLogLoaderKey = Uuid;
 
 impl Loader<JobAssociatedLogLoaderKey> for JobAssociatedLogLoader {
 	type Value = Vec<Log>;
@@ -36,9 +36,8 @@ impl Loader<JobAssociatedLogLoaderKey> for JobAssociatedLogLoader {
 		let mut result = HashMap::new();
 
 		for log in log_list {
-			match log.job_id.as_deref() {
+			match log.job_id {
 				Some(job_id) => {
-					let job_id = job_id.to_string();
 					result
 						.entry(job_id)
 						.or_insert_with(Vec::new)

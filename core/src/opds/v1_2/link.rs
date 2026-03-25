@@ -4,6 +4,7 @@
 //! It also defines the [`OpdsStreamLink`] struct for representing an OPDS page steaming extension
 //! link element as specified at https://github.com/anansi-project/opds-pse/blob/master/v1.2.md
 
+use uuid::Uuid;
 use xml::{writer::XmlEvent, EventWriter};
 
 use crate::{error::CoreResult, filesystem::ContentType};
@@ -138,7 +139,7 @@ impl OpdsLink {
 // don't love this solution, but it works for now.
 #[derive(Debug)]
 pub struct OpdsStreamLink {
-	pub book_id: String,
+	pub book_id: Uuid,
 	pub count: String,
 	pub mime_type: String,
 	pub last_read: Option<String>,
@@ -147,7 +148,7 @@ pub struct OpdsStreamLink {
 
 impl OpdsStreamLink {
 	pub fn new(
-		book_id: String,
+		book_id: Uuid,
 		count: String,
 		mime_type: String,
 		last_read: Option<String>,
@@ -221,8 +222,9 @@ mod tests {
 
 	#[test]
 	fn test_opds_stream_link() {
+		let book_id = Uuid::parse_str("123e4567-e89b-12d3-a456-426614174000").unwrap();
 		let link = OpdsStreamLink::new(
-			"123".to_string(),
+			book_id,
 			"35".to_string(),
 			"image/jpeg".to_string(),
 			Some("10".to_string()),
@@ -236,7 +238,7 @@ mod tests {
 		let expected_result = normalize_xml(
 			r#"
 			<?xml version="1.0" encoding="UTF-8"?>
-			<link href="/opds/v1.2/books/123/pages/{pageNumber}?zero_based=true"
+			<link href="/opds/v1.2/books/123e4567-e89b-12d3-a456-426614174000/pages/{pageNumber}?zero_based=true"
 						type="image/jpeg"
 						rel="http://vaemendis.net/opds-pse/stream"
 						pse:count="35"

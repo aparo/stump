@@ -8,20 +8,21 @@ use sea_orm::{
 #[graphql(name = "BookClubDiscussionModel")]
 #[sea_orm(table_name = "book_club_discussions")]
 pub struct Model {
-	#[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
-	pub id: String,
+	#[sea_orm(primary_key, auto_increment = false)]
+	pub id: Uuid,
 	pub is_locked: bool,
 	pub is_archived: bool,
-	#[sea_orm(column_type = "Text", nullable)]
-	pub book_club_book_id: Option<String>,
-	#[sea_orm(column_type = "Text", nullable)]
+	#[sea_orm(nullable)]
+	pub book_club_book_id: Option<Uuid>,
+	#[sea_orm(nullable)]
 	pub title: Option<String>,
-	#[sea_orm(column_type = "Text", nullable)]
+	#[sea_orm(nullable)]
 	pub emoji: Option<String>,
 	pub is_pinned: bool,
 	pub created_at: DateTimeWithTimeZone,
-	#[sea_orm(column_type = "Text")]
-	pub book_club_id: String,
+	// pub book_club_id: Uuid,
+	#[sea_orm(nullable)]
+	pub book_club_id: Uuid,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -72,7 +73,7 @@ impl ActiveModelBehavior for ActiveModel {
 	{
 		if insert {
 			if self.id.is_not_set() {
-				self.id = ActiveValue::Set(Uuid::new_v4().to_string());
+				self.id = ActiveValue::Set(Uuid::new_v4());
 			}
 			self.created_at = ActiveValue::Set(chrono::Utc::now().into());
 		}

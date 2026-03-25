@@ -29,13 +29,14 @@ impl BookClubDiscussionQuery {
 	) -> Result<BookClubDiscussion> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
+		let id = Uuid::parse_str(id.as_str())?;
 
-		let discussion = book_club_discussion::Entity::find_by_id(id.as_ref())
+		let discussion = book_club_discussion::Entity::find_by_id(id)
 			.one(conn)
 			.await?
 			.ok_or("Discussion not found")?;
 
-		verify_read_access(&discussion.book_club_id, user, conn).await?;
+		verify_read_access(discussion.book_club_id, user, conn).await?;
 
 		Ok(discussion.into())
 	}
@@ -48,19 +49,17 @@ impl BookClubDiscussionQuery {
 	) -> Result<Vec<BookClubDiscussion>> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
+		let book_club_book_id = Uuid::parse_str(book_club_book_id.as_str())?;
 
-		let book = book_club_book::Entity::find_by_id(book_club_book_id.as_ref())
+		let book = book_club_book::Entity::find_by_id(book_club_book_id)
 			.one(conn)
 			.await?
 			.ok_or("Book not found")?;
 
-		verify_read_access(&book.book_club_id, user, conn).await?;
+		verify_read_access(book.book_club_id, user, conn).await?;
 
 		let discussion = book_club_discussion::Entity::find()
-			.filter(
-				book_club_discussion::Column::BookClubBookId
-					.eq(book_club_book_id.as_ref()),
-			)
+			.filter(book_club_discussion::Column::BookClubBookId.eq(book_club_book_id))
 			.all(conn)
 			.await?;
 
@@ -78,11 +77,12 @@ impl BookClubDiscussionQuery {
 	) -> Result<Vec<BookClubDiscussion>> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
+		let book_club_id = Uuid::parse_str(book_club_id.as_str())?;
 
-		verify_read_access(book_club_id.as_ref(), user, conn).await?;
+		verify_read_access(book_club_id, user, conn).await?;
 
 		let discussions = book_club_discussion::Entity::find()
-			.filter(book_club_discussion::Column::BookClubId.eq(book_club_id.as_ref()))
+			.filter(book_club_discussion::Column::BookClubId.eq(book_club_id))
 			.order_by_desc(book_club_discussion::Column::IsPinned)
 			.order_by_asc(book_club_discussion::Column::CreatedAt)
 			.all(conn)
@@ -102,18 +102,19 @@ impl BookClubDiscussionQuery {
 	) -> Result<BookClubDiscussionMessage> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
+		let id = Uuid::parse_str(id.as_str())?;
 
-		let message = book_club_discussion_message::Entity::find_by_id(id.as_ref())
+		let message = book_club_discussion_message::Entity::find_by_id(id)
 			.one(conn)
 			.await?
 			.ok_or("Message not found")?;
 
-		let discussion = book_club_discussion::Entity::find_by_id(&message.discussion_id)
+		let discussion = book_club_discussion::Entity::find_by_id(message.discussion_id)
 			.one(conn)
 			.await?
 			.ok_or("Discussion not found")?;
 
-		verify_read_access(&discussion.book_club_id, user, conn).await?;
+		verify_read_access(discussion.book_club_id, user, conn).await?;
 
 		Ok(message.into())
 	}
@@ -128,25 +129,26 @@ impl BookClubDiscussionQuery {
 	) -> Result<CursorPaginatedResponse<BookClubDiscussionMessage>> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
+		let discussion_id = Uuid::parse_str(discussion_id.as_str())?;
+		let parent_id = match parent_id {
+			Some(id) => Some(Uuid::parse_str(id.as_str())?),
+			None => None,
+		};
 
-		let discussion = book_club_discussion::Entity::find_by_id(discussion_id.as_ref())
+		let discussion = book_club_discussion::Entity::find_by_id(discussion_id)
 			.one(conn)
 			.await?
 			.ok_or("Discussion not found")?;
 
-		verify_read_access(&discussion.book_club_id, user, conn).await?;
+		verify_read_access(discussion.book_club_id, user, conn).await?;
 
 		let mut query = book_club_discussion_message::Entity::find()
-			.filter(
-				book_club_discussion_message::Column::DiscussionId
-					.eq(discussion_id.as_ref()),
-			)
+			.filter(book_club_discussion_message::Column::DiscussionId.eq(discussion_id))
 			.filter(book_club_discussion_message::Column::DeletedAt.is_null());
 
 		if let Some(parent_id) = parent_id {
 			query = query.filter(
-				book_club_discussion_message::Column::ParentMessageId
-					.eq(parent_id.as_ref()),
+				book_club_discussion_message::Column::ParentMessageId.eq(parent_id),
 			);
 		} else {
 			query = query.filter(
@@ -165,16 +167,16 @@ impl BookClubDiscussionQuery {
 		// this should be fine for now. TODO: Revisit this in future
 		if let Some(after) = &pagination.after {
 			query =
-				query.filter(book_club_discussion_message::Column::Id.gt(after.as_str()));
+				query.filter(book_club_discussion_message::Column::Id.gt(after.clone()));
 		}
 
 		let messages = query.limit(limit).all(conn).await?;
 
 		let current_cursor = pagination
 			.after
-			.or_else(|| messages.first().map(|m| m.id.clone()));
+			.or_else(|| messages.first().map(|m| m.id.to_string()));
 
-		let next_cursor = match messages.last().map(|m| m.id.clone()) {
+		let next_cursor = match messages.last().map(|m| m.id.to_string()) {
 			Some(id) if messages.len() == limit as usize => Some(id),
 			_ => None,
 		};
@@ -198,13 +200,11 @@ impl BookClubDiscussionQuery {
 		book_club_id: ID,
 	) -> Result<Vec<BookClubDiscussion>> {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
+		let book_club_id = Uuid::parse_str(book_club_id.as_str())?;
 
 		let current_book_position =
-			match book_club_book::Entity::get_current_or_next_position(
-				book_club_id.as_ref(),
-				conn,
-			)
-			.await?
+			match book_club_book::Entity::get_current_or_next_position(book_club_id, conn)
+				.await?
 			{
 				Some(pos) => pos,
 				// No books exist at all, so there can be no previous discussions
@@ -212,7 +212,7 @@ impl BookClubDiscussionQuery {
 			};
 
 		let discussions = book_club_discussion::Entity::find()
-			.filter(book_club_discussion::Column::BookClubId.eq(book_club_id.as_ref()))
+			.filter(book_club_discussion::Column::BookClubId.eq(book_club_id))
 			.filter(book_club_discussion::Column::IsPinned.eq(false))
 			// If the discussion is linked to a book, it should only be included if it is linked to a book BEFORE
 			// the current book.
@@ -228,7 +228,7 @@ impl BookClubDiscussionQuery {
 									sea_orm::sea_query::Expr::col(
 										book_club_book::Column::BookClubId,
 									)
-									.eq(book_club_id.as_ref()),
+									.eq(book_club_id),
 								)
 								.and_where(
 									sea_orm::sea_query::Expr::col(
@@ -252,7 +252,7 @@ impl BookClubDiscussionQuery {
 }
 
 async fn verify_read_access(
-	book_club_id: &str,
+	book_club_id: Uuid,
 	user: &AuthUser,
 	conn: &DatabaseConnection,
 ) -> Result<()> {

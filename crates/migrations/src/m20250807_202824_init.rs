@@ -13,7 +13,7 @@ enum AgeRestrictions {
 }
 
 #[derive(DeriveIden)]
-enum ApiKeys {
+pub enum ApiKeys {
 	Table,
 	Id,
 	Name,
@@ -27,7 +27,7 @@ enum ApiKeys {
 }
 
 #[derive(DeriveIden)]
-enum BookClubs {
+pub enum BookClubs {
 	Table,
 	Id,
 	Name,
@@ -40,7 +40,7 @@ enum BookClubs {
 }
 
 #[derive(DeriveIden)]
-enum Emailers {
+pub enum Emailers {
 	Table,
 	Id,
 	Name,
@@ -58,7 +58,7 @@ enum Emailers {
 }
 
 #[derive(DeriveIden)]
-enum Jobs {
+pub enum Jobs {
 	Table,
 	Id,
 	Name,
@@ -104,7 +104,7 @@ enum ScheduledJobConfigs {
 }
 
 #[derive(DeriveIden)]
-enum ServerInvitations {
+pub enum ServerInvitations {
 	Table,
 	Id,
 	Secret,
@@ -127,7 +127,7 @@ enum Bookmarks {
 }
 
 #[derive(DeriveIden)]
-enum RefreshTokens {
+pub enum RefreshTokens {
 	Table,
 	Id,
 	UserId,
@@ -136,7 +136,7 @@ enum RefreshTokens {
 }
 
 #[derive(DeriveIden)]
-enum Sessions {
+pub enum Sessions {
 	Table,
 	Id,
 	SessionId,
@@ -146,7 +146,7 @@ enum Sessions {
 }
 
 #[derive(DeriveIden)]
-enum UserLoginActivity {
+pub enum UserLoginActivity {
 	Table,
 	Id,
 	IpAddress,
@@ -157,7 +157,7 @@ enum UserLoginActivity {
 }
 
 #[derive(DeriveIden)]
-enum FavoriteLibraries {
+pub enum FavoriteLibraries {
 	Table,
 	UserId,
 	LibraryId,
@@ -165,7 +165,7 @@ enum FavoriteLibraries {
 }
 
 #[derive(DeriveIden)]
-enum FavoriteMedia {
+pub enum FavoriteMedia {
 	Table,
 	UserId,
 	MediaId,
@@ -173,7 +173,7 @@ enum FavoriteMedia {
 }
 
 #[derive(DeriveIden)]
-enum FavoriteSeries {
+pub enum FavoriteSeries {
 	Table,
 	UserId,
 	SeriesId,
@@ -181,7 +181,7 @@ enum FavoriteSeries {
 }
 
 #[derive(DeriveIden)]
-enum LibraryExclusions {
+pub enum LibraryExclusions {
 	Table,
 	Id,
 	UserId,
@@ -213,7 +213,7 @@ enum SeriesTags {
 }
 
 #[derive(DeriveIden)]
-enum LastLibraryVisits {
+pub enum LastLibraryVisits {
 	Table,
 	Id,
 	UserId,
@@ -233,7 +233,7 @@ enum Reviews {
 }
 
 #[derive(DeriveIden)]
-enum Logs {
+pub enum Logs {
 	Table,
 	Id,
 	Level,
@@ -244,7 +244,7 @@ enum Logs {
 }
 
 #[derive(DeriveIden)]
-enum EmailerSendRecords {
+pub enum EmailerSendRecords {
 	Table,
 	Id,
 	EmailerId,
@@ -255,7 +255,7 @@ enum EmailerSendRecords {
 }
 
 #[derive(DeriveIden)]
-enum LibraryScanRecords {
+pub enum LibraryScanRecords {
 	Table,
 	Id,
 	Options,
@@ -353,7 +353,7 @@ enum SeriesMetadata {
 }
 
 #[derive(DeriveIden)]
-enum ReadingSessions {
+pub enum ReadingSessions {
 	Table,
 	Id,
 	Page,
@@ -370,7 +370,7 @@ enum ReadingSessions {
 }
 
 #[derive(DeriveIden)]
-enum FinishedReadingSessions {
+pub enum FinishedReadingSessions {
 	Table,
 	Id,
 	StartedAt,
@@ -520,7 +520,7 @@ enum BookClubDiscussionMessageLikes {
 }
 
 #[derive(DeriveIden)]
-enum Users {
+pub enum Users {
 	Table,
 	Id,
 	Username,
@@ -579,7 +579,7 @@ enum ServerConfig {
 }
 
 #[derive(DeriveIden)]
-enum Libraries {
+pub enum Libraries {
 	Table,
 	Id,
 	Name,
@@ -613,7 +613,7 @@ enum LibraryConfigs {
 }
 
 #[derive(DeriveIden)]
-enum Series {
+pub enum Series {
 	Table,
 	Id,
 	Name,
@@ -627,7 +627,7 @@ enum Series {
 }
 
 #[derive(DeriveIden)]
-enum Media {
+pub enum Media {
 	Table,
 	Id,
 	Name,

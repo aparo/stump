@@ -55,7 +55,7 @@ impl SmartListViewMutation {
 
 		let smart_list_view = smart_list_view::Entity::find_by_user_list_id_name(
 			user,
-			&input.list_id,
+			input.list_id,
 			&original_name,
 		)
 		.one(&txn)
@@ -82,9 +82,11 @@ impl SmartListViewMutation {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 		let txn = conn.begin().await?;
+		let id =
+			Uuid::parse_str(id.as_ref()).map_err(|_| "Invalid list ID".to_string())?;
 
 		let smart_list_view =
-			smart_list_view::Entity::find_by_user_list_id_name(user, &id, &name)
+			smart_list_view::Entity::find_by_user_list_id_name(user, id, &name)
 				.one(&txn)
 				.await?
 				.ok_or("Smart list view not found".to_string())?;

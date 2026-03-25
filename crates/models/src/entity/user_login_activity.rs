@@ -7,15 +7,11 @@ use sea_orm::entity::prelude::*;
 pub struct Model {
 	#[sea_orm(primary_key, auto_increment = true)]
 	pub id: i64,
-	#[sea_orm(column_type = "Text")]
 	pub ip_address: String,
-	#[sea_orm(column_type = "Text")]
 	pub user_agent: String,
 	pub authentication_successful: bool,
-	#[sea_orm(column_type = "custom(\"DATETIME\")")]
 	pub timestamp: DateTimeWithTimeZone,
-	#[sea_orm(column_type = "Text")]
-	pub user_id: String,
+	pub user_id: Uuid,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

@@ -31,9 +31,10 @@ impl BookClubDiscussion {
 
 		let core = ctx.data::<CoreContext>()?;
 
-		let book = models::entity::book_club_book::Entity::find_by_id(book_club_book_id)
-			.one(core.conn.as_ref())
-			.await?;
+		let book =
+			models::entity::book_club_book::Entity::find_by_id(book_club_book_id.clone())
+				.one(core.conn.as_ref())
+				.await?;
 
 		Ok(book.map(BookClubBook::from))
 	}
@@ -47,7 +48,7 @@ impl BookClubDiscussion {
 		if let Some(ref book_id) = self.model.book_club_book_id {
 			let core = ctx.data::<CoreContext>()?;
 			if let Some(book) =
-				models::entity::book_club_book::Entity::find_by_id(book_id)
+				models::entity::book_club_book::Entity::find_by_id(book_id.clone())
 					.one(core.conn.as_ref())
 					.await?
 			{
@@ -83,7 +84,7 @@ impl BookClubDiscussion {
 		let core = ctx.data::<CoreContext>()?;
 
 		let count = book_club_discussion_message::Entity::find()
-			.filter(book_club_discussion_message::Column::DiscussionId.eq(&self.model.id))
+			.filter(book_club_discussion_message::Column::DiscussionId.eq(self.model.id))
 			.filter(book_club_discussion_message::Column::DeletedAt.is_null())
 			.count(core.conn.as_ref())
 			.await?;

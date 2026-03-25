@@ -11,9 +11,9 @@ pub struct Model {
 	pub email: Option<String>,
 	#[sea_orm(column_type = "Text", nullable)]
 	pub granted_permissions: Option<String>,
-	#[sea_orm(column_type = "custom(\"DATETIME\")")]
+
 	pub created_at: DateTimeWithTimeZone,
-	#[sea_orm(column_type = "custom(\"DATETIME\")")]
+
 	pub expires_at: String,
 }
 

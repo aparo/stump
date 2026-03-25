@@ -21,7 +21,7 @@ pub struct JobManager {
 	/// Queue of jobs waiting to be run in a worker thread
 	queue: RwLock<VecDeque<Box<dyn Executor>>>,
 	/// Worker threads with a running job
-	workers: RwLock<HashMap<String, Arc<Worker>>>,
+	workers: RwLock<HashMap<Uuid, Arc<Worker>>>,
 	/// A channel to send shutdown signals to the parent [`JobManager`]
 	job_controller_tx: mpsc::UnboundedSender<JobControllerCommand>,
 	/// A channel to emit core events
@@ -71,10 +71,7 @@ impl JobManager {
 				job::Column::Status,
 				Expr::value(JobStatus::Cancelled.to_string()),
 			)
-			.col_expr(
-				job::Column::CompletedAt,
-				Expr::value(Some(Utc::now().to_rfc3339())),
-			)
+			.col_expr(job::Column::CompletedAt, Expr::value(Some(Utc::now())))
 			.exec(conn)
 			.await
 			.map_err(|err| JobManagerError::JobPersistFailed(err.to_string()))?
@@ -95,15 +92,15 @@ impl JobManager {
 		self: Arc<Self>,
 		job: Box<dyn Executor>,
 	) -> JobManagerResult<()> {
-		let job_id = job.id().to_string();
+		let job_id = job.id();
 
-		if self.job_already_exists(&job_id).await {
+		if self.job_already_exists(job_id).await {
 			tracing::warn!(?job_id, "Job already exists in queue or is running!");
 			return Err(JobManagerError::JobAlreadyExists(job_id));
 		}
 
 		let active_model = job::ActiveModel {
-			id: Set(job.id().to_string()),
+			id: Set(job.id()),
 			name: Set(job.name().to_string()),
 			description: Set(job.description()),
 			status: Set(JobStatus::Queued),
@@ -116,7 +113,7 @@ impl JobManager {
 			// added to queue, and so they would exist when re-queued for execution
 			// which causes a conflict and throws
 			.on_conflict(
-				OnConflict::new()
+				OnConflict::column(job::Column::Id)
 					.update_column(job::Column::Status)
 					.to_owned(),
 			)
@@ -128,7 +125,7 @@ impl JobManager {
 		let mut workers = self.workers.write().await;
 		// If there are no running workers, just start the job
 		if workers.is_empty() {
-			let job_id = job.id().to_string();
+			let job_id = job.id();
 			let worker = Worker::create_and_spawn(
 				job,
 				self.clone(),
@@ -170,7 +167,7 @@ impl JobManager {
 	/// nothing will happen.
 	///
 	/// Will attempt to dispatch the next job in the queue if one exists
-	pub async fn complete(self: Arc<Self>, job_id: String) {
+	pub async fn complete(self: Arc<Self>, job_id: Uuid) {
 		self.workers.write().await.remove(&job_id).map_or_else(
 			|| {
 				tracing::error!(
@@ -187,14 +184,14 @@ impl JobManager {
 	/// Cancel a job by ID. If the job is not running but in the queue, it will be removed. If
 	/// the job is running, it will be sent a shutdown signal. Otherwise, an error will be
 	/// returned
-	pub async fn cancel(self: Arc<Self>, job_id: String) -> JobManagerResult<()> {
+	pub async fn cancel(self: Arc<Self>, job_id: Uuid) -> JobManagerResult<()> {
 		let mut workers = self.workers.write().await;
 
 		if let Some(worker) = workers.remove(&job_id) {
 			worker.cancel().await;
 			drop(workers);
 			self.auto_enqueue().await;
-		} else if let Some(index) = self.get_queued_job_index(&job_id).await {
+		} else if let Some(index) = self.get_queued_job_index(job_id).await {
 			job::Entity::update_many()
 				.filter(job::Column::Id.eq(job_id.clone()))
 				.col_expr(
@@ -207,10 +204,10 @@ impl JobManager {
 
 			self.queue.write().await.remove(index).map_or_else(
 				|| {
-					tracing::warn!(index, job_id, "Unexpected result: failed to remove job with existing index precondition");
+					tracing::warn!(index, ?job_id , "Unexpected result: failed to remove job with existing index precondition");
 				},
 				|_| {
-                    tracing::trace!(index, job_id, "Removed job from queue");
+                    tracing::trace!(index, ?job_id , "Removed job from queue");
                 },
 			);
 		} else {
@@ -236,23 +233,23 @@ impl JobManager {
 	}
 
 	/// Pause a job by ID. This operation does not check the queue
-	pub async fn pause(self: Arc<Self>, job_id: String) -> JobManagerResult<()> {
-		let worker = self.get_worker(&job_id).await?;
+	pub async fn pause(self: Arc<Self>, job_id: Uuid) -> JobManagerResult<()> {
+		let worker = self.get_worker(job_id).await?;
 		worker.pause().await;
 		Ok(())
 	}
 
 	/// Resume a job by ID. This operation does not check the queue
-	pub async fn resume(self: Arc<Self>, job_id: String) -> JobManagerResult<()> {
-		let worker = self.get_worker(&job_id).await?;
+	pub async fn resume(self: Arc<Self>, job_id: Uuid) -> JobManagerResult<()> {
+		let worker = self.get_worker(job_id).await?;
 		worker.resume().await;
 		Ok(())
 	}
 
 	/// Get a worker by ID, if it exists
-	async fn get_worker(self: Arc<Self>, id: &str) -> JobManagerResult<Arc<Worker>> {
-		self.workers.read().await.get(id).map_or_else(
-			|| Err(JobManagerError::JobNotFound(id.to_string())),
+	async fn get_worker(self: Arc<Self>, id: Uuid) -> JobManagerResult<Arc<Worker>> {
+		self.workers.read().await.get(&id).map_or_else(
+			|| Err(JobManagerError::JobNotFound(id)),
 			|worker| Ok(worker.clone()),
 		)
 	}
@@ -264,17 +261,17 @@ impl JobManager {
 		join_all(workers.values().map(|worker| worker.cancel())).await;
 	}
 
-	async fn job_already_exists(&self, job_id: &str) -> bool {
-		self.workers.read().await.contains_key(job_id)
+	async fn job_already_exists(&self, job_id: Uuid) -> bool {
+		self.workers.read().await.contains_key(&job_id)
 			|| self.get_queued_job_index(job_id).await.is_some()
 	}
 
 	/// Returns the index of a job in the pending queue by ID.
-	async fn get_queued_job_index(&self, job_id: &str) -> Option<usize> {
+	async fn get_queued_job_index(&self, job_id: Uuid) -> Option<usize> {
 		self.queue
 			.read()
 			.await
 			.iter()
-			.position(|job| job.id().to_string() == job_id)
+			.position(|job| job.id() == job_id)
 	}
 }

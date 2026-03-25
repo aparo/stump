@@ -37,7 +37,7 @@ impl EmailerSendRecord {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 
 		if let Some(id) = self.model.sent_by_user_id.clone() {
-			let user = user::Entity::find_by_id(&id)
+			let user = user::Entity::find_by_id(id)
 				.one(conn)
 				.await?
 				.ok_or("User not found")?;

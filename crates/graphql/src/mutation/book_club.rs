@@ -36,7 +36,7 @@ impl BookClubMutation {
 		let created_club = club.insert(&txn).await?;
 		let _created_member = member.insert(&txn).await?;
 		let _general_discussion =
-			create_general_discussion(&created_club.id, &txn).await?;
+			create_general_discussion(created_club.id, &txn).await?;
 
 		txn.commit().await?;
 
@@ -52,8 +52,9 @@ impl BookClubMutation {
 	) -> Result<BookClub> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
+		let id = Uuid::parse_str(id.as_ref())?;
 
-		let book_club = get_book_club_for_admin(user, &id, conn)
+		let book_club = get_book_club_for_admin(user, id, conn)
 			.await?
 			.ok_or("Book club not found or you lack permission to update")?;
 
@@ -66,8 +67,9 @@ impl BookClubMutation {
 	async fn delete_book_club(&self, ctx: &Context<'_>, id: ID) -> Result<BookClub> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
+		let id = Uuid::parse_str(id.as_ref())?;
 
-		let book_club = get_book_club_for_admin(user, &id, conn)
+		let book_club = get_book_club_for_admin(user, id, conn)
 			.await?
 			.ok_or("Book club not found or you lack permission to update")?;
 
@@ -79,13 +81,13 @@ impl BookClubMutation {
 
 pub async fn get_book_club_for_admin(
 	user: &AuthUser,
-	id: &ID,
+	id: Uuid,
 	conn: &DatabaseConnection,
 ) -> Result<Option<book_club::Model>> {
 	Ok(book_club::Entity::find_for_member_enforce_role_and_id(
 		user,
 		BookClubMemberRole::Admin,
-		id.as_ref(),
+		id,
 	)
 	.one(conn)
 	.await?)
@@ -100,7 +102,7 @@ mod tests {
 
 	fn get_default_book_club() -> book_club::Model {
 		book_club::Model {
-			id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa".to_string(),
+			id: Uuid::parse_str("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa").unwrap(),
 			name: "Test".to_string(),
 			slug: "test".to_string(),
 			description: None,
@@ -117,8 +119,9 @@ mod tests {
 		let id: ID = book_club.id.clone().into();
 		let user = get_default_user();
 		let conn = get_mock_db_for_model::<book_club::Model>(vec![]).into_connection();
+		let id = Uuid::parse_str(id.as_ref()).unwrap();
 
-		let result = get_book_club_for_admin(&user, &id, &conn).await.unwrap();
+		let result = get_book_club_for_admin(&user, id, &conn).await.unwrap();
 		assert_eq!(result, None);
 	}
 
@@ -128,8 +131,9 @@ mod tests {
 		let id: ID = book_club.id.clone().into();
 		let user = get_default_user();
 		let conn = get_mock_db_for_model(vec![book_club.clone()]).into_connection();
+		let id = Uuid::parse_str(id.as_ref()).unwrap();
 
-		let result = get_book_club_for_admin(&user, &id, &conn).await.unwrap();
+		let result = get_book_club_for_admin(&user, id, &conn).await.unwrap();
 		assert_eq!(result, Some(book_club));
 	}
 }

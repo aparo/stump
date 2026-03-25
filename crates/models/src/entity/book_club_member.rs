@@ -12,20 +12,17 @@ use crate::shared::book_club::BookClubMemberRole;
 #[graphql(name = "BookClubMemberModel")]
 #[sea_orm(table_name = "book_club_members")]
 pub struct Model {
-	#[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
-	pub id: String,
-	#[sea_orm(column_type = "Text", nullable)]
+	#[sea_orm(primary_key, auto_increment = false)]
+	pub id: Uuid,
+	#[sea_orm(nullable)]
 	pub display_name: Option<String>,
 	#[sea_orm(column_type = "Text", nullable)]
 	pub bio: Option<String>,
 	pub hide_progress: bool,
 	pub role: BookClubMemberRole,
-	#[sea_orm(column_type = "custom(\"DATETIME\")")]
 	pub joined_at: DateTimeWithTimeZone,
-	#[sea_orm(column_type = "Text")]
-	pub user_id: String,
-	#[sea_orm(column_type = "Text")]
-	pub book_club_id: String,
+	pub user_id: Uuid,
+	pub book_club_id: Uuid,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -108,7 +105,7 @@ impl Entity {
 			Query::select()
 				.column(Column::BookClubId)
 				.from(Self)
-				.and_where(Column::UserId.eq(user.id.clone()))
+				.and_where(Column::UserId.eq(user.id))
 				.to_owned(),
 		)
 	}
@@ -139,17 +136,17 @@ impl Entity {
 
 	pub fn find_members_accessible_to_user_for_book_club_id(
 		user: &AuthUser,
-		book_club_id: &str,
+		book_club_id: Uuid,
 	) -> Select<Self> {
 		Self::find_members_accessible_to_user(user)
 			.filter(Column::BookClubId.eq(book_club_id))
 	}
 
-	pub fn find_by_club_for_user(user: &AuthUser, book_club_id: &str) -> Select<Self> {
+	pub fn find_by_club_for_user(user: &AuthUser, book_club_id: Uuid) -> Select<Self> {
 		Self::find().filter(
 			Column::BookClubId
 				.eq(book_club_id)
-				.and(Column::UserId.eq(user.id.clone())),
+				.and(Column::UserId.eq(user.id)),
 		)
 	}
 }
@@ -189,8 +186,10 @@ mod tests {
 	fn test_find_members_accessible_to_book_club_id_for_server_owner() {
 		let user = get_default_user();
 
-		let select =
-			Entity::find_members_accessible_to_user_for_book_club_id(&user, "321");
+		let select = Entity::find_members_accessible_to_user_for_book_club_id(
+			&user,
+			Uuid::parse_str("321").unwrap(),
+		);
 		assert_eq!(
 			select_no_cols_to_string(select),
 			(r#"SELECT  FROM "book_club_members" WHERE "book_club_members"."book_club_id" = '321'"#)

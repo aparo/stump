@@ -107,8 +107,12 @@ pub(crate) async fn get_media_thumbnail(
 		}
 	}
 
-	let generated_thumb =
-		get_thumbnail(config.get_thumbnails_dir(), &book.id, image_format).await?;
+	let generated_thumb = get_thumbnail(
+		config.get_thumbnails_dir(),
+		&book.id.to_string(),
+		image_format,
+	)
+	.await?;
 
 	let adjusted_config = StumpConfig {
 		pdf_prerender_range: 0, // Disable PDF prerendering for thumbnails since we only need the first page

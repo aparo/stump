@@ -7,9 +7,9 @@ pub struct Model {
 	pub id: i32,
 	pub session_id: String,
 	pub user_id: String,
-	#[sea_orm(column_type = "custom(\"DATETIME\")")]
+
 	pub created_at: DateTimeWithTimeZone,
-	#[sea_orm(column_type = "custom(\"DATETIME\")")]
+
 	pub expiry_time: DateTimeWithTimeZone,
 }
 

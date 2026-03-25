@@ -50,7 +50,7 @@ pub enum LibraryScanTask {
 	Init(InitTaskInput),
 	WalkSeries(PathBuf),
 	SeriesTask {
-		id: String,
+		id: Uuid,
 		path: String,
 		task: SeriesScanTask,
 	},
@@ -61,14 +61,14 @@ pub enum LibraryScanTask {
 pub struct InitTaskInput {
 	series_to_create: Vec<PathBuf>,
 	missing_series: Vec<PathBuf>,
-	recovered_series: Vec<String>,
+	recovered_series: Vec<Uuid>,
 }
 
 /// A job that scans a library and updates the database with the results
 #[derive(Clone)]
 pub struct LibraryScanJob {
 	/// The ID of the library to scan
-	pub id: String,
+	pub id: Uuid,
 	/// The path to the library to scan
 	pub path: String,
 	/// The library configuration to use
@@ -79,7 +79,7 @@ pub struct LibraryScanJob {
 
 impl LibraryScanJob {
 	pub fn new(
-		id: String,
+		id: Uuid,
 		path: String,
 		options: Option<ScanOptions>,
 	) -> Box<WrappedJob<LibraryScanJob>> {
@@ -193,7 +193,7 @@ impl JobExt for LibraryScanJob {
 		output.ignored_directories = ignored_directories;
 
 		if library_is_missing {
-			handle_missing_library(&ctx.conn, self.id.as_str()).await?;
+			handle_missing_library(&ctx.conn, self.id).await?;
 			ctx.send_batch(vec![
 				JobProgress::msg("Failed to find library on disk").into_worker_send(),
 				CoreEvent::DiscoveredMissingLibrary(event::DiscoveredMissingLibrary {
@@ -419,7 +419,7 @@ impl JobExt for LibraryScanJob {
 
 					let task_count = series_to_create.len() as i32;
 					let (built_series, failure_logs) = safely_build_series(
-						&self.id,
+						self.id,
 						series_to_create,
 						ctx.config.as_ref(),
 						|position| {
@@ -628,7 +628,7 @@ impl JobExt for LibraryScanJob {
 						updated_media,
 						logs: new_logs,
 						..
-					} = handle_restored_media(ctx, &series_id, ids).await;
+					} = handle_restored_media(ctx, series_id, ids).await;
 
 					ctx.send_batch(vec![
 						JobProgress::msg("Restored media entities").into_worker_send(),
@@ -651,7 +651,7 @@ impl JobExt for LibraryScanJob {
 						updated_media,
 						logs: new_logs,
 						..
-					} = handle_missing_media(ctx, &series_id, paths).await;
+					} = handle_missing_media(ctx, series_id, paths).await;
 
 					ctx.send_batch(vec![
 						JobProgress::msg("Handled missing media").into_worker_send(),
@@ -756,7 +756,7 @@ impl JobExt for LibraryScanJob {
 
 pub async fn handle_missing_library(
 	conn: &DatabaseConnection,
-	library_id: &str,
+	library_id: Uuid,
 ) -> Result<(), JobError> {
 	let txn = conn.begin().await?;
 
@@ -814,10 +814,7 @@ async fn handle_scan_complete(
 	let now = chrono::Utc::now();
 
 	let update_result = library::Entity::update_many()
-		.col_expr(
-			library::Column::LastScannedAt,
-			Expr::value(now.to_rfc3339()),
-		)
+		.col_expr(library::Column::LastScannedAt, Expr::value(now))
 		.filter(library::Column::Id.eq(job.id.clone()))
 		.exec(conn)
 		.await;
@@ -842,8 +839,8 @@ async fn handle_scan_complete(
 		library_scan_record::Entity::insert(library_scan_record::ActiveModel {
 			options: Set(persisted_options),
 			timestamp: Set(now.into()),
-			job_id: Set(Some(ctx.job_id.clone())),
-			library_id: Set(job.id.clone()),
+			job_id: Set(Some(ctx.job_id)),
+			library_id: Set(job.id),
 			..Default::default()
 		})
 		.exec(conn)

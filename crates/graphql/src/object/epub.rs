@@ -44,7 +44,7 @@ pub struct SpineItem {
 #[derive(Debug, Clone, SimpleObject)]
 #[graphql(complex)]
 pub struct Epub {
-	pub media_id: String,
+	pub media_id: Uuid,
 	pub spine: Vec<SpineItem>,
 	pub resources: HashMap<String, (String, String)>,
 	// Note: Not using [EpubContent] since it is recursive and selections would be a nightmare
@@ -149,21 +149,19 @@ impl Epub {
 	async fn bookmarks(&self, ctx: &Context<'_>) -> Result<Vec<Bookmark>> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
-		if self.media_id.is_empty() {
-			return Err("Media ID not set".into());
-		}
+		// if self.media_id.is_empty() {
+		// 	return Err("Media ID not set".into());
+		// }
 
 		let id = self.media_id.clone();
 
-		Ok(
-			bookmark::Entity::find_for_user_and_media_id(user, id.as_ref())
-				.into_model::<bookmark::Model>()
-				.all(conn)
-				.await?
-				.into_iter()
-				.map(Bookmark::from)
-				.collect(),
-		)
+		Ok(bookmark::Entity::find_for_user_and_media_id(user, id)
+			.into_model::<bookmark::Model>()
+			.all(conn)
+			.await?
+			.into_iter()
+			.map(Bookmark::from)
+			.collect())
 	}
 
 	async fn media(&self, ctx: &Context<'_>) -> Result<Media> {
@@ -204,15 +202,16 @@ mod tests {
 		}];
 		epub_doc.root_base = PathBuf::from("/");
 		epub_doc.root_file = PathBuf::from("test.html");
+		let epub_id = Uuid::new_v4();
 		let epub = Epub::try_from_with_epub(
 			MediaIdentSelect {
-				id: "test".to_string(),
+				id: epub_id,
 				path: "test.epub".to_string(),
 			},
 			epub_doc,
 		)
 		.unwrap();
-		assert_eq!(epub.media_id, "test");
+		assert_eq!(epub.media_id, epub_id);
 		assert_eq!(epub.resources.get("test.css").unwrap().0, "test.css");
 		assert_eq!(epub.resources.get("test.css").unwrap().1, "text/css");
 		assert_eq!(epub.toc.len(), 1);
@@ -238,9 +237,11 @@ mod tests {
 				properties: None,
 			},
 		);
+		let epub_id = Uuid::new_v4();
+
 		let epub = Epub::try_from_with_epub(
 			MediaIdentSelect {
-				id: "test".to_string(),
+				id: epub_id,
 				path: "test.epub".to_string(),
 			},
 			epub_doc,
@@ -256,7 +257,7 @@ mod tests {
 		}];
 		let epub = Epub::try_from_with_epub(
 			MediaIdentSelect {
-				id: "test".to_string(),
+				id: epub_id,
 				path: "test.epub".to_string(),
 			},
 			epub_doc,
@@ -267,7 +268,7 @@ mod tests {
 		epub_doc.root_base = malformed_path.clone();
 		let epub = Epub::try_from_with_epub(
 			MediaIdentSelect {
-				id: "test".to_string(),
+				id: epub_id,
 				path: "test.epub".to_string(),
 			},
 			epub_doc,

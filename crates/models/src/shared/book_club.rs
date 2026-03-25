@@ -4,6 +4,7 @@ use async_graphql::{Enum, InputObject, SimpleObject};
 use sea_orm::{DeriveActiveEnum, EnumIter, FromJsonQueryResult};
 use serde::{Deserialize, Serialize};
 use strum::Display;
+use uuid::Uuid;
 
 /// The role of a member within a book club
 #[derive(
@@ -94,7 +95,7 @@ pub struct BookClubExternalBook {
 )]
 #[graphql(input_name = "BookClubInternalBookInput")]
 pub struct BookClubInternalBook {
-	pub id: String,
+	pub id: Uuid,
 }
 
 /// The status of a book suggestion

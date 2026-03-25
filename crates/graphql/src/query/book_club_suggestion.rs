@@ -24,16 +24,15 @@ impl BookClubSuggestionQuery {
 	) -> Result<Vec<BookClubBookSuggestion>> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
+		let book_club_id = Uuid::parse_str(book_club_id.as_str())?;
 
-		book_club::Entity::find_by_id_and_user(book_club_id.as_ref(), user)
+		book_club::Entity::find_by_id_and_user(book_club_id, user)
 			.one(conn)
 			.await?
 			.ok_or("Book club not found or you don't have access")?;
 
 		let suggestions = book_club_book_suggestion::Entity::find()
-			.filter(
-				book_club_book_suggestion::Column::BookClubId.eq(book_club_id.as_ref()),
-			)
+			.filter(book_club_book_suggestion::Column::BookClubId.eq(book_club_id))
 			.apply_if(status, |query, status| {
 				query.filter(book_club_book_suggestion::Column::Status.eq(status))
 			})
@@ -55,14 +54,13 @@ impl BookClubSuggestionQuery {
 	) -> Result<BookClubBookSuggestion> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
+		let suggestion_id = Uuid::parse_str(suggestion_id.as_str())?;
+		let suggestion = book_club_book_suggestion::Entity::find_by_id(suggestion_id)
+			.one(conn)
+			.await?
+			.ok_or("Suggestion not found")?;
 
-		let suggestion =
-			book_club_book_suggestion::Entity::find_by_id(suggestion_id.as_ref())
-				.one(conn)
-				.await?
-				.ok_or("Suggestion not found")?;
-
-		book_club::Entity::find_by_id_and_user(&suggestion.book_club_id, user)
+		book_club::Entity::find_by_id_and_user(suggestion.book_club_id, user)
 			.one(conn)
 			.await?
 			.ok_or("You don't have access to this book club")?;

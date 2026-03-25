@@ -68,7 +68,7 @@ pub async fn enforce_max_sessions(
 	conn: &DatabaseConnection,
 ) -> APIResult<()> {
 	let existing_sessions = session::Entity::find()
-		.filter(session::Column::UserId.eq(for_user.id.clone()))
+		.filter(session::Column::UserId.eq(for_user.id))
 		.all(conn)
 		.await?;
 	let existing_login_sessions_count = existing_sessions.len() as i32;
@@ -81,8 +81,7 @@ pub async fn enforce_max_sessions(
 				.min_by_key(|session| session.expiry_time)
 				.map(|session| session.id);
 
-			handle_remove_earliest_session(conn, for_user.id.clone(), oldest_session_id)
-				.await?;
+			handle_remove_earliest_session(conn, for_user.id, oldest_session_id).await?;
 		},
 		_ => (),
 	}
@@ -90,9 +89,9 @@ pub async fn enforce_max_sessions(
 	Ok(())
 }
 
-async fn lock_account(conn: &DatabaseConnection, user_id: String) -> APIResult<()> {
+async fn lock_account(conn: &DatabaseConnection, user_id: Uuid) -> APIResult<()> {
 	let affected_rows = user::Entity::update_many()
-		.filter(user::Column::Id.eq(user_id.clone()))
+		.filter(user::Column::Id.eq(user_id))
 		.col_expr(user::Column::IsLocked, Expr::value(true))
 		.exec(conn)
 		.await?
@@ -131,7 +130,7 @@ async fn handle_login_attempt(
 	success: bool,
 ) -> APIResult<user_login_activity::Model> {
 	let active_model = user_login_activity::ActiveModel {
-		user_id: Set(for_user.id.clone()),
+		user_id: Set(for_user.id),
 		ip_address: Set(request_info.ip_addr.to_string()),
 		user_agent: Set(user_agent.to_string()),
 		timestamp: Set(Utc::now().into()),
@@ -145,7 +144,7 @@ async fn handle_login_attempt(
 
 async fn handle_remove_earliest_session(
 	conn: &DatabaseConnection,
-	for_user_id: String,
+	for_user_id: Uuid,
 	session_id: Option<i32>,
 ) -> APIResult<u64> {
 	if let Some(oldest_session_id) = session_id {
@@ -231,12 +230,12 @@ async fn login(
 		.await?
 		.ok_or(APIError::Unauthorized)?;
 
-	match session.get::<String>(SESSION_USER_KEY).await? {
+	match session.get::<Uuid>(SESSION_USER_KEY).await? {
 		Some(user_id) if user_id == user.id && !user.is_locked => {
 			// TODO: should this be tracked?
 			// TODO: should this be permission gated?
 			if generate_token {
-				let token = create_jwt_auth(&user.id, &state.conn, &state.config).await?;
+				let token = create_jwt_auth(user.id, &state.conn, &state.config).await?;
 				return Ok(Json(LoginResponse::AccessToken(GeneratedToken {
 					for_user: user.into(),
 					token,
@@ -282,7 +281,7 @@ async fn login(
 		user_login_activity::Entity::find()
 			.filter(
 				user_login_activity::Column::UserId
-					.eq(user.id.clone())
+					.eq(user.id)
 					.and(
 						user_login_activity::Column::Timestamp
 							.gte(twenty_four_hours_ago)
@@ -308,7 +307,7 @@ async fn login(
 	}
 
 	if should_lock_account {
-		lock_account(state.conn.as_ref(), user.id.clone()).await?;
+		lock_account(state.conn.as_ref(), user.id).await?;
 	}
 
 	if !provided_valid_credentials {
@@ -322,14 +321,12 @@ async fn login(
 	let auth_user = inject_avatar_url(AuthUser::from(user), service);
 
 	if create_session {
-		session
-			.insert(SESSION_USER_KEY, auth_user.id.clone())
-			.await?;
+		session.insert(SESSION_USER_KEY, auth_user.id).await?;
 	}
 
 	// TODO: should this be permission gated?
 	if generate_token {
-		let token = create_jwt_auth(&auth_user.id, &state.conn, &state.config).await?;
+		let token = create_jwt_auth(auth_user.id, &state.conn, &state.config).await?;
 		Ok(Json(LoginResponse::AccessToken(GeneratedToken {
 			for_user: auth_user,
 			token,
@@ -425,7 +422,7 @@ pub async fn register(
 	let created_user = active_model.insert(&tx).await?;
 
 	let active_model = user_preferences::ActiveModel {
-		user_id: Set(Some(created_user.id.clone())),
+		user_id: Set(Some(created_user.id)),
 		..Default::default()
 	};
 	let created_user_preferences = active_model.insert(&tx).await?;
@@ -436,7 +433,7 @@ pub async fn register(
 	let updated_user = updated_user.update(&tx).await?;
 
 	let auth_user = user::LoginUser::find()
-		.filter(user::Column::Id.eq(updated_user.id.clone()))
+		.filter(user::Column::Id.eq(updated_user.id))
 		.into_model::<user::LoginUser>()
 		.one(&tx)
 		.await?

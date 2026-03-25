@@ -10,16 +10,14 @@ use sea_orm::{entity::prelude::*, FromQueryResult, QueryOrder, QuerySelect};
 pub struct Model {
 	#[sea_orm(primary_key, auto_increment = true)]
 	pub id: i32,
-	#[sea_orm(column_type = "custom(\"DATETIME\")")]
 	pub started_at: DateTimeWithTimeZone,
-	#[sea_orm(column_type = "custom(\"DATETIME\")")]
 	pub completed_at: DateTimeWithTimeZone,
-	#[sea_orm(column_type = "Text")]
-	pub media_id: String,
-	#[sea_orm(column_type = "Text")]
-	pub user_id: String,
-	#[sea_orm(column_type = "Text", nullable)]
-	pub device_id: Option<String>,
+	#[sea_orm(column_type = "Uuid")]
+	pub media_id: Uuid,
+	#[sea_orm(column_type = "Uuid")]
+	pub user_id: Uuid,
+	#[sea_orm(column_type = "Uuid", nullable)]
+	pub device_id: Option<Uuid>,
 	pub elapsed_seconds: Option<i64>,
 }
 
@@ -109,14 +107,14 @@ impl Entity {
 		Self::find()
 			.inner_join(media::Entity)
 			.filter(media::Column::SeriesId.eq(series_id))
-			.filter(Column::UserId.eq(user.id.clone()))
+			.filter(Column::UserId.eq(user.id))
 			.distinct_on([Column::MediaId])
 	}
 
 	pub async fn recent_completed_record(
 		conn: &DatabaseConnection,
-		user_id: &str,
-		media_id: &str,
+		user_id: Uuid,
+		media_id: Uuid,
 		timeout_minutes: i64,
 	) -> Result<Option<Model>, DbErr> {
 		let cutoff = chrono::Utc::now() - chrono::Duration::minutes(timeout_minutes);

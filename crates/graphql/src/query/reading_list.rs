@@ -75,15 +75,19 @@ mod tests {
 	use crate::tests::common::*;
 	use sea_orm::MockDatabase;
 
+	fn get_uuid_1() -> Uuid {
+		Uuid::parse_str("d776488d-23f5-483a-ab1c-0704d5b8335f").unwrap()
+	}
+
 	fn get_test_model() -> reading_list::Model {
 		reading_list::Model {
-			id: "1".to_string(),
+			id: get_uuid_1(),
 			name: "hello".to_string(),
 			description: Some("world".to_string()),
 			updated_at: "2021-08-01T00:00:00Z".parse().unwrap(),
 			visibility: "PUBLIC".to_string(),
 			ordering: "MANUAL".to_string(),
-			creating_user_id: "42".to_string(),
+			creating_user_id: get_default_user().id,
 		}
 	}
 
@@ -103,7 +107,7 @@ mod tests {
 			.unwrap();
 
 		assert_eq!(reading_lists.nodes.len(), 1);
-		assert_eq!(reading_lists.nodes[0].model.id, "1");
+		assert_eq!(reading_lists.nodes[0].model.id, get_uuid_1());
 		assert_eq!(reading_lists.nodes[0].model.name, "hello");
 
 		match reading_lists.page_info {

@@ -375,7 +375,7 @@ pub trait Executor: Send + Sync {
 
 		if expected_logs > 0 {
 			let active_models = output.logs.into_iter().map(|log| log::ActiveModel {
-				job_id: Set(Some(job_id.to_string())),
+				job_id: Set(Some(job_id)),
 				level: Set(log.level),
 				message: Set(log.msg),
 				timestamp: Set(log.timestamp.into()),

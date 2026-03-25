@@ -6,6 +6,7 @@ use tokio::sync::{
 	mpsc::{self, error::SendError},
 	oneshot,
 };
+use uuid::Uuid;
 
 use super::{Executor, JobManager, JobManagerResult, WorkerSend, WorkerSendExt};
 use crate::{config::StumpConfig, event::CoreEvent};
@@ -13,7 +14,7 @@ use crate::{config::StumpConfig, event::CoreEvent};
 /// Input for commands that require an acknowledgement when they are completed
 /// (e.g. cancel, pause, resume)
 pub struct AcknowledgeableCommand {
-	pub id: String,
+	pub id: Uuid,
 	pub ack: oneshot::Sender<JobManagerResult<()>>,
 }
 
@@ -23,7 +24,7 @@ pub enum JobControllerCommand {
 	/// Add a job to the queue to be run
 	EnqueueJob(Box<dyn Executor>),
 	/// A job has been completed and should be removed from the queue
-	CompleteJob(String),
+	CompleteJob(Uuid),
 	/// Cancel a job by its ID
 	CancelJob(AcknowledgeableCommand),
 	/// Pause a job by its ID

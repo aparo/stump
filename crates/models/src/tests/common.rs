@@ -2,6 +2,7 @@ use sea_orm::{
 	sea_query::{Condition, Query, SqliteQueryBuilder},
 	EntityTrait, QuerySelect, QueryTrait,
 };
+use uuid::Uuid;
 
 use crate::entity::user::AuthUser;
 
@@ -22,7 +23,7 @@ pub fn select_no_cols_to_string<EntityType: EntityTrait>(
 
 pub fn get_default_user() -> AuthUser {
 	AuthUser {
-		id: "42".to_string(),
+		id: Uuid::parse_str("0ad39398-ce6a-4bcc-b044-719163a07c53").unwrap(),
 		username: "test".to_string(),
 		avatar_path: None,
 		avatar_url: None,

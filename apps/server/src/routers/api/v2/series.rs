@@ -50,8 +50,12 @@ pub(crate) async fn get_series_thumbnail(
 		}
 	}
 
-	let generated_thumb =
-		get_thumbnail(config.get_thumbnails_dir(), &series.id, image_format).await?;
+	let generated_thumb = get_thumbnail(
+		config.get_thumbnails_dir(),
+		&series.id.to_string(),
+		image_format,
+	)
+	.await?;
 
 	match (generated_thumb, first_book) {
 		(Some(result), _) => Ok(result),
@@ -68,8 +72,9 @@ async fn get_series_thumbnail_handler(
 	Extension(req): Extension<AuthContext>,
 ) -> APIResult<ImageResponse> {
 	let user = req.user();
+	let id = Uuid::parse_str(&id).unwrap();
 	let series = series::Entity::find_for_user(&user)
-		.filter(series::Column::Id.eq(id.clone()))
+		.filter(series::Column::Id.eq(id))
 		.into_model::<series::SeriesThumbSelect>()
 		.one(ctx.conn.as_ref())
 		.await?

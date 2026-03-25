@@ -22,7 +22,7 @@ impl SmartListMutation {
 		let user_id = ctx.data::<AuthContext>()?.id();
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 
-		let active_model = input.into_active_model(&user_id)?;
+		let active_model = input.into_active_model(user_id)?;
 		let inserted_smart_list = smart_list::Entity::insert(active_model)
 			.exec_with_returning(conn)
 			.await?;
@@ -40,14 +40,16 @@ impl SmartListMutation {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 		let txn = conn.begin().await?;
+		let id = Uuid::parse_str(id.as_str())
+			.map_err(|_| "Invalid smart list ID".to_string())?;
 
-		let _ = smart_list::Entity::find_by_id(user, id.clone())
+		let _ = smart_list::Entity::find_by_id(user, id)
 			.one(&txn)
 			.await?
 			.ok_or("Smart list not found".to_string())?;
 
-		let mut active_model = input.into_active_model(&user.id)?;
-		active_model.id = Set(id.to_string());
+		let mut active_model = input.into_active_model(user.id)?;
+		active_model.id = Set(id);
 		let updated = active_model.update(&txn).await?;
 		txn.commit().await?;
 
@@ -60,7 +62,10 @@ impl SmartListMutation {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 		let txn = conn.begin().await?;
 
-		let smart_list = smart_list::Entity::find_by_id(user, id.clone())
+		let id = Uuid::parse_str(id.as_str())
+			.map_err(|_| "Invalid smart list ID".to_string())?;
+
+		let smart_list = smart_list::Entity::find_by_id(user, id)
 			.one(&txn)
 			.await?
 			.ok_or("Smart list not found".to_string())?;

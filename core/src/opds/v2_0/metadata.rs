@@ -3,6 +3,7 @@ use derive_builder::Builder;
 use models::entity::media_metadata;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
+use uuid::Uuid;
 
 use crate::CoreError;
 
@@ -98,7 +99,7 @@ pub struct OPDSWebPubMetadata {
 	pub number_of_pages: Option<i32>,
 	pub publisher: Option<String>,
 	pub language: Option<String>,
-	pub number: Option<rust_decimal::Decimal>,
+	pub number: Option<f64>,
 	pub age_rating: Option<i32>,
 	pub year: Option<i32>,
 	pub month: Option<i32>,
@@ -199,7 +200,7 @@ pub struct OPDSMetadata {
 	/// An optional subtitle for the feed or collection
 	subtitle: Option<String>,
 	/// The unique identifier for the feed or collection
-	identifier: Option<String>,
+	identifier: Option<Uuid>,
 	/// The date and time the feed or collection was last modified, in RFC 3339 format
 	modified: Option<String>,
 	/// A human-readable description, if available

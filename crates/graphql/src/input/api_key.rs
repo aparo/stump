@@ -22,7 +22,7 @@ impl APIKeyInput {
 
 		let active_model = api_key::ActiveModel {
 			id: NotSet, // auto-incremented
-			user_id: Set(user.id.clone()),
+			user_id: Set(user.id),
 			name: Set(self.name),
 			short_token: Set(pek.short_token().to_string()),
 			long_token_hash: Set(hash),

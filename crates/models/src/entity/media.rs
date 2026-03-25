@@ -23,55 +23,43 @@ use super::{library_exclusion, media_metadata, series, series_metadata, user::Au
 #[sea_orm(table_name = "media")]
 pub struct Model {
 	/// The unique identifier for the media
-	#[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
-	pub id: String,
+	#[sea_orm(primary_key, auto_increment = false)]
+	pub id: Uuid,
 	/// The name of the media, derived from the filename and excluding the extension
-	#[sea_orm(column_type = "Text")]
 	pub name: String,
 	/// The size of the media file in bytes
 	pub size: i64,
 	/// The extension of the media file, excluding the leading period
-	#[sea_orm(column_type = "Text")]
 	pub extension: String,
 	/// The number of pages in the media, if applicable. Will be -1 for certain media types
 	pub pages: i32,
 	/// The timestamp of the last time the media was updated. This will be set during creation, as well
-	#[sea_orm(column_type = "custom(\"DATETIME\")")]
 	pub updated_at: Option<DateTimeWithTimeZone>,
 	/// The timestamp of the creation of the media
-	#[sea_orm(column_type = "custom(\"DATETIME\")")]
 	pub created_at: DateTimeWithTimeZone,
 	/// The timestamp of when the underlying file was last modified on disk. This will only be set if
 	/// a timestamp can be retrieved from the filesystem
-	#[sea_orm(column_type = "custom(\"DATETIME\")", nullable)]
 	pub modified_at: Option<DateTimeWithTimeZone>,
 	/// A Stump-specific hash of the media file. This is used as a secondary identifier for the media, primarily
 	/// in aiding in the identification of duplicate media files
-	#[sea_orm(column_type = "Text", nullable)]
 	pub hash: Option<String>,
 	/// A hash of the media file that adheres to the KoReader hash algorithm. This is used to identify
 	/// books from the KoReader application so progress can be synced between the two applications
-	#[sea_orm(column_type = "Text", nullable)]
 	pub koreader_hash: Option<String>,
 	/// The path of the underlying media file on disk
-	#[sea_orm(column_type = "Text")]
 	pub path: String,
 	/// The status of the media. This is used to determine if the media is available for reading (i.e.,
 	/// if it is available on disk)
-	#[sea_orm(column_type = "Text")]
 	pub status: FileStatus,
 	/// The metadata for the thumbnail image of the media
 	#[sea_orm(column_type = "Json", nullable)]
 	pub thumbnail_meta: Option<ImageMetadata>,
 	/// The path to the thumbnail image of the media on disk
-	#[sea_orm(column_type = "Text", nullable)]
 	pub thumbnail_path: Option<String>,
 	/// The unique identifier of the series that the media belongs to. While this is nullable, it is
 	/// expected that all media will belong to a series
-	#[sea_orm(column_type = "Text", nullable)]
-	pub series_id: Option<String>,
+	pub series_id: Option<Uuid>,
 	/// The timestamp of when the media was **soft** deleted. This will act like a trash bin.
-	#[sea_orm(column_type = "custom(\"DATETIME\")", nullable)]
 	pub deleted_at: Option<DateTimeWithTimeZone>,
 }
 
@@ -220,7 +208,7 @@ impl ModelWithMetadata {
 			.left_join(media_metadata::Entity)
 	}
 
-	pub fn find_by_id(id: String) -> Select<Entity> {
+	pub fn find_by_id(id: Uuid) -> Select<Entity> {
 		Prefixer::new(Entity::find_by_id(id).select_only())
 			.add_columns(Entity)
 			.add_columns(media_metadata::Entity)
@@ -235,7 +223,7 @@ impl ModelWithMetadata {
 		apply_age_restriction_filter(select, user.age_restriction.clone())
 	}
 
-	pub fn find_by_id_for_user(id: String, user: &AuthUser) -> Select<Entity> {
+	pub fn find_by_id_for_user(id: Uuid, user: &AuthUser) -> Select<Entity> {
 		let select = ModelWithMetadata::find_by_id(id);
 		let select = apply_series_metadata_join(select);
 		let select = apply_library_hidden_filter(select, user);
@@ -245,7 +233,7 @@ impl ModelWithMetadata {
 
 #[derive(Debug, FromQueryResult)]
 pub struct MediaIdentSelect {
-	pub id: String,
+	pub id: Uuid,
 	pub path: String,
 }
 
@@ -266,9 +254,9 @@ impl From<Model> for MediaIdentSelect {
 
 #[derive(Debug, FromQueryResult)]
 pub struct MediaThumbSelect {
-	pub id: String,
+	pub id: Uuid,
 	pub path: String,
-	pub series_id: String,
+	pub series_id: Uuid,
 	pub thumbnail_path: Option<String>,
 	pub thumbnail_meta: Option<ImageMetadata>,
 }
@@ -434,7 +422,7 @@ impl ActiveModelBehavior for ActiveModel {
 	{
 		if insert {
 			if self.id.is_not_set() {
-				self.id = ActiveValue::Set(Uuid::new_v4().to_string());
+				self.id = ActiveValue::Set(Uuid::new_v4());
 			}
 			if self.status.is_not_set() {
 				self.status = ActiveValue::Set(FileStatus::Ready);
@@ -498,7 +486,7 @@ mod tests {
 			id: 1,
 			age: 18,
 			restrict_on_unset: true,
-			user_id: user.id.clone(),
+			user_id: user.id,
 		});
 		let select = Entity::find_for_user(&user);
 		let stmt_str = select_no_cols_to_string(select);
@@ -549,12 +537,15 @@ mod tests {
 	#[test]
 	fn test_metadata_by_id_find_for_users() {
 		let user = get_default_user();
-		let select = ModelWithMetadata::find_by_id_for_user("123".to_string(), &user);
+		let select = ModelWithMetadata::find_by_id_for_user(
+			Uuid::parse_str("f35f3fb0-bb14-43e2-91b9-234b4503cff2").unwrap(),
+			&user,
+		);
 		let stmt_str = select_no_cols_to_string(select);
 		assert_eq!(
             stmt_str,
             r#"SELECT  FROM "media" LEFT JOIN "media_metadata" ON "media"."id" = "media_metadata"."media_id" INNER JOIN "series" ON "media"."series_id" = "series"."id" LEFT JOIN "series_metadata" ON "series_metadata"."series_id" = "series"."id" "#.to_string() +
-            r#"WHERE "media"."id" = '123' AND "series"."library_id" NOT IN (SELECT "library_id" FROM "library_exclusions" WHERE "library_exclusions"."user_id" = '42')"#
+            r#"WHERE "media"."id" = 'f35f3fb0-bb14-43e2-91b9-234b4503cff2' AND "series"."library_id" NOT IN (SELECT "library_id" FROM "library_exclusions" WHERE "library_exclusions"."user_id" = '42')"#
             );
 	}
 }

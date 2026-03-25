@@ -5,12 +5,11 @@ use sea_orm::entity::prelude::*;
 pub struct Model {
 	#[sea_orm(primary_key)]
 	pub id: i32,
-	#[sea_orm(column_type = "custom(\"DATETIME\")")]
 	pub timestamp: DateTimeWithTimeZone,
 	#[sea_orm(column_type = "Text")]
-	pub liked_by_id: String,
+	pub liked_by_id: Uuid,
 	#[sea_orm(column_type = "Text")]
-	pub suggestion_id: String,
+	pub suggestion_id: Uuid,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

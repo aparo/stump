@@ -52,7 +52,7 @@ impl BookClub {
 	async fn current_book(&self, ctx: &Context<'_>) -> Result<Option<BookClubBook>> {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 
-		let book = book_club_book::Entity::find_current_for_book_club_id(&self.model.id)
+		let book = book_club_book::Entity::find_current_for_book_club_id(self.model.id)
 			.one(conn)
 			.await?;
 
@@ -64,7 +64,7 @@ impl BookClub {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 
 		let book = book_club_book::Entity::find()
-			.filter(book_club_book::Column::BookClubId.eq(&self.model.id))
+			.filter(book_club_book::Column::BookClubId.eq(self.model.id))
 			.filter(book_club_book::Column::CompletedAt.is_not_null())
 			.order_by_desc(book_club_book::Column::CompletedAt)
 			.one(conn)
@@ -79,7 +79,7 @@ impl BookClub {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 
 		let books = book_club_book::Entity::find()
-			.filter(book_club_book::Column::BookClubId.eq(&self.model.id))
+			.filter(book_club_book::Column::BookClubId.eq(self.model.id))
 			.filter(book_club_book::Column::CompletedAt.is_not_null())
 			.order_by_desc(book_club_book::Column::CompletedAt)
 			.all(conn)
@@ -93,7 +93,7 @@ impl BookClub {
 	async fn books(&self, ctx: &Context<'_>) -> Result<Vec<BookClubBook>> {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 
-		let books = book_club_book::Entity::find_for_book_club_id(&self.model.id)
+		let books = book_club_book::Entity::find_for_book_club_id(self.model.id)
 			.all(conn)
 			.await?;
 
@@ -103,7 +103,7 @@ impl BookClub {
 	async fn invitations(&self, ctx: &Context<'_>) -> Result<Vec<BookClubInvitation>> {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 		let book_club_invitations =
-			book_club_invitation::Entity::find_for_book_club_id(&self.model.id.clone())
+			book_club_invitation::Entity::find_for_book_club_id(self.model.id.clone())
 				.into_model::<book_club_invitation::Model>()
 				.all(conn)
 				.await?;
@@ -120,7 +120,7 @@ impl BookClub {
 		let book_club_members =
 			book_club_member::Entity::find_members_accessible_to_user_for_book_club_id(
 				user,
-				&self.model.id.clone(),
+				self.model.id.clone(),
 			)
 			.into_model::<book_club_member::Model>()
 			.all(conn)
@@ -139,7 +139,7 @@ impl BookClub {
 		let book_club_members =
 			book_club_member::Entity::find_members_accessible_to_user_for_book_club_id(
 				user,
-				&self.model.id.clone(),
+				self.model.id.clone(),
 			)
 			.filter(book_club_member::Column::Role.eq(BookClubMemberRole::Moderator))
 			.into_model::<book_club_member::Model>()
@@ -158,7 +158,7 @@ impl BookClub {
 		let count =
 			book_club_member::Entity::find_members_accessible_to_user_for_book_club_id(
 				user,
-				&self.model.id.clone(),
+				self.model.id.clone(),
 			)
 			.count(conn)
 			.await?;
@@ -174,7 +174,7 @@ impl BookClub {
 			.filter(
 				book_club_member::Column::BookClubId
 					.eq(self.model.id.clone())
-					.and(book_club_member::Column::UserId.eq(user.id.clone())),
+					.and(book_club_member::Column::UserId.eq(user.id)),
 			)
 			.into_model::<book_club_member::Model>()
 			.one(conn)
@@ -191,7 +191,7 @@ impl BookClub {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 
 		let discussions = book_club_discussion::Entity::find()
-			.filter(book_club_discussion::Column::BookClubId.eq(&self.model.id))
+			.filter(book_club_discussion::Column::BookClubId.eq(self.model.id))
 			.filter(book_club_discussion::Column::IsPinned.eq(true))
 			.order_by_asc(book_club_discussion::Column::CreatedAt)
 			.all(conn)
@@ -208,7 +208,7 @@ impl BookClub {
 
 		let current_book_position =
 			match book_club_book::Entity::get_current_or_next_position(
-				&self.model.id,
+				self.model.id,
 				conn,
 			)
 			.await?
@@ -219,7 +219,7 @@ impl BookClub {
 			};
 
 		let count = book_club_discussion::Entity::find()
-			.filter(book_club_discussion::Column::BookClubId.eq(&self.model.id))
+			.filter(book_club_discussion::Column::BookClubId.eq(self.model.id))
 			.filter(book_club_discussion::Column::IsPinned.eq(false))
 			// If the discussion is linked to a book, it should only count if it is linked to a book BEFORE
 			// the current book.

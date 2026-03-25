@@ -242,7 +242,7 @@ async fn callback(
 		};
 		let created_user = active_model.insert(&tx).await?;
 		let created_user_preferences = user_preferences::ActiveModel {
-			user_id: Set(Some(created_user.id.clone())),
+			user_id: Set(Some(created_user.id)),
 			..Default::default()
 		}
 		.insert(&tx)
@@ -273,7 +273,7 @@ async fn callback(
 										avatar_path_str,
 									)),
 								)
-								.filter(user::Column::Id.eq(user.id.clone()))
+								.filter(user::Column::Id.eq(user.id))
 								.exec(ctx.conn.as_ref())
 								.await
 							{
@@ -320,7 +320,7 @@ async fn callback(
 	);
 
 	if generate_token {
-		let token = create_jwt_auth(&user_model.id, &ctx.conn, &ctx.config).await?;
+		let token = create_jwt_auth(user_model.id, &ctx.conn, &ctx.config).await?;
 		tracing::debug!(user_id = %user_model.id, "Generated JWT tokens for OIDC user");
 
 		if let Some(redirect_uri) = authorize_query.redirect_uri {

@@ -22,7 +22,7 @@ use super::{
 
 pub struct MediaBuilder {
 	path: PathBuf,
-	series_id: String,
+	series_id: Uuid,
 	library_config: library_config::Model,
 	config: StumpConfig,
 }
@@ -49,13 +49,13 @@ impl BuiltMedia {
 impl MediaBuilder {
 	pub fn new(
 		path: &Path,
-		series_id: &str,
+		series_id: Uuid,
 		library_config: library_config::Model,
 		config: &StumpConfig,
 	) -> Self {
 		Self {
 			path: path.to_path_buf(),
-			series_id: series_id.to_string(),
+			series_id,
 			library_config,
 			config: config.clone(),
 		}
@@ -102,7 +102,7 @@ impl MediaBuilder {
 			0
 		});
 
-		let id = Uuid::new_v4().to_string();
+		let id = Uuid::new_v4();
 		let pages = processed_entry.pages;
 		let mut resolved_metadata = None;
 
@@ -119,7 +119,7 @@ impl MediaBuilder {
 			}
 
 			resolved_metadata = Some(media_metadata::ActiveModel {
-				media_id: Set(Some(id.clone())),
+				media_id: Set(Some(id)),
 				..metadata.into_active_model()
 			});
 		}
@@ -229,7 +229,7 @@ mod tests {
 			hard_delete_conversions: false,
 			..library_config()
 		};
-		let series_id = "series_id";
+		let series_id = Uuid::new_v4(); // was series_id
 
 		MediaBuilder::new(path, series_id, library_config, &StumpConfig::debug()).build()
 	}
@@ -242,7 +242,7 @@ mod tests {
 			generate_file_hashes: true,
 			..library_config()
 		};
-		let series_id = "series_id";
+		let series_id = Uuid::new_v4();
 
 		let builder =
 			MediaBuilder::new(path, series_id, library_config, &StumpConfig::debug());
@@ -262,7 +262,7 @@ mod tests {
 			generate_koreader_hashes: false,
 			hard_delete_conversions: false,
 			ignore_rules: None,
-			library_id: Some("library_id".to_string()),
+			library_id: Some(Uuid::new_v4()),
 			library_pattern: LibraryPattern::SeriesBased,
 			process_metadata: true,
 			thumbnail_config: None,

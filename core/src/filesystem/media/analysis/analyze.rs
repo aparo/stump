@@ -17,10 +17,11 @@ use models::{
 	shared::analysis::{MediaAnalysisData, PageDimension},
 };
 use sea_orm::{sea_query::OnConflict, ActiveValue::Set, EntityTrait, FromQueryResult};
+use uuid::Uuid;
 
 #[derive(Debug, Clone, FromQueryResult)]
 pub struct MediaForProcessing {
-	pub id: String,
+	pub id: Uuid,
 	pub path: String,
 	pub pages: i32,
 	pub page_count: Option<i32>,
@@ -162,7 +163,7 @@ pub async fn safely_analyze_book(
 						"Failed to analyze page {}/{}",
 						page_num, page_count
 					))
-					.with_ctx(book.id.clone()),
+					.with_ctx(book.id.to_string()),
 				);
 			},
 		}
@@ -214,7 +215,7 @@ pub async fn safely_analyze_book(
 				"Failed to write analysis data to database: {}",
 				e
 			))
-			.with_ctx(book.id.clone()),
+			.with_ctx(book.id.to_string()),
 		);
 	} else {
 		tracing::trace!(book_id = %book.id, "Successfully wrote page analysis to database");

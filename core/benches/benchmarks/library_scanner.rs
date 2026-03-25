@@ -138,7 +138,7 @@ async fn create_test_library(
 	let library_temp_dir = TempDirBuilder::new().prefix("ROOT").tempdir()?;
 	let library_temp_dir_path = library_temp_dir.path().to_str().unwrap().to_string();
 
-	let id = Uuid::new_v4().to_string();
+	let id = Uuid::new_v4();
 
 	let library_config = library_config::ActiveModel {
 		convert_rar_to_zip: Set(false),
@@ -148,7 +148,7 @@ async fn create_test_library(
 		generate_file_hashes: Set(true),
 		generate_koreader_hashes: Set(true),
 		hard_delete_conversions: Set(false),
-		library_id: Set(Some(id.to_string())),
+		library_id: Set(Some(id)),
 		library_pattern: Set(LibraryPattern::SeriesBased),
 		watch: Set(false),
 		process_metadata: Set(true),
@@ -158,7 +158,7 @@ async fn create_test_library(
 	.await?;
 
 	let library = library::ActiveModel {
-		id: Set(id.clone()),
+		id: Set(id),
 		name: Set("Benchmark Library".to_string()),
 		path: Set(library_temp_dir_path.clone()),
 		status: Set(FileStatus::Ready),
@@ -213,15 +213,15 @@ async fn setup_test(
 		create_test_library(series_count, books_per_series).await?;
 
 	let job = WrappedJob::new(LibraryScanJob {
-		id: library.0.id.clone(),
+		id: library.0.id,
 		path: library.0.path.clone(),
 		config: Some(library.1.clone()),
 		options: Default::default(),
 	});
 
-	let job_id = Uuid::new_v4().to_string();
+	let job_id = Uuid::new_v4();
 	let _db_job = job::ActiveModel {
-		id: Set(job_id.clone()),
+		id: Set(job_id),
 		name: Set(job.name().to_string()),
 		..Default::default()
 	}

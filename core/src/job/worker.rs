@@ -59,7 +59,7 @@ pub enum WorkerCommand {
 #[derive(Clone)]
 pub struct WorkerCtx {
 	/// The ID of the job that the worker is running
-	pub job_id: String,
+	pub job_id: Uuid,
 	/// A pointer to the prisma client
 	pub conn: Arc<DatabaseConnection>,
 	/// A pointer to the stump configuration
@@ -224,7 +224,7 @@ pub struct Worker {
 impl Worker {
 	/// Create a new worker instance and its context
 	fn new(
-		job_id: &str,
+		job_id: Uuid,
 		conn: Arc<DatabaseConnection>,
 		config: Arc<StumpConfig>,
 		core_event_tx: broadcast::Sender<CoreEvent>,
@@ -235,7 +235,7 @@ impl Worker {
 		let (status_tx, status_rx) = async_channel::unbounded::<WorkerStatusEvent>();
 
 		let worker_ctx = WorkerCtx {
-			job_id: job_id.to_string(),
+			job_id,
 			conn,
 			config,
 			core_event_tx,
@@ -260,9 +260,9 @@ impl Worker {
 		core_event_tx: broadcast::Sender<CoreEvent>,
 		job_controller_tx: mpsc::UnboundedSender<JobControllerCommand>,
 	) -> Result<Arc<Self>, JobError> {
-		let job_id = job.id().to_string();
+		let job_id = job.id();
 		let (worker, worker_ctx, status_rx) = Worker::new(
-			job_id.as_str(),
+			job_id,
 			conn.clone(),
 			config,
 			core_event_tx,
@@ -378,7 +378,7 @@ impl WorkerManager {
 	/// The main worker loop. This is where the job is run and the worker listens for
 	/// commands to cancel the job.
 	async fn main_loop(mut self, mut executor: Box<dyn Executor>) {
-		let job_id = executor.id().to_string();
+		let job_id = executor.id();
 		let loop_ctx = self.worker_ctx.clone();
 		let finalizer_ctx = loop_ctx.clone();
 
@@ -464,7 +464,7 @@ impl WorkerManager {
 								JobStatus::Failed,
 								&format!("Job failed: {join_error}"),
 							));
-							let _ = handle_failure_status(job_id.clone(), JobStatus::Failed, &finalizer_ctx.conn, elapsed).await;
+							let _ = handle_failure_status(job_id, JobStatus::Failed, &finalizer_ctx.conn, elapsed).await;
 						}
 					}
 					return self.manager.complete(job_id).await;
@@ -500,13 +500,13 @@ impl WorkerManager {
 
 /// Update the job status to the provided status in the database
 pub(crate) async fn handle_failure_status(
-	job_id: String,
+	job_id: Uuid,
 	status: JobStatus,
 	conn: &DatabaseConnection,
 	elapsed: Duration,
 ) -> Result<(), JobError> {
 	let update_result = job::Entity::update_many()
-		.filter(job::Column::Id.eq(job_id.clone()))
+		.filter(job::Column::Id.eq(job_id))
 		.col_expr(
 			job::Column::Status,
 			Expr::value(status.to_string()),

@@ -18,28 +18,25 @@ use super::{library_exclusion, user::AuthUser};
 #[graphql(name = "LibraryModel")]
 #[sea_orm(table_name = "libraries")]
 pub struct Model {
-	#[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
-	pub id: String,
-	#[sea_orm(column_type = "Text", unique)]
+	#[sea_orm(primary_key, auto_increment = false)]
+	pub id: Uuid,
+	#[sea_orm(unique)]
 	pub name: String,
-	#[sea_orm(column_type = "Text", nullable)]
+	#[sea_orm(nullable)]
 	pub description: Option<String>,
-	#[sea_orm(column_type = "Text", unique)]
+	#[sea_orm(unique)]
 	pub path: String,
-	#[sea_orm(column_type = "Text")]
 	pub status: FileStatus,
 	#[sea_orm(column_type = "Json", nullable)]
 	pub thumbnail_meta: Option<ImageMetadata>,
-	#[sea_orm(column_type = "Text", nullable)]
+	#[sea_orm(nullable)]
 	pub thumbnail_path: Option<String>,
-	#[sea_orm(column_type = "custom(\"DATETIME\")")]
 	pub created_at: DateTimeWithTimeZone,
-	#[sea_orm(column_type = "custom(\"DATETIME\")")]
 	pub updated_at: Option<DateTimeWithTimeZone>,
-	#[sea_orm(column_type = "Text", nullable)]
+	#[sea_orm(nullable)]
 	pub emoji: Option<String>,
 	pub config_id: i32,
-	#[sea_orm(column_type = "custom(\"DATETIME\")", nullable)]
+
 	pub last_scanned_at: Option<DateTimeWithTimeZone>,
 }
 
@@ -54,7 +51,7 @@ impl Entity {
 #[derive(Clone, Debug, DerivePartialModel, FromQueryResult)]
 #[sea_orm(entity = "<Model as ModelTrait>::Entity")]
 pub struct LibraryIdentSelect {
-	pub id: String,
+	pub id: Uuid,
 	pub name: String,
 	pub path: String,
 }
@@ -68,7 +65,7 @@ impl LibraryIdentSelect {
 #[derive(Clone, Debug, DerivePartialModel, FromQueryResult)]
 #[sea_orm(entity = "<Model as ModelTrait>::Entity")]
 pub struct LibraryThumbSelect {
-	pub id: String,
+	pub id: Uuid,
 	pub name: String,
 	pub path: String,
 	pub thumbnail_path: Option<String>,
@@ -150,7 +147,7 @@ impl ActiveModelBehavior for ActiveModel {
 	{
 		if insert {
 			if self.id.is_not_set() {
-				self.id = ActiveValue::Set(Uuid::new_v4().to_string());
+				self.id = ActiveValue::Set(Uuid::new_v4());
 			}
 
 			if self.status.is_not_set() {

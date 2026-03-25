@@ -3,17 +3,13 @@ use sea_orm::{entity::prelude::*, prelude::async_trait::async_trait, ActiveValue
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
 #[sea_orm(table_name = "book_club_discussion_message_reactions")]
 pub struct Model {
-	#[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
-	pub id: String,
-	#[sea_orm(column_type = "Text", nullable)]
-	pub emoji: Option<String>, // None if custom emoji
+	#[sea_orm(primary_key, auto_increment = false)]
+	pub id: Uuid,
+	pub emoji: Option<String>,        // None if custom emoji
 	pub custom_emoji_id: Option<i32>, // None if standard unicode emoji
-	#[sea_orm(column_type = "custom(\"DATETIME\")")]
 	pub created_at: DateTimeWithTimeZone,
-	#[sea_orm(column_type = "Text")]
-	pub member_id: String,
-	#[sea_orm(column_type = "Text")]
-	pub message_id: String,
+	pub member_id: Uuid,
+	pub message_id: Uuid,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

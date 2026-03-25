@@ -18,7 +18,7 @@ impl SeriesLoader {
 }
 
 /// A type alias for the key used in the SeriesLoader, which represents the series ID
-pub type SeriesLoaderKey = String;
+pub type SeriesLoaderKey = Uuid;
 
 impl Loader<SeriesLoaderKey> for SeriesLoader {
 	type Value = Series;

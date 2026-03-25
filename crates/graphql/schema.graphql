@@ -11,7 +11,7 @@ enum AccessRole {
 type ActiveReadingSession {
 	id: Int!
 	page: Int
-	percentageCompleted: Decimal
+	percentageCompleted: Float
 	locator: ReadiumLocator
 	epubcfi: String
 	koreaderProgress: String

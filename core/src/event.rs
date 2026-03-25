@@ -1,45 +1,46 @@
 use async_graphql::{SimpleObject, Union};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use crate::job::{CoreJobOutput, JobUpdate, WorkerSend, WorkerSendExt};
 
 #[derive(Clone, Serialize, Deserialize, Debug, SimpleObject)]
 pub struct JobStarted {
-	pub id: String,
+	pub id: Uuid,
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug, SimpleObject)]
 pub struct JobOutput {
-	pub id: String,
+	pub id: Uuid,
 	pub output: CoreJobOutput,
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug, SimpleObject)]
 pub struct DiscoveredMissingLibrary {
-	pub id: String,
+	pub id: Uuid,
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug, SimpleObject)]
 #[serde(rename_all = "camelCase")]
 pub struct CreatedMedia {
-	pub id: String,
-	pub series_id: String,
-	pub library_id: String,
+	pub id: Uuid,
+	pub series_id: Uuid,
+	pub library_id: Uuid,
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug, SimpleObject)]
 #[serde(rename_all = "camelCase")]
 pub struct CreatedManySeries {
 	pub count: u64,
-	pub library_id: String,
+	pub library_id: Uuid,
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug, SimpleObject)]
 #[serde(rename_all = "camelCase")]
 pub struct CreatedOrUpdatedManyMedia {
 	pub count: u64,
-	pub series_id: String,
-	pub library_id: String,
+	pub series_id: Uuid,
+	pub library_id: Uuid,
 }
 
 /// An event that is emitted by the core and consumed by a client

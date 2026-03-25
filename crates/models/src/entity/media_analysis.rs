@@ -11,8 +11,8 @@ pub struct Model {
 	#[sea_orm(column_type = "Json")]
 	pub data: MediaAnalysisData,
 
-	#[sea_orm(unique, column_type = "Text")]
-	pub media_id: String,
+	#[sea_orm(unique, column_type = "Uuid")]
+	pub media_id: Uuid,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

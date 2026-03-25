@@ -20,14 +20,14 @@ impl SeriesFinishedCountLoader {
 /// A type alias for the key used in the SeriesLoader, which represents the series ID
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct FinishedCountLoaderKey {
-	pub user_id: String,
-	pub series_id: String,
+	pub user_id: Uuid,
+	pub series_id: Uuid,
 }
 
 #[derive(Debug, FromQueryResult)]
 pub struct UserIdSeriesIdCount {
-	pub user_id: String,
-	pub series_id: String,
+	pub user_id: Uuid,
+	pub series_id: Uuid,
 	pub count: i64,
 }
 
@@ -39,8 +39,7 @@ impl Loader<FinishedCountLoaderKey> for SeriesFinishedCountLoader {
 		&self,
 		keys: &[FinishedCountLoaderKey],
 	) -> Result<HashMap<FinishedCountLoaderKey, Self::Value>, Self::Error> {
-		let series_ids: Vec<String> =
-			keys.iter().map(|key| key.series_id.clone()).collect();
+		let series_ids: Vec<Uuid> = keys.iter().map(|key| key.series_id).collect();
 
 		let finished_count = finished_reading_session::Entity::find()
 			.inner_join(media::Entity)

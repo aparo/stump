@@ -29,13 +29,14 @@ impl BookClubSuggestionMutation {
 	) -> Result<BookClubBookSuggestion> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
+		let book_club_id = Uuid::parse_str(book_club_id.as_ref())?;
 
-		book_club::Entity::find_by_id_and_user(book_club_id.as_ref(), user)
+		book_club::Entity::find_by_id_and_user(book_club_id, user)
 			.one(conn)
 			.await?
 			.ok_or("Book club not found or you don't have access")?;
 
-		let member = get_member_for_user(book_club_id.as_ref(), user, conn).await?;
+		let member = get_member_for_user(book_club_id, user, conn).await?;
 
 		if input.book_id.is_none() && (input.title.is_none() || input.author.is_none()) {
 			return Err(
@@ -44,8 +45,8 @@ impl BookClubSuggestionMutation {
 		}
 
 		let suggestion = book_club_book_suggestion::ActiveModel {
-			id: Set(Uuid::new_v4().to_string()),
-			book_club_id: Set(book_club_id.to_string()),
+			id: Set(Uuid::new_v4()),
+			book_club_id: Set(book_club_id),
 			book_id: Set(input.book_id),
 			title: Set(input.title),
 			author: Set(input.author),
@@ -72,14 +73,14 @@ impl BookClubSuggestionMutation {
 	) -> Result<BookClubBookSuggestion> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
+		let suggestion_id = Uuid::parse_str(suggestion_id.as_ref())?;
 
-		let suggestion =
-			book_club_book_suggestion::Entity::find_by_id(suggestion_id.as_ref())
-				.one(conn)
-				.await?
-				.ok_or("Suggestion not found")?;
+		let suggestion = book_club_book_suggestion::Entity::find_by_id(suggestion_id)
+			.one(conn)
+			.await?
+			.ok_or("Suggestion not found")?;
 
-		let member = get_member_for_user(&suggestion.book_club_id, user, conn).await?;
+		let member = get_member_for_user(suggestion.book_club_id, user, conn).await?;
 
 		let can_remove = suggestion.suggested_by_id == member.id
 			|| member.role >= BookClubMemberRole::Admin
@@ -109,20 +110,20 @@ impl BookClubSuggestionMutation {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 
-		let suggestion =
-			book_club_book_suggestion::Entity::find_by_id(suggestion_id.as_ref())
-				.one(conn)
-				.await?
-				.ok_or("Suggestion not found")?;
+		let suggestion_id = Uuid::parse_str(suggestion_id.as_ref())?;
 
-		let member = get_member_for_user(&suggestion.book_club_id, user, conn).await?;
+		let suggestion = book_club_book_suggestion::Entity::find_by_id(suggestion_id)
+			.one(conn)
+			.await?
+			.ok_or("Suggestion not found")?;
+
+		let member = get_member_for_user(suggestion.book_club_id, user, conn).await?;
 
 		let existing_like = book_club_book_suggestion_like::Entity::find()
 			.filter(
-				book_club_book_suggestion_like::Column::SuggestionId
-					.eq(suggestion_id.as_ref()),
+				book_club_book_suggestion_like::Column::SuggestionId.eq(suggestion_id),
 			)
-			.filter(book_club_book_suggestion_like::Column::LikedById.eq(&member.id))
+			.filter(book_club_book_suggestion_like::Column::LikedById.eq(member.id))
 			.one(conn)
 			.await?;
 
@@ -133,7 +134,7 @@ impl BookClubSuggestionMutation {
 			let like = book_club_book_suggestion_like::ActiveModel {
 				timestamp: Set(DateTimeWithTimeZone::from(Utc::now())),
 				liked_by_id: Set(member.id.clone()),
-				suggestion_id: Set(suggestion_id.to_string()),
+				suggestion_id: Set(suggestion_id),
 				..Default::default()
 			};
 			like.insert(conn).await?;
@@ -155,14 +156,13 @@ impl BookClubSuggestionMutation {
 	) -> Result<BookClubBookSuggestion> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
+		let suggestion_id = Uuid::parse_str(suggestion_id.as_ref())?;
+		let suggestion = book_club_book_suggestion::Entity::find_by_id(suggestion_id)
+			.one(conn)
+			.await?
+			.ok_or("Suggestion not found")?;
 
-		let suggestion =
-			book_club_book_suggestion::Entity::find_by_id(suggestion_id.as_ref())
-				.one(conn)
-				.await?
-				.ok_or("Suggestion not found")?;
-
-		let member = get_member_for_user(&suggestion.book_club_id, user, conn).await?;
+		let member = get_member_for_user(suggestion.book_club_id, user, conn).await?;
 
 		if member.role < BookClubMemberRole::Admin && !user.is_server_owner {
 			return Err("Only admins and above can update suggestion status".into());
@@ -187,7 +187,7 @@ impl BookClubSuggestionMutation {
 
 /// Helper function to get the member record for a user in a book club
 async fn get_member_for_user(
-	book_club_id: &str,
+	book_club_id: Uuid,
 	user: &AuthUser,
 	conn: &DatabaseConnection,
 ) -> Result<book_club_member::Model> {

@@ -19,8 +19,7 @@ use super::{age_restriction, user_preferences};
 #[sea_orm(table_name = "users")]
 pub struct Model {
 	#[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
-	pub id: String,
-	#[sea_orm(column_type = "Text", unique)]
+	pub id: Uuid,
 	pub username: String,
 	#[sea_orm(column_type = "Text")]
 	#[graphql(skip)]
@@ -28,9 +27,7 @@ pub struct Model {
 	pub is_server_owner: bool,
 	#[sea_orm(column_type = "Text", nullable)]
 	pub avatar_path: Option<String>,
-	#[sea_orm(column_type = "custom(\"DATETIME\")")]
 	pub created_at: DateTimeWithTimeZone,
-	#[sea_orm(column_type = "custom(\"DATETIME\")", nullable)]
 	pub deleted_at: Option<DateTimeWithTimeZone>,
 	pub is_locked: bool,
 	pub max_sessions_allowed: Option<i32>,
@@ -50,7 +47,7 @@ pub struct Model {
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AuthUser {
-	pub id: String,
+	pub id: Uuid,
 	pub avatar_path: Option<String>,
 	pub avatar_url: Option<String>,
 	pub username: String,
@@ -117,7 +114,7 @@ impl FromQueryResult for AuthUser {
 
 #[derive(Clone)]
 pub struct LoginUser {
-	pub id: String,
+	pub id: Uuid,
 	pub avatar_path: Option<String>,
 	pub username: String,
 	pub hashed_password: String,
@@ -206,7 +203,7 @@ impl From<LoginUser> for AuthUser {
 
 #[derive(Debug, FromQueryResult)]
 pub struct UserIdentSelect {
-	pub id: String,
+	pub id: Uuid,
 	pub username: String,
 }
 
@@ -372,7 +369,7 @@ impl ActiveModelBehavior for ActiveModel {
 	{
 		if insert {
 			if self.id.is_not_set() {
-				self.id = ActiveValue::Set(Uuid::new_v4().to_string());
+				self.id = ActiveValue::Set(Uuid::new_v4());
 			}
 			self.created_at = ActiveValue::Set(DateTimeWithTimeZone::from(Utc::now()));
 			self.is_locked = ActiveValue::Set(false);

@@ -29,7 +29,7 @@ impl UserQuery {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 
 		let first = user::Entity::find()
-			.filter(user::Column::Id.eq(user.id.clone()))
+			.filter(user::Column::Id.eq(user.id))
 			.one(conn)
 			.await?
 			.unwrap();
@@ -96,15 +96,18 @@ impl UserQuery {
 						.one(conn)
 						.await?
 						.ok_or("Cursor not found")?;
-					cursor.after(user.id.clone());
+					cursor.after(user.id);
 				}
 				cursor.first(info.limit);
 
 				let models = cursor.all(conn).await?;
-				let current_cursor =
-					info.after.or_else(|| models.first().map(|m| m.id.clone()));
+				let current_cursor = info
+					.after
+					.or_else(|| models.first().map(|m| m.id.to_string()));
 				let next_cursor = match models.last().map(|m| m.id.clone()) {
-					Some(id) if models.len() == info.limit as usize => Some(id),
+					Some(id) if models.len() == info.limit as usize => {
+						Some(id.to_string())
+					},
 					_ => None,
 				};
 
@@ -145,13 +148,13 @@ impl UserQuery {
 	}
 
 	#[graphql(
-		guard = "SelfGuard::new(&id).or(PermissionGuard::one(UserPermission::ReadUsers)).or(ServerOwnerGuard)"
+		guard = "SelfGuard::new(id).or(PermissionGuard::one(UserPermission::ReadUsers)).or(ServerOwnerGuard)"
 	)]
-	async fn user_by_id(&self, ctx: &Context<'_>, id: ID) -> Result<User> {
+	async fn user_by_id(&self, ctx: &Context<'_>, id: Uuid) -> Result<User> {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 
 		let first = user::Entity::find()
-			.filter(user::Column::Id.eq(id.to_string()))
+			.filter(user::Column::Id.eq(id))
 			.one(conn)
 			.await?
 			.unwrap();
@@ -174,16 +177,16 @@ impl UserQuery {
 			.collect())
 	}
 
-	#[graphql(guard = "SelfGuard::new(&id).or(ServerOwnerGuard)")]
+	#[graphql(guard = "SelfGuard::new(id).or(ServerOwnerGuard)")]
 	async fn login_activity_by_id(
 		&self,
 		ctx: &Context<'_>,
-		id: ID,
+		id: Uuid,
 	) -> Result<Vec<UserLoginActivity>> {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 
 		let activities = user_login_activity::Entity::find()
-			.filter(user_login_activity::Column::UserId.eq(id.to_string()))
+			.filter(user_login_activity::Column::UserId.eq(id))
 			.order_by_desc(user_login_activity::Column::Timestamp)
 			.all(conn)
 			.await?;

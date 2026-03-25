@@ -221,10 +221,8 @@ impl ProcessedMediaMetadata {
 			series: Set(self.series),
 			series_group: Set(self.series_group),
 			story_arc: Set(self.story_arc),
-			story_arc_number: Set(self
-				.story_arc_number
-				.and_then(|n| Decimal::try_from(n).ok())),
-			number: Set(self.number.and_then(|n| Decimal::try_from(n).ok())),
+			story_arc_number: Set(self.story_arc_number),
+			number: Set(self.number),
 			volume: Set(self.volume),
 			summary: Set(self.summary),
 			notes: Set(self.notes),

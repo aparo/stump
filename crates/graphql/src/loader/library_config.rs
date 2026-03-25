@@ -15,7 +15,7 @@ impl LibraryConfigLoader {
 
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct LibraryConfigLoaderKey {
-	pub series_id: String,
+	pub series_id: Uuid,
 }
 
 impl Loader<LibraryConfigLoaderKey> for LibraryConfigLoader {
@@ -36,7 +36,7 @@ impl Loader<LibraryConfigLoaderKey> for LibraryConfigLoader {
 			.column(series::Column::Id)
 			.column(series::Column::LibraryId)
 			.filter(series::Column::Id.is_in(series_ids))
-			.into_tuple::<(String, String)>()
+			.into_tuple::<(Uuid, Uuid)>()
 			.all(self.conn.as_ref())
 			.await?;
 

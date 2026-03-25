@@ -23,28 +23,20 @@ use super::{library_exclusion, series_metadata, user::AuthUser};
 #[graphql(name = "SeriesModel")]
 #[sea_orm(table_name = "series")]
 pub struct Model {
-	#[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
-	pub id: String,
-	#[sea_orm(column_type = "Text")]
+	#[sea_orm(primary_key, auto_increment = false)]
+	pub id: Uuid,
 	pub name: String,
 	#[sea_orm(column_type = "Text", nullable)]
 	pub description: Option<String>,
-	#[sea_orm(column_type = "custom(\"DATETIME\")")]
 	pub created_at: DateTimeWithTimeZone,
-	#[sea_orm(column_type = "custom(\"DATETIME\")", nullable)]
 	pub updated_at: Option<DateTimeWithTimeZone>,
-	#[sea_orm(column_type = "custom(\"DATETIME\")", nullable)]
 	pub deleted_at: Option<DateTimeWithTimeZone>,
-	#[sea_orm(column_type = "Text")]
 	pub path: String,
-	#[sea_orm(column_type = "Text")]
 	pub status: FileStatus,
 	#[sea_orm(column_type = "Json", nullable)]
 	pub thumbnail_meta: Option<ImageMetadata>,
-	#[sea_orm(column_type = "Text", nullable)]
 	pub thumbnail_path: Option<String>,
-	#[sea_orm(column_type = "Text", nullable)]
-	pub library_id: Option<String>,
+	pub library_id: Option<Uuid>,
 }
 
 pub fn get_age_restriction_filter(min_age: i32, restrict_on_unset: bool) -> Condition {
@@ -81,10 +73,7 @@ impl Entity {
 			})
 	}
 
-	pub fn find_series_ident_for_user_and_id(
-		user: &AuthUser,
-		id: String,
-	) -> Select<Self> {
+	pub fn find_series_ident_for_user_and_id(user: &AuthUser, id: Uuid) -> Select<Self> {
 		Self::find_for_user(user)
 			.select_only()
 			.columns(vec![Column::Id, Column::Path])
@@ -94,7 +83,7 @@ impl Entity {
 
 #[derive(FromQueryResult)]
 pub struct SeriesIdentSelect {
-	pub id: String,
+	pub id: Uuid,
 	pub path: String,
 }
 
@@ -106,11 +95,11 @@ impl SeriesIdentSelect {
 
 #[derive(Debug, FromQueryResult)]
 pub struct SeriesThumbSelect {
-	pub id: String,
+	pub id: Uuid,
 	pub path: String,
 	pub thumbnail_path: Option<String>,
 	pub thumbnail_meta: Option<crate::shared::image::ImageMetadata>,
-	pub library_id: Option<String>,
+	pub library_id: Option<Uuid>,
 }
 
 impl SeriesThumbSelect {
@@ -163,7 +152,7 @@ impl ModelWithMetadata {
 			.left_join(series_metadata::Entity)
 	}
 
-	pub fn find_by_id(id: String) -> Select<Entity> {
+	pub fn find_by_id(id: Uuid) -> Select<Entity> {
 		Prefixer::new(Entity::find_by_id(id).select_only())
 			.add_columns(Entity)
 			.add_columns(series_metadata::Entity)
@@ -176,7 +165,7 @@ impl ModelWithMetadata {
 		apply_age_restriction_filter(user, apply_hidden_library_filter(user, select))
 	}
 
-	pub fn find_by_id_for_user(id: String, user: &AuthUser) -> Select<Entity> {
+	pub fn find_by_id_for_user(id: Uuid, user: &AuthUser) -> Select<Entity> {
 		let select = ModelWithMetadata::find_by_id(id);
 		apply_age_restriction_filter(user, apply_hidden_library_filter(user, select))
 	}
@@ -192,7 +181,7 @@ fn apply_hidden_library_filter(
 				Query::select()
 					.column(library_exclusion::Column::LibraryId)
 					.from(library_exclusion::Entity)
-					.and_where(library_exclusion::Column::UserId.eq(user.id.clone()))
+					.and_where(library_exclusion::Column::UserId.eq(user.id))
 					.to_owned(),
 			),
 		)
@@ -265,7 +254,7 @@ impl ActiveModelBehavior for ActiveModel {
 	{
 		if insert {
 			if self.id.is_not_set() {
-				self.id = ActiveValue::Set(Uuid::new_v4().to_string());
+				self.id = ActiveValue::Set(Uuid::new_v4());
 			}
 			if self.status.is_not_set() {
 				self.status = ActiveValue::Set(FileStatus::Ready);
@@ -306,7 +295,7 @@ mod tests {
 			id: 1,
 			age: 18,
 			restrict_on_unset: true,
-			user_id: user.id.clone(),
+			user_id: user.id,
 		});
 
 		let select = Entity::find_for_user(&user);
@@ -336,11 +325,14 @@ mod tests {
 	fn test_find_series_ident_for_user_and_id() {
 		let user = get_default_user();
 
-		let select = Entity::find_series_ident_for_user_and_id(&user, "123".to_string());
+		let select = Entity::find_series_ident_for_user_and_id(
+			&user,
+			Uuid::parse_str("f35f3fb0-bb14-43e2-91b9-234b4503cff2").unwrap(),
+		);
 		let stmt_str = select_no_cols_to_string(select);
 		assert_eq!(
 			stmt_str,
-			r#"SELECT  FROM "series" WHERE "series"."deleted_at" IS NULL AND "series"."library_id" NOT IN (SELECT "library_id" FROM "library_exclusions" WHERE "library_exclusions"."user_id" = '42') AND "series"."id" = '123'"#.to_string()
+			r#"SELECT  FROM "series" WHERE "series"."deleted_at" IS NULL AND "series"."library_id" NOT IN (SELECT "library_id" FROM "library_exclusions" WHERE "library_exclusions"."user_id" = '42') AND "series"."id" = 'f35f3fb0-bb14-43e2-91b9-234b4503cff2'"#.to_string()
 		);
 	}
 
@@ -358,11 +350,14 @@ mod tests {
 	#[test]
 	fn test_find_media_with_metadata_for_id() {
 		let user = get_default_user();
-		let select = ModelWithMetadata::find_by_id_for_user("123".to_string(), &user);
+		let select = ModelWithMetadata::find_by_id_for_user(
+			Uuid::parse_str("6f6d2e63-1532-4f85-9d3c-c19f9f915b38").unwrap(),
+			&user,
+		);
 		let stmt_str = select_no_cols_to_string(select);
 		assert_eq!(
             stmt_str,
-            r#"SELECT  FROM "series" LEFT JOIN "series_metadata" ON "series"."id" = "series_metadata"."series_id" WHERE "series"."id" = '123' AND "series"."library_id" NOT IN (SELECT "library_id" FROM "library_exclusions" WHERE "library_exclusions"."user_id" = '42')"#.to_string()
+            r#"SELECT  FROM "series" LEFT JOIN "series_metadata" ON "series"."id" = "series_metadata"."series_id" WHERE "series"."id" = '6f6d2e63-1532-4f85-9d3c-c19f9f915b38' AND "series"."library_id" NOT IN (SELECT "library_id" FROM "library_exclusions" WHERE "library_exclusions"."user_id" = '42')"#.to_string()
         );
 	}
 }

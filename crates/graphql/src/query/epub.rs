@@ -1,5 +1,6 @@
 use async_graphql::{Context, Object, Result, ID};
 use models::entity::{bookmark, media, media_annotation};
+use uuid::Uuid;
 
 use crate::{
 	data::{AuthContext, CoreContext},
@@ -33,16 +34,14 @@ impl EpubQuery {
 	) -> Result<Vec<Bookmark>> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
-
-		Ok(
-			bookmark::Entity::find_for_user_and_media_id(user, id.as_ref())
-				.into_model::<bookmark::Model>()
-				.all(conn)
-				.await?
-				.into_iter()
-				.map(Bookmark::from)
-				.collect(),
-		)
+		let id = Uuid::parse_str(id.as_str())?;
+		Ok(bookmark::Entity::find_for_user_and_media_id(user, id)
+			.into_model::<bookmark::Model>()
+			.all(conn)
+			.await?
+			.into_iter()
+			.map(Bookmark::from)
+			.collect())
 	}
 
 	/// Get all annotations (highlights/notes) for a single book
@@ -53,15 +52,14 @@ impl EpubQuery {
 	) -> Result<Vec<MediaAnnotation>> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
+		let id = Uuid::parse_str(id.as_str())?;
 
-		Ok(media_annotation::Model::find_for_user_and_media_id(
-			&user.id,
-			id.as_ref(),
-			conn,
+		Ok(
+			media_annotation::Model::find_for_user_and_media_id(user.id, id, conn)
+				.await?
+				.into_iter()
+				.map(MediaAnnotation::from)
+				.collect(),
 		)
-		.await?
-		.into_iter()
-		.map(MediaAnnotation::from)
-		.collect())
 	}
 }

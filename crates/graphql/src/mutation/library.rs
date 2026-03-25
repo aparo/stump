@@ -663,7 +663,7 @@ impl LibraryMutation {
 		&self,
 		ctx: &Context<'_>,
 		id: ID,
-		user_ids: Vec<String>,
+		user_ids: Vec<Uuid>,
 	) -> Result<Library> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let core = ctx.data::<CoreContext>()?;
@@ -673,7 +673,7 @@ impl LibraryMutation {
 		}
 
 		let server_owner_id = if user.is_server_owner {
-			user.id.clone()
+			user.id
 		} else {
 			user::Entity::find()
 				.select_only()
@@ -949,7 +949,7 @@ impl LibraryMutation {
 
 		let active_model = last_library_visit::ActiveModel {
 			library_id: Set(library.id.clone()),
-			user_id: Set(user.id.clone()),
+			user_id: Set(user.id),
 			timestamp: Set(Utc::now().into()),
 			..Default::default()
 		};
@@ -1031,10 +1031,10 @@ async fn enforce_valid_library_path(
 	}
 
 	// example: new_path = "/data/books/fiction", existing_library = "/data/books"
-	// check if new_path matches the pattern "/data/books/_%".
-	let values: [sea_orm::Value; 1] = [path.into()];
-	let mut parent_query = library::Entity::find()
-		.filter(Expr::cust_with_values("? LIKE path || '/_%'", values));
+	// check if new_path starts with the existing library path followed by a slash
+	let parent_path = format!("{}/", normalize_path(path));
+	let mut parent_query =
+		library::Entity::find().filter(library::Column::Path.starts_with(&parent_path));
 
 	if let Some(existing_path) = existing_path {
 		parent_query = parent_query.filter(library::Column::Path.ne(existing_path));

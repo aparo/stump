@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use crate::filesystem::media::{BuiltMedia, ProcessedFileHashes, ProcessedMediaMetadata};
 
@@ -26,7 +27,7 @@ pub enum BookVisitOperation {
 #[derive(Default)]
 pub struct CustomVisitResult {
 	/// The ID of the book that was visited
-	pub id: String,
+	pub id: Uuid,
 	/// The metadata that was generated during the visit, if any
 	pub meta: Option<Box<ProcessedMediaMetadata>>,
 	/// The hashes that were generated during the visit, if any
@@ -52,7 +53,7 @@ impl BookVisitResult {
 					},
 				}
 			},
-			BookVisitResult::Custom(result) => result.id.clone(),
+			BookVisitResult::Custom(result) => result.id.to_string(),
 		}
 	}
 }
@@ -154,9 +155,10 @@ mod tests {
 
 	#[test]
 	fn test_error_ctx() {
+		let book_id = Uuid::new_v4();
 		let book = BuiltMedia {
 			media: media::ActiveModel {
-				id: ActiveValue::Set("book".to_string()),
+				id: ActiveValue::Set(book_id),
 				path: ActiveValue::Set("path".to_string()),
 				..Default::default()
 			},
@@ -167,14 +169,14 @@ mod tests {
 		assert_eq!(result.error_ctx(), "path".to_string());
 
 		let result = BookVisitResult::Custom(CustomVisitResult {
-			id: "book".to_string(),
+			id: book_id,
 			meta: None,
 			hashes: None,
 		});
 		assert_eq!(result.error_ctx(), "book".to_string());
 
 		let result = BookVisitResult::Custom(CustomVisitResult {
-			id: "book".to_string(),
+			id: book_id,
 			meta: None,
 			hashes: None,
 		});

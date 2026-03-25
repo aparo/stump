@@ -5,6 +5,7 @@ use std::collections::HashMap;
 
 use crate::{error::CoreError, opds::v1_2::link::OpdsLink, utils::chain_optional_iter};
 use chrono::{DateTime, Utc};
+use uuid::Uuid;
 use xml::{writer::XmlEvent, EventWriter};
 
 use super::{
@@ -249,6 +250,7 @@ mod tests {
 	use std::str::FromStr;
 
 	use chrono::DateTime;
+	use uuid::Uuid;
 
 	use super::*;
 	use crate::opds::v1_2::tests::normalize_xml;
@@ -256,8 +258,9 @@ mod tests {
 	#[test]
 	fn test_opds_feed() {
 		let updated = DateTime::from_str("2010-01-10T10:01:11Z").unwrap();
+		let entry_id = Uuid::parse_str("6409a00b-7bf2-405e-826c-3fdff0fd0734").unwrap();
 		let entry = OpdsEntry::new(
-			"urn:uuid:6409a00b-7bf2-405e-826c-3fdff0fd0734".to_string(),
+			entry_id,
 			updated,
 			"Modern Online Philately".to_string(),
 			None,
@@ -294,7 +297,7 @@ mod tests {
 				</author>
 				<entry>
 					<title>Modern Online Philately</title>
-					<id>urn:uuid:6409a00b-7bf2-405e-826c-3fdff0fd0734</id>
+					<id>6409a00b-7bf2-405e-826c-3fdff0fd0734</id>
 					<updated>2010-01-10T10:01:11+00:00</updated>
 					<content />
 				</entry>

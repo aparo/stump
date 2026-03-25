@@ -18,7 +18,7 @@ use crate::{
 };
 
 // Note: Type aliasing for clarity
-type Id = String;
+type Id = Uuid;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
@@ -117,16 +117,16 @@ impl JobExt for PlaceholderGenerationJob {
 					.select_only()
 					.columns(media::MediaThumbSelect::columns())
 					.inner_join(series::Entity)
-					.filter(series::Column::LibraryId.eq(id))
+					.filter(series::Column::LibraryId.eq(*id))
 					.into_model::<media::MediaThumbSelect>()
 					.all(ctx.conn.as_ref())
 					.await
 					.map_err(|e| JobError::InitFailed(e.to_string()))?;
-				let media_ids = books.iter().map(|m| m.id.clone()).collect::<Vec<_>>();
+				let media_ids = books.iter().map(|m| m.id).collect::<Vec<_>>();
 
 				let series_ids = books
 					.iter()
-					.map(|m| m.series_id.clone())
+					.map(|m| m.series_id)
 					.collect::<std::collections::HashSet<_>>()
 					.into_iter()
 					.collect::<Vec<_>>();
@@ -142,7 +142,7 @@ impl JobExt for PlaceholderGenerationJob {
 
 				let library_ids = series
 					.iter()
-					.filter_map(|s| s.library_id.clone())
+					.filter_map(|s| s.library_id)
 					.collect::<std::collections::HashSet<_>>()
 					.into_iter()
 					.collect::<Vec<_>>();
@@ -157,7 +157,7 @@ impl JobExt for PlaceholderGenerationJob {
 				let books = media::Entity::find()
 					.select_only()
 					.columns(media::MediaThumbSelect::columns())
-					.filter(media::Column::SeriesId.eq(id))
+					.filter(media::Column::SeriesId.eq(*id))
 					.into_model::<media::MediaIdentSelect>()
 					.all(ctx.conn.as_ref())
 					.await
@@ -167,7 +167,7 @@ impl JobExt for PlaceholderGenerationJob {
 
 				PlaceholderGenerationInit {
 					media_ids,
-					series_ids: vec![id.clone()],
+					series_ids: vec![*id],
 					library_ids: vec![],
 				}
 			},

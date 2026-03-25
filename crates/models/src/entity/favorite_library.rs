@@ -5,11 +5,10 @@ use sea_orm::{prelude::*, ActiveValue, FromQueryResult};
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
 #[sea_orm(table_name = "favorite_libraries")]
 pub struct Model {
-	#[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
-	pub user_id: String,
-	#[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
-	pub library_id: String,
-	#[sea_orm(column_type = "custom(\"DATETIME\")")]
+	#[sea_orm(primary_key, auto_increment = false, column_type = "Uuid")]
+	pub user_id: Uuid,
+	#[sea_orm(primary_key, auto_increment = false, column_type = "Uuid")]
+	pub library_id: Uuid,
 	pub favorited_at: DateTimeWithTimeZone,
 }
 

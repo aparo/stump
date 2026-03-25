@@ -146,7 +146,7 @@ impl MediaMutation {
 		if is_favorite {
 			let last_insert_id =
 				favorite_media::Entity::insert(favorite_media::ActiveModel {
-					user_id: Set(user.id.clone()),
+					user_id: Set(user.id),
 					media_id: Set(model.media.id.clone()),
 					favorited_at: Set(DateTimeWithTimeZone::from(Utc::now())),
 				})
@@ -159,7 +159,7 @@ impl MediaMutation {
 			let affected_rows = favorite_media::Entity::delete_many()
 				.filter(
 					favorite_media::Column::UserId
-						.eq(user.id.clone())
+						.eq(user.id)
 						.and(favorite_media::Column::MediaId.eq(model.media.id.clone())),
 				)
 				.exec(core.conn.as_ref())
@@ -291,7 +291,7 @@ impl MediaMutation {
 			.filter(
 				reading_session::Column::MediaId
 					.eq(model.media.id.clone())
-					.and(reading_session::Column::UserId.eq(user.id.clone())),
+					.and(reading_session::Column::UserId.eq(user.id)),
 			)
 			.exec(conn)
 			.await?
@@ -323,7 +323,7 @@ impl MediaMutation {
 			.filter(
 				finished_reading_session::Column::MediaId
 					.eq(model.media.id.clone())
-					.and(finished_reading_session::Column::UserId.eq(user.id.clone())),
+					.and(finished_reading_session::Column::UserId.eq(user.id)),
 			)
 			.exec(conn)
 			.await?
@@ -346,10 +346,12 @@ impl MediaMutation {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let core = ctx.data::<CoreContext>()?;
 		let conn = core.conn.as_ref();
+		let id = Uuid::parse_str(id.to_string().as_str())
+			.map_err(|_| "Invalid media ID format")?;
 
 		let mut active_session = reading_session::ActiveModel {
-			user_id: Set(user.id.clone()),
-			media_id: Set(id.to_string()),
+			user_id: Set(user.id),
+			media_id: Set(id),
 			updated_at: Set(Some(Utc::now().into())),
 			started_at: Set(Utc::now().into()),
 			..Default::default()
@@ -366,16 +368,16 @@ impl MediaMutation {
 				active_session.percentage_completed = Set(input.percentage);
 				active_session.elapsed_seconds = Set(input.elapsed_seconds);
 				has_elapsed_seconds = input.elapsed_seconds.is_some();
-				is_complete = input.is_complete.unwrap_or(
-					input.percentage.unwrap_or_default() >= Decimal::new(1, 0),
-				);
+				is_complete = input
+					.is_complete
+					.unwrap_or(input.percentage.unwrap_or_default() >= 1.0);
 			},
 			MediaProgressInput::Paged(input) => {
 				active_session.page = Set(Some(input.page));
 				active_session.elapsed_seconds = Set(input.elapsed_seconds);
 				has_elapsed_seconds = input.elapsed_seconds.is_some();
 
-				let book_pages = get_book_pages(id.to_string(), conn).await?;
+				let book_pages = get_book_pages(id, conn).await?;
 				is_complete = input.page >= book_pages;
 				active_session.percentage_completed =
 					Set(Some(compute_page_based_percentage(input.page, book_pages)));
@@ -420,8 +422,8 @@ impl MediaMutation {
 			let recent_completion =
 				finished_reading_session::Entity::recent_completed_record(
 					conn,
-					&user.id,
-					id.as_ref(),
+					user.id,
+					id,
 					finished_reading_session::COMPLETION_DEDUP_TIMEOUT_MINUTES,
 				)
 				.await?;
@@ -436,8 +438,8 @@ impl MediaMutation {
 			}
 
 			let finished_reading_session = finished_reading_session::ActiveModel {
-				user_id: Set(user.id.clone()),
-				media_id: Set(id.to_string()),
+				user_id: Set(user.id),
+				media_id: Set(id),
 				started_at: Set(active_session
 					.updated_at
 					.unwrap_or_else(|| chrono::Utc::now().into())),
@@ -504,8 +506,8 @@ async fn update_active_reading_session(
 	};
 
 	let active_session = reading_session::ActiveModel {
-		user_id: Set(user.id.clone()),
-		media_id: Set(model.media.id.to_string()),
+		user_id: Set(user.id),
+		media_id: Set(model.media.id),
 		page: Set(Some(page)),
 		updated_at: Set(Some(chrono::Utc::now().into())),
 		..Default::default()
@@ -548,7 +550,7 @@ async fn set_completed_media(
 	model: &media::ModelWithMetadata,
 ) -> Result<finished_reading_session::Model> {
 	let active_session =
-		reading_session::Entity::find_for_user_and_media_id(user, &model.media.id)
+		reading_session::Entity::find_for_user_and_media_id(user, model.media.id)
 			.one(txn)
 			.await?;
 
@@ -558,8 +560,8 @@ async fn set_completed_media(
 		.unwrap_or_else(|| Utc::now().into());
 
 	let finished_reading_session = finished_reading_session::ActiveModel {
-		user_id: Set(user.id.clone()),
-		media_id: Set(model.media.id.to_string()),
+		user_id: Set(user.id),
+		media_id: Set(model.media.id),
 		started_at: Set(started_at),
 		completed_at: Set(chrono::Utc::now().into()),
 		..Default::default()
@@ -572,18 +574,17 @@ async fn set_completed_media(
 	Ok(finished_reading_session)
 }
 
-fn compute_page_based_percentage(current_page: i32, pages: i32) -> Decimal {
+fn compute_page_based_percentage(current_page: i32, pages: i32) -> f64 {
 	if pages <= 0 {
-		Decimal::new(0, 0)
+		0.0
 	} else {
-		let percentage =
-			Decimal::new(current_page as i64, 0) / Decimal::new(pages as i64, 0);
+		let percentage = current_page as f64 / pages as f64;
 		// Cannot be negative and cannot be more than 100%
-		percentage.clamp(Decimal::new(0, 0), Decimal::new(100, 0))
+		percentage.clamp(0.0, 100.0)
 	}
 }
 
-async fn get_book_pages(book_id: String, conn: &DatabaseConnection) -> Result<i32> {
+async fn get_book_pages(book_id: Uuid, conn: &DatabaseConnection) -> Result<i32> {
 	let pages: i32 = media::Entity::find_by_id(book_id)
 		.select_only()
 		.columns(vec![media::Column::Pages])

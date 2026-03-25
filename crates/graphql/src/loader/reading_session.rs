@@ -21,8 +21,8 @@ impl ReadingSessionLoader {
 
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct ActiveReadingSessionLoaderKey {
-	pub user_id: String,
-	pub media_id: String,
+	pub user_id: Uuid,
+	pub media_id: Uuid,
 }
 
 impl Loader<ActiveReadingSessionLoaderKey> for ReadingSessionLoader {
@@ -74,8 +74,8 @@ impl Loader<ActiveReadingSessionLoaderKey> for ReadingSessionLoader {
 // allows us to share a single ReadingSessionLoader between the models
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct FinishedReadingSessionLoaderKey {
-	pub user_id: String,
-	pub media_id: String,
+	pub user_id: Uuid,
+	pub media_id: Uuid,
 }
 
 impl Loader<FinishedReadingSessionLoaderKey> for ReadingSessionLoader {

@@ -23,7 +23,7 @@ impl EpubProgressLocatorInput {
 #[derive(Debug, Clone, InputObject)]
 pub struct EpubProgressInput {
 	pub locator: EpubProgressLocatorInput,
-	pub percentage: Option<Decimal>,
+	pub percentage: Option<f64>,
 	pub is_complete: Option<bool>,
 	pub elapsed_seconds: Option<i64>,
 }
@@ -42,7 +42,7 @@ pub enum MediaProgressInput {
 
 #[derive(InputObject)]
 pub struct BookmarkInput {
-	pub media_id: String,
+	pub media_id: Uuid,
 	pub locator: EpubProgressLocatorInput,
 	pub preview_content: Option<String>,
 }
@@ -54,12 +54,12 @@ impl BookmarkInput {
 			EpubProgressLocatorInput::Readium(loc) => (None, Some(loc.clone())),
 		};
 		bookmark::ActiveModel {
-			id: Set(Uuid::new_v4().to_string()),
+			id: Set(Uuid::new_v4()),
 			epubcfi: Set(epubcfi),
 			locator: Set(locator.as_deref().cloned()),
 			preview_content: Set(self.preview_content.clone()),
-			media_id: Set(self.media_id.clone()),
-			user_id: Set(user.id.clone()),
+			media_id: Set(self.media_id),
+			user_id: Set(user.id),
 			page: Set(Some(-1)),
 			..Default::default()
 		}
@@ -73,8 +73,8 @@ pub struct MediaMetadataInput {
 	pub series: Option<String>,
 	pub series_group: Option<String>,
 	pub story_arc: Option<String>,
-	pub story_arc_number: Option<Decimal>,
-	pub number: Option<Decimal>,
+	pub story_arc_number: Option<f64>,
+	pub number: Option<f64>,
 	pub volume: Option<i32>,
 	pub summary: Option<String>,
 	pub notes: Option<String>,
@@ -157,7 +157,7 @@ fn into_array_string(s: Option<Vec<String>>) -> Option<String> {
 
 #[derive(Debug, Clone, InputObject)]
 pub struct CreateAnnotationInput {
-	pub media_id: String,
+	pub media_id: Uuid,
 	pub locator: ReadiumLocator,
 	pub annotation_text: Option<String>,
 }
@@ -168,7 +168,7 @@ impl CreateAnnotationInput {
 			locator: Set(self.locator),
 			annotation_text: Set(self.annotation_text),
 			media_id: Set(self.media_id),
-			user_id: Set(user.id.clone()),
+			user_id: Set(user.id),
 			..Default::default()
 		}
 	}

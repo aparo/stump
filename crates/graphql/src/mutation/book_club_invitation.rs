@@ -60,6 +60,7 @@ async fn validate_book_club_invitation_input(
 	input: &BookClubInvitationInput,
 	conn: &DatabaseConnection,
 ) -> Result<()> {
+	let id: Uuid = Uuid::parse_str(id.as_ref())?;
 	let _book_club = get_book_club_for_admin(user, id, conn)
 		.await?
 		.ok_or("Book club not found or you lack permission to update")?;
@@ -100,12 +101,12 @@ async fn get_book_club_invitation(
 	id: &ID,
 	conn: &DatabaseConnection,
 ) -> Result<book_club_invitation::Model> {
-	Ok(
-		book_club_invitation::Entity::find_for_user_and_id(user, id.as_ref())
-			.one(conn)
-			.await?
-			.ok_or("Invitation not found")?,
-	)
+	let id: Uuid = Uuid::parse_str(id.as_ref())?;
+
+	Ok(book_club_invitation::Entity::find_for_user_and_id(user, id)
+		.one(conn)
+		.await?
+		.ok_or("Invitation not found")?)
 }
 
 async fn decline_invitation(
@@ -139,10 +140,11 @@ fn create_invitation_active_model(
 	id: &ID,
 	input: &BookClubInvitationInput,
 ) -> book_club_invitation::ActiveModel {
+	let id: Uuid = Uuid::parse_str(id.as_ref()).unwrap_or_else(|_| Uuid::new_v4());
 	book_club_invitation::ActiveModel {
 		role: Set(input.role.unwrap_or(BookClubMemberRole::Member)),
 		user_id: Set(input.user_id.clone()),
-		book_club_id: Set(id.to_string()),
+		book_club_id: Set(id),
 		..Default::default()
 	}
 }
@@ -153,9 +155,9 @@ fn create_member_active_model(
 	input: BookClubMemberInput,
 ) -> book_club_member::ActiveModel {
 	book_club_member::ActiveModel {
-		id: Set(Uuid::new_v4().to_string()),
+		id: Set(Uuid::new_v4()),
 		display_name: Set(input.display_name),
-		user_id: Set(user.id.clone()),
+		user_id: Set(user.id),
 		book_club_id: Set(invitation.book_club_id.clone()),
 		role: Set(invitation.role),
 		hide_progress: Set(false),
@@ -166,6 +168,8 @@ fn create_member_active_model(
 
 #[cfg(test)]
 mod tests {
+	use std::str::FromStr;
+
 	use crate::tests::common::*;
 
 	use super::*;
@@ -174,8 +178,10 @@ mod tests {
 	use sea_orm::TryIntoModel;
 
 	fn get_default_book_club() -> book_club::Model {
+		let book_club_id =
+			Uuid::from_str("f1ae2ad1-c2ef-46bf-806b-0848200c9693").unwrap();
 		book_club::Model {
-			id: "123".to_string(),
+			id: book_club_id,
 			name: "Test".to_string(),
 			slug: "test".to_string(),
 			description: None,
@@ -187,20 +193,24 @@ mod tests {
 	}
 
 	fn get_default_book_club_invitation() -> book_club_invitation::Model {
+		let book_club_id =
+			Uuid::from_str("f1ae2ad1-c2ef-46bf-806b-0848200c9693").unwrap();
+		let user_id = Uuid::from_str("6d53ddf7-f0d4-4918-b559-9d0a950f2d43 ").unwrap();
+
 		book_club_invitation::Model {
-			id: "314".to_string(),
+			id: Uuid::new_v4(),
 			role: BookClubMemberRole::Admin,
-			user_id: "42".to_string(),
-			book_club_id: "123".to_string(),
+			user_id,
+			book_club_id,
 		}
 	}
 
 	#[tokio::test]
 	async fn decline_book_club_invitation_no_member() {
 		let user = get_default_user();
-		let id: ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa".into();
+		let id: ID = "f1ae2ad1-c2ef-46bf-806b-0848200c9693".into();
 		let member = BookClubMemberInput {
-			user_id: "42".to_string(),
+			user_id: default_user_id(),
 			display_name: None,
 		};
 		let input = BookClubInvitationResponseInput {
@@ -224,7 +234,7 @@ mod tests {
 		let user = get_default_user();
 		let id: ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa".into();
 		let member = BookClubMemberInput {
-			user_id: "42".to_string(),
+			user_id: default_user_id(),
 			display_name: None,
 		};
 
@@ -274,7 +284,7 @@ mod tests {
 
 		let input = BookClubInvitationInput {
 			role: Some(BookClubMemberRole::Admin),
-			user_id: "456".to_string(),
+			user_id: default_user_456_id(),
 		};
 
 		let result = validate_book_club_invitation_input(
@@ -313,7 +323,7 @@ mod tests {
 			get_mock_db_for_model(vec![get_default_book_club()]).into_connection();
 		let input: BookClubInvitationInput = BookClubInvitationInput {
 			role: None,
-			user_id: "456".to_string(),
+			user_id: default_user_456_id(),
 		};
 		let result = validate_book_club_invitation_input(
 			&get_default_user(),
@@ -331,7 +341,7 @@ mod tests {
 			get_mock_db_for_model(vec![get_default_book_club()]).into_connection();
 		let input: BookClubInvitationInput = BookClubInvitationInput {
 			role: Some(BookClubMemberRole::Creator),
-			user_id: "456".to_string(),
+			user_id: default_user_456_id(),
 		};
 		let result = validate_book_club_invitation_input(
 			&get_default_user(),
@@ -350,7 +360,7 @@ mod tests {
 			get_mock_db_for_model(vec![get_default_book_club()]).into_connection();
 		let input: BookClubInvitationInput = BookClubInvitationInput {
 			role: Some(BookClubMemberRole::Creator),
-			user_id: user.id.clone(),
+			user_id: user.id,
 		};
 		let result =
 			validate_book_club_invitation_input(&user, &"123".into(), &input, &mock_db)
@@ -360,16 +370,19 @@ mod tests {
 
 	#[test]
 	fn test_create_invitation_active_model() {
-		let id: ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa".into();
+		let id: ID = "40f6e2fc-636f-4150-a326-91dbbd5774d6".into();
 		let input = BookClubInvitationInput {
 			role: Some(BookClubMemberRole::Admin),
-			user_id: "456".to_string(),
+			user_id: default_user_456_id(),
 		};
 
 		let active_model = create_invitation_active_model(&id, &input);
 
 		assert_eq!(active_model.role.unwrap(), BookClubMemberRole::Admin);
-		assert_eq!(active_model.user_id.unwrap(), "456".to_string());
-		assert_eq!(active_model.book_club_id.unwrap(), id.to_string());
+		assert_eq!(active_model.user_id.unwrap(), default_user_456_id());
+		assert_eq!(
+			active_model.book_club_id.unwrap().to_string(),
+			id.to_string()
+		);
 	}
 }

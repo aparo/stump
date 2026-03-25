@@ -59,7 +59,7 @@ impl CustomEmojiMutation {
 			name: Set(input.name),
 			is_animated: Set(input.is_animated),
 			file_extension: Set(extension.clone()),
-			created_by_id: Set(user.id.clone()),
+			created_by_id: Set(user.id),
 			..Default::default()
 		};
 

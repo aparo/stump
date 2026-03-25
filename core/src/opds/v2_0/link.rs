@@ -5,6 +5,7 @@ use derive_builder::Builder;
 use models::entity::{library, series};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
+use uuid::Uuid;
 
 use crate::filesystem::ContentType;
 
@@ -238,7 +239,7 @@ impl OPDSLink {
 		})
 	}
 
-	pub fn progression(book_id: String, finalizer: &OPDSLinkFinalizer) -> Self {
+	pub fn progression(book_id: Uuid, finalizer: &OPDSLinkFinalizer) -> Self {
 		Self::Link(OPDSBaseLink {
 			href: finalizer
 				.format_link(format!("/opds/v2.0/books/{book_id}/progression",)),
@@ -453,7 +454,7 @@ mod tests {
 	#[test]
 	fn test_navigation_link_from_library_data() {
 		let library = library::Model {
-			id: "123".to_string(),
+			id: Uuid::new_v4(),
 			name: "A library".to_string(),
 			created_at: chrono::Utc::now().into(),
 			updated_at: Some(chrono::Utc::now().into()),

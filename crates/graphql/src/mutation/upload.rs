@@ -218,7 +218,7 @@ impl UploadMutation {
 		}
 
 		let path_buf =
-			place_thumbnail(&library.id, &extension, &image_buf, &core.config).await?;
+			place_thumbnail(library.id, &extension, &image_buf, &core.config).await?;
 
 		tracing::debug!(?path_buf, "Placed library thumbnail");
 
@@ -313,7 +313,7 @@ impl UploadMutation {
 		}
 
 		let path_buf =
-			place_thumbnail(&series.series.id, &extension, &image_buf, &core.config)
+			place_thumbnail(series.series.id, &extension, &image_buf, &core.config)
 				.await?;
 
 		tracing::debug!(?path_buf, "Placed series thumbnail");
@@ -422,7 +422,7 @@ impl UploadMutation {
 		}
 
 		let path_buf =
-			place_thumbnail(&book.media.id, &extension, &image_buf, &core.config).await?;
+			place_thumbnail(book.media.id, &extension, &image_buf, &core.config).await?;
 
 		tracing::debug!(?path_buf, "Placed book thumbnail");
 
@@ -517,7 +517,7 @@ impl UploadMutation {
 		}
 
 		let path_buf =
-			place_thumbnail(&series.series.id, &extension, &image_buf, &core.config)
+			place_thumbnail(series.series.id, &extension, &image_buf, &core.config)
 				.await?;
 
 		tracing::debug!(?path_buf, "Placed series thumbnail from base64");
@@ -610,7 +610,7 @@ impl UploadMutation {
 		}
 
 		let path_buf =
-			place_thumbnail(&book.media.id, &extension, &image_buf, &core.config).await?;
+			place_thumbnail(book.media.id, &extension, &image_buf, &core.config).await?;
 
 		tracing::debug!(?path_buf, "Placed book thumbnail from base64");
 
