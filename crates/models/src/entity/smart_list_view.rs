@@ -1,5 +1,5 @@
 use super::smart_list;
-use async_graphql::{SimpleObject, ID};
+use async_graphql::SimpleObject;
 use sea_orm::{prelude::*, Condition};
 
 use crate::entity::user::AuthUser;

@@ -1,4 +1,4 @@
-use async_graphql::{Context, Object, Result, ID};
+use async_graphql::{Context, Object, Result};
 use models::{
 	entity::finished_reading_session, entity::user, entity::user_login_activity,
 	shared::enums::UserPermission,

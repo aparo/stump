@@ -5,7 +5,6 @@ use std::collections::HashMap;
 
 use crate::{error::CoreError, opds::v1_2::link::OpdsLink, utils::chain_optional_iter};
 use chrono::{DateTime, Utc};
-use uuid::Uuid;
 use xml::{writer::XmlEvent, EventWriter};
 
 use super::{

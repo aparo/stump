@@ -1,4 +1,4 @@
-use async_graphql::{Enum, SimpleObject, ID};
+use async_graphql::{Enum, SimpleObject};
 use filter_gen::Ordering;
 use sea_orm::{
 	prelude::*, Condition, DeriveActiveEnum, EnumIter, QueryOrder, QuerySelect,
