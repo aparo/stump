@@ -161,7 +161,7 @@ pub(crate) async fn get_media_thumbnail_by_id(
 							Query::select()
 								.column(series::Column::LibraryId)
 								.from(series::Entity)
-								.and_where(series::Column::Id.eq(book.series_id.clone()))
+								.and_where(series::Column::Id.eq(book.series_id))
 								.to_owned(),
 						),
 					)

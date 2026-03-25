@@ -193,7 +193,7 @@ impl JobManager {
 			self.auto_enqueue().await;
 		} else if let Some(index) = self.get_queued_job_index(job_id).await {
 			job::Entity::update_many()
-				.filter(job::Column::Id.eq(job_id.clone()))
+				.filter(job::Column::Id.eq(job_id))
 				.col_expr(
 					job::Column::Status,
 					Expr::value(JobStatus::Cancelled.to_string()),
@@ -212,7 +212,7 @@ impl JobManager {
 			);
 		} else {
 			let affected_rows = job::Entity::update_many()
-				.filter(job::Column::Id.eq(job_id.clone()))
+				.filter(job::Column::Id.eq(job_id))
 				.col_expr(
 					job::Column::Status,
 					Expr::value(JobStatus::Cancelled.to_string()),

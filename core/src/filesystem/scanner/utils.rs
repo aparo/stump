@@ -118,7 +118,7 @@ pub(crate) async fn handle_book_visit_operation(
 		BookVisitResult::Custom(custom) => {
 			if let Some(meta) = custom.meta {
 				let active_model = media_metadata::ActiveModel {
-					media_id: Set(Some(custom.id.clone())),
+					media_id: Set(Some(custom.id)),
 					..meta.into_active_model()
 				};
 				let updated_meta = active_model.update(db).await?;
@@ -128,7 +128,7 @@ pub(crate) async fn handle_book_visit_operation(
 
 			if let Some(hashes) = custom.hashes {
 				let affected_rows = media::Entity::update_many()
-					.filter(media::Column::Id.eq(custom.id.clone()))
+					.filter(media::Column::Id.eq(custom.id))
 					.col_expr(media::Column::Hash, Expr::value(hashes.hash))
 					.col_expr(
 						media::Column::KoreaderHash,
@@ -615,7 +615,7 @@ pub(crate) async fn safely_build_and_insert_media(
 
 	let mut output = MediaOperationOutput::default();
 
-	let Some(library_id) = library_config.library_id.clone() else {
+	let Some(library_id) = library_config.library_id else {
 		tracing::error!(?library_config, "Library config has no library ID?");
 		output.logs.push(JobExecuteLog::error(format!(
 			"Library config has no library ID: {:?}",
@@ -647,7 +647,7 @@ pub(crate) async fn safely_build_and_insert_media(
 		);
 
 		for (book_index, path) in chunk.iter().enumerate() {
-			let series_id = series_id.clone();
+			let series_id = series_id;
 			let library_config = library_config.clone();
 			let path = path.clone();
 
@@ -725,8 +725,8 @@ pub(crate) async fn safely_build_and_insert_media(
 					.into_worker_send(),
 					CoreEvent::CreatedMedia(CreatedMedia {
 						id: created_media.id,
-						series_id: series_id.clone(),
-						library_id: library_id.clone(),
+						series_id: series_id,
+						library_id: library_id,
 					})
 					.into_worker_send(),
 				]);
@@ -833,7 +833,7 @@ pub(crate) async fn visit_and_update_media(
 			let ctx = BookVisitCtx {
 				operation: *operation,
 				existing_book: Some(book),
-				series_id: series_id.clone(),
+				series_id: series_id,
 				path: PathBuf::from(path.as_str()),
 			};
 			let library_config = library_config.clone();

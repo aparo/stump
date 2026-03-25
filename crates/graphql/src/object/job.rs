@@ -52,10 +52,7 @@ impl Job {
 	async fn log_count(&self, ctx: &Context<'_>) -> Result<u64> {
 		let loader = ctx.data::<DataLoader<JobAssociatedLogLoader>>()?;
 
-		let logs = loader
-			.load_one(self.model.id.clone())
-			.await?
-			.unwrap_or_default();
+		let logs = loader.load_one(self.model.id).await?.unwrap_or_default();
 
 		Ok(logs.len() as u64)
 	}
@@ -64,10 +61,7 @@ impl Job {
 	async fn logs(&self, ctx: &Context<'_>) -> Result<Vec<Log>> {
 		let loader = ctx.data::<DataLoader<JobAssociatedLogLoader>>()?;
 
-		let logs = loader
-			.load_one(self.model.id.clone())
-			.await?
-			.unwrap_or_default();
+		let logs = loader.load_one(self.model.id).await?.unwrap_or_default();
 
 		Ok(logs)
 	}

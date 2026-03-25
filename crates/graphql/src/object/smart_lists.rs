@@ -74,11 +74,10 @@ impl SmartList {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 		let txn = conn.begin().await?;
 
-		let smart_list =
-			smart_list::Entity::find_by_id(user, self.model.id.clone().into())
-				.one(&txn)
-				.await?
-				.ok_or("Smart list not found".to_string())?;
+		let smart_list = smart_list::Entity::find_by_id(user, self.model.id)
+			.one(&txn)
+			.await?
+			.ok_or("Smart list not found".to_string())?;
 
 		let deserialized_filters: Vec<SmartListFilterGroupInput> =
 			serde_json::from_slice(&smart_list.filters)?;
@@ -107,11 +106,10 @@ impl SmartList {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 		let txn = conn.begin().await?;
 
-		let smart_list =
-			smart_list::Entity::find_by_id(user, self.model.id.clone().into())
-				.one(&txn)
-				.await?
-				.ok_or("Smart list not found".to_string())?;
+		let smart_list = smart_list::Entity::find_by_id(user, self.model.id)
+			.one(&txn)
+			.await?
+			.ok_or("Smart list not found".to_string())?;
 
 		let deserialized_filters: Vec<SmartListFilterGroupInput> =
 			serde_json::from_slice(&smart_list.filters)?;
@@ -139,11 +137,10 @@ impl SmartList {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 		let txn = conn.begin().await?;
 
-		let smart_list =
-			smart_list::Entity::find_by_id(user, self.model.id.clone().into())
-				.one(&txn)
-				.await?
-				.ok_or("Smart list not found".to_string())?;
+		let smart_list = smart_list::Entity::find_by_id(user, self.model.id)
+			.one(&txn)
+			.await?
+			.ok_or("Smart list not found".to_string())?;
 
 		let deserialized_filters: Vec<SmartListFilterGroupInput> =
 			serde_json::from_slice(&smart_list.filters)?;

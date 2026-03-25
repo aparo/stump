@@ -151,7 +151,7 @@ impl JobExt for LibraryScanJob {
 		// updated since being queued. This is perhaps a bit overly cautious, but it's
 		// just one additional query.
 		let config = library_config::Entity::find()
-			.filter(library_config::Column::LibraryId.eq(self.id.clone()))
+			.filter(library_config::Column::LibraryId.eq(self.id))
 			.one(ctx.conn.as_ref())
 			.await?
 			.ok_or(JobError::InitFailed(
@@ -197,7 +197,7 @@ impl JobExt for LibraryScanJob {
 			ctx.send_batch(vec![
 				JobProgress::msg("Failed to find library on disk").into_worker_send(),
 				CoreEvent::DiscoveredMissingLibrary(event::DiscoveredMissingLibrary {
-					id: self.id.clone(),
+					id: self.id,
 				})
 				.into_worker_send(),
 			]);
@@ -247,7 +247,7 @@ impl JobExt for LibraryScanJob {
 		output: &Self::Output,
 	) -> Result<Option<Vec<Box<dyn Executor>>>, JobError> {
 		ctx.send_core_event(CoreEvent::JobOutput(event::JobOutput {
-			id: ctx.job_id.clone(),
+			id: ctx.job_id,
 			output: CoreJobOutput::LibraryScan(output.clone()),
 		}));
 
@@ -270,8 +270,7 @@ impl JobExt for LibraryScanJob {
 				jobs.push(WrappedJob::new(ThumbnailGenerationJob {
 					options,
 					params: ThumbnailGenerationJobParams::books_in_library(
-						self.id.clone(),
-						false,
+						self.id, false,
 					),
 				}));
 			},
@@ -290,7 +289,7 @@ impl JobExt for LibraryScanJob {
 			tracing::trace!("Thumbnail color processing job should be enqueued");
 			jobs.push(
 				PlaceholderGenerationJob::new(PlaceholderGenerationJobConfig::new(
-					PlaceholderGenerationJobScope::BooksInLibrary(self.id.clone()),
+					PlaceholderGenerationJobScope::BooksInLibrary(self.id),
 					false,
 				))
 				.wrapped(),
@@ -453,7 +452,7 @@ impl JobExt for LibraryScanJob {
 								ctx.send_core_event(CoreEvent::CreatedManySeries(
 									event::CreatedManySeries {
 										count: created_series.len() as u64,
-										library_id: self.id.clone(),
+										library_id: self.id,
 									},
 								));
 							},
@@ -611,7 +610,7 @@ impl JobExt for LibraryScanJob {
 				)
 				.into_iter()
 				.map(|task| LibraryScanTask::SeriesTask {
-					id: series.id.clone(),
+					id: series.id,
 					path: series_path_str.clone(),
 					task,
 				})
@@ -636,7 +635,7 @@ impl JobExt for LibraryScanJob {
 							event::CreatedOrUpdatedManyMedia {
 								count: updated_media,
 								series_id,
-								library_id: self.id.clone(),
+								library_id: self.id,
 							},
 						)
 						.into_worker_send(),
@@ -659,7 +658,7 @@ impl JobExt for LibraryScanJob {
 							event::CreatedOrUpdatedManyMedia {
 								count: updated_media,
 								series_id,
-								library_id: self.id.clone(),
+								library_id: self.id,
 							},
 						)
 						.into_worker_send(),
@@ -678,7 +677,7 @@ impl JobExt for LibraryScanJob {
 						..
 					} = safely_build_and_insert_media(
 						MediaBuildOperation {
-							series_id: series_id.clone(),
+							series_id: series_id,
 							library_config: self.config.clone().ok_or(
 								JobError::TaskFailed(
 									"Library configuration is missing".to_string(),
@@ -697,7 +696,7 @@ impl JobExt for LibraryScanJob {
 							event::CreatedOrUpdatedManyMedia {
 								count: created_media,
 								series_id,
-								library_id: self.id.clone(),
+								library_id: self.id,
 							},
 						)
 						.into_worker_send(),
@@ -716,7 +715,7 @@ impl JobExt for LibraryScanJob {
 						..
 					} = visit_and_update_media(
 						MediaBuildOperation {
-							series_id: series_id.clone(),
+							series_id: series_id,
 							library_config: self.config.clone().ok_or(
 								JobError::TaskFailed(
 									"Library configuration is missing".to_string(),
@@ -735,7 +734,7 @@ impl JobExt for LibraryScanJob {
 							event::CreatedOrUpdatedManyMedia {
 								count: updated_media,
 								series_id,
-								library_id: self.id.clone(),
+								library_id: self.id,
 							},
 						)
 						.into_worker_send(),
@@ -815,7 +814,7 @@ async fn handle_scan_complete(
 
 	let update_result = library::Entity::update_many()
 		.col_expr(library::Column::LastScannedAt, Expr::value(now))
-		.filter(library::Column::Id.eq(job.id.clone()))
+		.filter(library::Column::Id.eq(job.id))
 		.exec(conn)
 		.await;
 

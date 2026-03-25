@@ -104,7 +104,7 @@ impl UserQuery {
 				let current_cursor = info
 					.after
 					.or_else(|| models.first().map(|m| m.id.to_string()));
-				let next_cursor = match models.last().map(|m| m.id.clone()) {
+				let next_cursor = match models.last().map(|m| m.id) {
 					Some(id) if models.len() == info.limit as usize => {
 						Some(id.to_string())
 					},

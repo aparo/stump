@@ -27,7 +27,7 @@ impl SmartListViewMutation {
 		let txn = conn.begin().await?;
 
 		// Ensure the user has access to the smart list
-		let _ = smart_list::Entity::find_by_id(user, input.list_id.clone())
+		let _ = smart_list::Entity::find_by_id(user, input.list_id)
 			.one(&txn)
 			.await?
 			.ok_or("Smart list not found".to_string())?;

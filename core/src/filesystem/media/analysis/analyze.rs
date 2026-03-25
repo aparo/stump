@@ -191,7 +191,7 @@ pub async fn safely_analyze_book(
 	}
 
 	let model = media_analysis::ActiveModel {
-		media_id: Set(book.id.clone()),
+		media_id: Set(book.id),
 		data: Set(constructed_analysis),
 		..Default::default()
 	};

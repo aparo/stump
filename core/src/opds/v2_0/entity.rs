@@ -80,7 +80,7 @@ impl OPDSPublicationEntity {
 					.to(media::Column::Id)
 					.on_condition(move |_left, _right| {
 						Condition::all()
-							.add(reading_session::Column::UserId.eq(for_user_id.clone()))
+							.add(reading_session::Column::UserId.eq(for_user_id))
 					})
 					.into(),
 			)

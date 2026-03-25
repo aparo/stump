@@ -54,7 +54,7 @@ impl BookClubSuggestionMutation {
 			notes: Set(input.notes),
 			status: Set(BookClubSuggestionStatus::Pending),
 			created_at: Set(DateTimeWithTimeZone::from(Utc::now())),
-			suggested_by_id: Set(member.id.clone()),
+			suggested_by_id: Set(member.id),
 			..Default::default()
 		};
 
@@ -133,7 +133,7 @@ impl BookClubSuggestionMutation {
 		} else {
 			let like = book_club_book_suggestion_like::ActiveModel {
 				timestamp: Set(DateTimeWithTimeZone::from(Utc::now())),
-				liked_by_id: Set(member.id.clone()),
+				liked_by_id: Set(member.id),
 				suggestion_id: Set(suggestion_id),
 				..Default::default()
 			};
@@ -171,7 +171,7 @@ impl BookClubSuggestionMutation {
 		let mut active_model = suggestion.into_active_model();
 		active_model.status = Set(status);
 		active_model.resolved_at = Set(Some(DateTimeWithTimeZone::from(Utc::now())));
-		active_model.resolved_by_id = Set(Some(member.id.clone()));
+		active_model.resolved_by_id = Set(Some(member.id));
 
 		if let Some(notes_value) = notes {
 			active_model.notes = Set(Some(notes_value));

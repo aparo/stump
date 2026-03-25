@@ -385,14 +385,14 @@ async fn get_library_by_id(
 		.ok_or(APIError::NotFound("Library not found".to_string()))?;
 
 	let series = series::Entity::find_for_user(&user)
-		.filter(series::Column::LibraryId.eq(library.id.clone()))
+		.filter(series::Column::LibraryId.eq(library.id))
 		.order_by_asc(series::Column::Name)
 		.offset(pagination.offset())
 		.limit(pagination.limit())
 		.all(ctx.conn.as_ref())
 		.await?;
 	let count = series::Entity::find_for_user(&user)
-		.filter(series::Column::LibraryId.eq(library.id.clone()))
+		.filter(series::Column::LibraryId.eq(library.id))
 		.count(ctx.conn.as_ref())
 		.await?;
 
@@ -865,7 +865,7 @@ async fn get_book_page(
 
 	let user = req.user();
 	let book = media::Entity::find_for_user(&user)
-		.filter(media::Column::Id.eq(id.clone()))
+		.filter(media::Column::Id.eq(id))
 		.one(ctx.conn.as_ref())
 		.await?
 		.ok_or(APIError::NotFound("Book not found".to_string()))?;
@@ -877,7 +877,7 @@ async fn get_book_page(
 				.filter(
 					reading_session::Column::UserId
 						.eq(user.id)
-						.and(reading_session::Column::MediaId.eq(id.clone())),
+						.and(reading_session::Column::MediaId.eq(id)),
 				)
 				.exec_with_returning(ctx.conn.as_ref())
 				.await?;
@@ -885,13 +885,13 @@ async fn get_book_page(
 			tracing::trace!(?deleted_session, "Deleted active reading session");
 
 			let started_at = deleted_session.as_ref().map(|s| s.started_at);
-			let device_id = deleted_session.as_ref().and_then(|s| s.device_id.clone());
+			let device_id = deleted_session.as_ref().and_then(|s| s.device_id);
 			let elapsed_seconds =
 				deleted_session.as_ref().and_then(|s| s.elapsed_seconds);
 
 			let active_model = finished_reading_session::ActiveModel {
 				user_id: Set(user.id),
-				media_id: Set(id.clone()),
+				media_id: Set(id),
 				device_id: Set(device_id),
 				started_at: Set(started_at.unwrap_or_else(|| Utc::now().into())),
 				elapsed_seconds: Set(elapsed_seconds),
@@ -911,7 +911,7 @@ async fn get_book_page(
 				.to_owned();
 			let active_model = reading_session::ActiveModel {
 				user_id: Set(user.id),
-				media_id: Set(id.clone()),
+				media_id: Set(id),
 				device_id: Set(None),
 				page: Set(Some(correct_page)),
 				started_at: Set(Utc::now().into()),

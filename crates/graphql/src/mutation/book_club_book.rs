@@ -42,7 +42,7 @@ impl BookClubBookMutation {
 		let active_model = match input.book {
 			BookClubBookVariant::Stored(BookClubInternalBook { id }) => {
 				book_club_book::ActiveModel {
-					id: Set(book_id.clone()),
+					id: Set(book_id),
 					position: Set(next_position),
 					book_entity_id: Set(Some(id)),
 					book_club_id: Set(book_club_id),
@@ -55,7 +55,7 @@ impl BookClubBookMutation {
 				url,
 				image_url,
 			}) => book_club_book::ActiveModel {
-				id: Set(book_id.clone()),
+				id: Set(book_id),
 				position: Set(next_position),
 				title: Set(Some(title)),
 				author: Set(Some(author)),
@@ -179,7 +179,7 @@ where
 			id: Set(Uuid::new_v4()),
 			is_locked: Set(false),
 			is_archived: Set(false),
-			book_club_book_id: Set(Some(book_id.clone())),
+			book_club_book_id: Set(Some(*book_id)),
 			title: Set(None),
 			is_pinned: Set(false),
 			created_at: Set(DateTimeWithTimeZone::from(Utc::now())),

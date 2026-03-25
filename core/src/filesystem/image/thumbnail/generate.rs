@@ -576,7 +576,7 @@ async fn get_series_thumbnail_candidate(
 	ctx: &WorkerCtx,
 ) -> Result<Option<Vec<u8>>, ThumbnailGenerateError> {
 	let Some(first_book) = media::Entity::find()
-		.filter(media::Column::SeriesId.eq(series.id.clone()))
+		.filter(media::Column::SeriesId.eq(series.id))
 		.order_by_asc(media::Column::Name)
 		.into_model::<media::MediaThumbSelect>()
 		.one(ctx.conn.as_ref())
@@ -656,9 +656,7 @@ async fn get_library_thumbnail_candidate(
 				Query::select()
 					.column(series::Column::Id)
 					.from(series::Entity)
-					.and_where(
-						Expr::col(series::Column::LibraryId).eq(library.id.clone()),
-					)
+					.and_where(Expr::col(series::Column::LibraryId).eq(library.id))
 					.order_by(series::Column::Name, Order::Asc)
 					.limit(1)
 					.to_owned(),

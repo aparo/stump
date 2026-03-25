@@ -36,7 +36,7 @@ impl ScheduledJobConfigMutation {
 			.included_library_ids
 			.iter()
 			.map(|library_id| scheduled_job_library::ActiveModel {
-				library_id: Set(library_id.clone()),
+				library_id: Set(*library_id),
 				schedule_id: Set(created_model.id),
 				..Default::default()
 			})
@@ -75,7 +75,7 @@ impl ScheduledJobConfigMutation {
 		let ids_to_remove = libraries
 			.iter()
 			.filter(|library| !input.included_library_ids.contains(&library.id))
-			.map(|library| library.id.clone())
+			.map(|library| library.id)
 			.collect::<Vec<_>>();
 
 		let ids_to_add = input

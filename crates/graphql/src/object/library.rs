@@ -69,10 +69,7 @@ impl Library {
 					Query::select()
 						.column(library_exclusion::Column::UserId)
 						.from(library_exclusion::Entity)
-						.and_where(
-							library_exclusion::Column::LibraryId
-								.eq(self.model.id.clone()),
-						)
+						.and_where(library_exclusion::Column::LibraryId.eq(self.model.id))
 						.to_owned(),
 				),
 			)
@@ -89,7 +86,7 @@ impl Library {
 		let is_favorite = loader
 			.load_one(FavoriteLibraryLoaderKey {
 				user_id: user.id,
-				library_id: self.model.id.clone(),
+				library_id: self.model.id,
 			})
 			.await?;
 
@@ -101,7 +98,7 @@ impl Library {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 
 		let record = library_scan_record::Entity::find()
-			.filter(library_scan_record::Column::LibraryId.eq(self.model.id.clone()))
+			.filter(library_scan_record::Column::LibraryId.eq(self.model.id))
 			.order_by_desc(library_scan_record::Column::Timestamp)
 			.one(conn)
 			.await?;
@@ -125,7 +122,7 @@ impl Library {
 					Query::select()
 						.column(series::Column::Id)
 						.from(series::Entity)
-						.and_where(series::Column::LibraryId.eq(self.model.id.clone()))
+						.and_where(series::Column::LibraryId.eq(self.model.id))
 						.to_owned(),
 				),
 			)
@@ -163,7 +160,7 @@ impl Library {
 				ORDER BY
 					letter ASC;
 				",
-				[self.model.id.clone().into()],
+				[self.model.id.into()],
 			))
 			.await?;
 
@@ -182,7 +179,7 @@ impl Library {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 
 		let records = library_scan_record::Entity::find()
-			.filter(library_scan_record::Column::LibraryId.eq(self.model.id.clone()))
+			.filter(library_scan_record::Column::LibraryId.eq(self.model.id))
 			.order_by_desc(library_scan_record::Column::Timestamp)
 			.all(conn)
 			.await?;
@@ -201,7 +198,7 @@ impl Library {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 
 		let models = series::ModelWithMetadata::find()
-			.filter(series::Column::LibraryId.eq(Some(self.model.id.clone())))
+			.filter(series::Column::LibraryId.eq(Some(self.model.id)))
 			// TODO: Consider allowing custom ordering?
 			.order_by_asc(series::Column::Name)
 			.apply_if(take, |query, take| query.limit(take))
@@ -233,7 +230,7 @@ impl Library {
 				ORDER BY
 					letter ASC;
 				",
-				[self.model.id.clone().into()],
+				[self.model.id.into()],
 			))
 			.await?;
 
@@ -299,7 +296,7 @@ impl Library {
 				FROM base_counts, finished_stats, active_stats;
 				",
 				[
-					self.model.id.clone().into(),
+					self.model.id.into(),
 					all_users.unwrap_or(false).into(),
 					user.id.into(),
 				],
@@ -355,9 +352,7 @@ impl Library {
 					Query::select()
 						.column(library_tag::Column::TagId)
 						.from(library_tag::Entity)
-						.and_where(
-							library_tag::Column::LibraryId.eq(self.model.id.clone()),
-						)
+						.and_where(library_tag::Column::LibraryId.eq(self.model.id))
 						.to_owned(),
 				),
 			)
@@ -423,10 +418,7 @@ async fn get_unique_metadata_fields(
 							Query::select()
 								.column(series::Column::Id)
 								.from(series::Entity)
-								.and_where(
-									series::Column::LibraryId
-										.eq(library.model.id.clone()),
-								)
+								.and_where(series::Column::LibraryId.eq(library.model.id))
 								.to_owned(),
 						),
 					)
@@ -464,10 +456,7 @@ async fn get_unique_str_list_metadata_fields(
 							Query::select()
 								.column(series::Column::Id)
 								.from(series::Entity)
-								.and_where(
-									series::Column::LibraryId
-										.eq(library.model.id.clone()),
-								)
+								.and_where(series::Column::LibraryId.eq(library.model.id))
 								.to_owned(),
 						),
 					)

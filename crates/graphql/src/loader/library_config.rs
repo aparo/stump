@@ -26,10 +26,7 @@ impl Loader<LibraryConfigLoaderKey> for LibraryConfigLoader {
 		&self,
 		keys: &[LibraryConfigLoaderKey],
 	) -> Result<HashMap<LibraryConfigLoaderKey, Self::Value>, Self::Error> {
-		let series_ids = keys
-			.iter()
-			.map(|key| key.series_id.clone())
-			.collect::<Vec<_>>();
+		let series_ids = keys.iter().map(|key| key.series_id).collect::<Vec<_>>();
 
 		let series_to_library = series::Entity::find()
 			.select_only()
@@ -42,7 +39,7 @@ impl Loader<LibraryConfigLoaderKey> for LibraryConfigLoader {
 
 		let library_ids = series_to_library
 			.iter()
-			.map(|(_, library_id)| library_id.clone())
+			.map(|(_, library_id)| *library_id)
 			.collect::<Vec<_>>();
 
 		let configs = library_config::Entity::find()
@@ -52,12 +49,7 @@ impl Loader<LibraryConfigLoaderKey> for LibraryConfigLoader {
 
 		let config_by_library = configs
 			.into_iter()
-			.filter_map(|model| {
-				model
-					.library_id
-					.clone()
-					.map(|library_id| (library_id, model))
-			})
+			.filter_map(|model| model.library_id.map(|library_id| (library_id, model)))
 			.collect::<HashMap<_, _>>();
 
 		let mut result = HashMap::new();

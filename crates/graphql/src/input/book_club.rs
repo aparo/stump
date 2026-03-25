@@ -32,7 +32,7 @@ impl CreateBookClubInput {
 			.unwrap_or_else(|| slugify!(self.name.as_str()));
 
 		let club = book_club::ActiveModel {
-			id: Set(id.clone()),
+			id: Set(id),
 			name: Set(self.name),
 			description: Set(self.description),
 			is_private: Set(self.is_private),

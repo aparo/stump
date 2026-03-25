@@ -227,7 +227,7 @@ impl UploadMutation {
 				library::Column::ThumbnailPath,
 				Expr::value(Some(path_buf.to_string_lossy().to_string())),
 			)
-			.filter(library::Column::Id.eq(library.id.clone()))
+			.filter(library::Column::Id.eq(library.id))
 			.exec(core.conn.as_ref())
 			.await?;
 
@@ -252,7 +252,7 @@ impl UploadMutation {
 		if let Err(e) = core.enqueue_job(
 			PlaceholderGenerationJob::new(PlaceholderGenerationJobConfig {
 				force_regenerate: true,
-				scope: PlaceholderGenerationJobScope::Libraries(vec![library.id.clone()]),
+				scope: PlaceholderGenerationJobScope::Libraries(vec![library.id]),
 			})
 			.wrapped(),
 		) {
@@ -323,14 +323,12 @@ impl UploadMutation {
 				series::Column::ThumbnailPath,
 				Expr::value(Some(path_buf.to_string_lossy().to_string())),
 			)
-			.filter(series::Column::Id.eq(series.series.id.clone()))
+			.filter(series::Column::Id.eq(series.series.id))
 			.exec(core.conn.as_ref())
 			.await?;
 
 		let config = library_config::Entity::find()
-			.filter(
-				library_config::Column::LibraryId.eq(series.series.library_id.clone()),
-			)
+			.filter(library_config::Column::LibraryId.eq(series.series.library_id))
 			.one(core.conn.as_ref())
 			.await?
 			.ok_or("Library config not found")?;
@@ -354,10 +352,7 @@ impl UploadMutation {
 		if let Err(e) = core.enqueue_job(
 			PlaceholderGenerationJob::new(PlaceholderGenerationJobConfig {
 				force_regenerate: true,
-				scope: PlaceholderGenerationJobScope::Series(vec![series
-					.series
-					.id
-					.clone()]),
+				scope: PlaceholderGenerationJobScope::Series(vec![series.series.id]),
 			})
 			.wrapped(),
 		) {
@@ -431,7 +426,7 @@ impl UploadMutation {
 				media::Column::ThumbnailPath,
 				Expr::value(Some(path_buf.to_string_lossy().to_string())),
 			)
-			.filter(media::Column::Id.eq(book.media.id.clone()))
+			.filter(media::Column::Id.eq(book.media.id))
 			.exec(core.conn.as_ref())
 			.await?;
 
@@ -441,7 +436,7 @@ impl UploadMutation {
 					Query::select()
 						.column(series::Column::LibraryId)
 						.from(series::Entity)
-						.and_where(series::Column::Id.eq(book.media.series_id.clone()))
+						.and_where(series::Column::Id.eq(book.media.series_id))
 						.to_owned(),
 				),
 			)
@@ -468,7 +463,7 @@ impl UploadMutation {
 		if let Err(e) = core.enqueue_job(
 			PlaceholderGenerationJob::new(PlaceholderGenerationJobConfig {
 				force_regenerate: true,
-				scope: PlaceholderGenerationJobScope::Books(vec![book.media.id.clone()]),
+				scope: PlaceholderGenerationJobScope::Books(vec![book.media.id]),
 			})
 			.wrapped(),
 		) {
@@ -527,14 +522,12 @@ impl UploadMutation {
 				series::Column::ThumbnailPath,
 				Expr::value(Some(path_buf.to_string_lossy().to_string())),
 			)
-			.filter(series::Column::Id.eq(series.series.id.clone()))
+			.filter(series::Column::Id.eq(series.series.id))
 			.exec(core.conn.as_ref())
 			.await?;
 
 		let config = library_config::Entity::find()
-			.filter(
-				library_config::Column::LibraryId.eq(series.series.library_id.clone()),
-			)
+			.filter(library_config::Column::LibraryId.eq(series.series.library_id))
 			.one(core.conn.as_ref())
 			.await?
 			.ok_or("Library config not found")?;
@@ -558,10 +551,7 @@ impl UploadMutation {
 		if let Err(e) = core.enqueue_job(
 			PlaceholderGenerationJob::new(PlaceholderGenerationJobConfig {
 				force_regenerate: true,
-				scope: PlaceholderGenerationJobScope::Series(vec![series
-					.series
-					.id
-					.clone()]),
+				scope: PlaceholderGenerationJobScope::Series(vec![series.series.id]),
 			})
 			.wrapped(),
 		) {
@@ -619,7 +609,7 @@ impl UploadMutation {
 				media::Column::ThumbnailPath,
 				Expr::value(Some(path_buf.to_string_lossy().to_string())),
 			)
-			.filter(media::Column::Id.eq(book.media.id.clone()))
+			.filter(media::Column::Id.eq(book.media.id))
 			.exec(core.conn.as_ref())
 			.await?;
 
@@ -629,7 +619,7 @@ impl UploadMutation {
 					Query::select()
 						.column(series::Column::LibraryId)
 						.from(series::Entity)
-						.and_where(series::Column::Id.eq(book.media.series_id.clone()))
+						.and_where(series::Column::Id.eq(book.media.series_id))
 						.to_owned(),
 				),
 			)
@@ -656,7 +646,7 @@ impl UploadMutation {
 		if let Err(e) = core.enqueue_job(
 			PlaceholderGenerationJob::new(PlaceholderGenerationJobConfig {
 				force_regenerate: true,
-				scope: PlaceholderGenerationJobScope::Books(vec![book.media.id.clone()]),
+				scope: PlaceholderGenerationJobScope::Books(vec![book.media.id]),
 			})
 			.wrapped(),
 		) {

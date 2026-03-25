@@ -193,7 +193,7 @@ impl LibraryMutation {
 			.ok_or("Library not found")?;
 
 		let affected_records = library_scan_record::Entity::delete_many()
-			.filter(library_scan_record::Column::LibraryId.eq(library.id.clone()))
+			.filter(library_scan_record::Column::LibraryId.eq(library.id))
 			.exec(core.conn.as_ref())
 			.await?
 			.rows_affected;
@@ -282,7 +282,7 @@ impl LibraryMutation {
 				to_link
 					.into_iter()
 					.map(|tag_id| library_tag::ActiveModel {
-						library_id: Set(created_library.id.clone()),
+						library_id: Set(created_library.id),
 						tag_id: Set(tag_id),
 						..Default::default()
 					})
@@ -299,7 +299,7 @@ impl LibraryMutation {
 
 		if scan_after_creation {
 			core.enqueue_job(LibraryScanJob::new(
-				created_library.id.clone(),
+				created_library.id,
 				created_library.path.clone(),
 				None,
 			))?;
@@ -336,7 +336,7 @@ impl LibraryMutation {
 		let series_ids: Vec<String> = series::Entity::find()
 			.select_only()
 			.column(series::Column::Id)
-			.filter(series::Column::LibraryId.eq(library.id.clone()))
+			.filter(series::Column::LibraryId.eq(library.id))
 			.into_tuple()
 			.all(&tx)
 			.await?;
@@ -428,10 +428,7 @@ impl LibraryMutation {
 					Query::select()
 						.column(library_tag::Column::TagId)
 						.from(library_tag::Entity)
-						.and_where(
-							library_tag::Column::LibraryId
-								.eq(existing_library.id.clone()),
-						)
+						.and_where(library_tag::Column::LibraryId.eq(existing_library.id))
 						.to_owned(),
 				),
 			)
@@ -448,7 +445,7 @@ impl LibraryMutation {
 
 		let _updated_config = library_config::ActiveModel {
 			id: Set(existing_config.id),
-			library_id: Set(existing_config.library_id.clone()),
+			library_id: Set(existing_config.library_id),
 			..config
 		}
 		.update(&txn)
@@ -517,9 +514,11 @@ impl LibraryMutation {
 
 				if !tags_to_disconnect.is_empty() {
 					let affected_rows = library_tag::Entity::delete_many()
-						.filter(library_tag::Column::Id.is_in(tags_to_disconnect).and(
-							library_tag::Column::LibraryId.eq(updated_library.id.clone()),
-						))
+						.filter(
+							library_tag::Column::Id.is_in(tags_to_disconnect).and(
+								library_tag::Column::LibraryId.eq(updated_library.id),
+							),
+						)
 						.exec(&txn)
 						.await?
 						.rows_affected;
@@ -527,11 +526,11 @@ impl LibraryMutation {
 				}
 
 				if !tags_to_connect.is_empty() {
-					let library_id = updated_library.id.clone();
+					let library_id = updated_library.id;
 					let to_link = tags_to_connect
 						.into_iter()
 						.map(|tag_id| library_tag::ActiveModel {
-							library_id: Set(library_id.clone()),
+							library_id: Set(library_id),
 							tag_id: Set(tag_id),
 							..Default::default()
 						})
@@ -552,7 +551,7 @@ impl LibraryMutation {
 
 		if scan_after_update {
 			core.enqueue_job(LibraryScanJob::new(
-				updated_library.id.clone(),
+				updated_library.id,
 				updated_library.path.clone(),
 				None,
 			))?;
@@ -698,7 +697,7 @@ impl LibraryMutation {
 			.ok_or("Library not found")?;
 
 		let existing_exclusions = library_exclusion::Entity::find()
-			.filter(library_exclusion::Column::LibraryId.eq(library.id.clone()))
+			.filter(library_exclusion::Column::LibraryId.eq(library.id))
 			.all(core.conn.as_ref())
 			.await?;
 
@@ -710,8 +709,8 @@ impl LibraryMutation {
 					.any(|exclusion| exclusion.user_id == **id)
 			})
 			.map(|id| library_exclusion::ActiveModel {
-				library_id: Set(library.id.clone()),
-				user_id: Set(id.clone()),
+				library_id: Set(library.id),
+				user_id: Set(*id),
 				..Default::default()
 			})
 			.collect::<Vec<_>>();
@@ -765,7 +764,7 @@ impl LibraryMutation {
 			.ok_or("Library not found")?;
 
 		library_scan_record::Entity::delete_many()
-			.filter(library_scan_record::Column::LibraryId.eq(library.id.clone()))
+			.filter(library_scan_record::Column::LibraryId.eq(library.id))
 			.exec(core.conn.as_ref())
 			.await?;
 
@@ -842,7 +841,7 @@ impl LibraryMutation {
 			.ok_or("Library not found")?;
 
 		let jobs_config = PlaceholderGenerationJob::new(PlaceholderGenerationJobConfig {
-			scope: PlaceholderGenerationJobScope::BooksInLibrary(library.id.clone()),
+			scope: PlaceholderGenerationJobScope::BooksInLibrary(library.id),
 			force_regenerate,
 		})
 		.wrapped();
@@ -870,7 +869,7 @@ impl LibraryMutation {
 			.ok_or("Library not found")?;
 
 		let series = series::Entity::find_for_user(user)
-			.filter(series::Column::LibraryId.eq(library.id.clone()))
+			.filter(series::Column::LibraryId.eq(library.id))
 			.select_only()
 			.columns(series::SeriesIdentSelect::columns())
 			.into_model::<series::SeriesIdentSelect>()
@@ -880,7 +879,7 @@ impl LibraryMutation {
 		let books = media::Entity::find()
 			.filter(
 				media::Column::SeriesId
-					.is_in(series.iter().map(|s| s.id.clone()).collect::<Vec<_>>()),
+					.is_in(series.iter().map(|s| s.id).collect::<Vec<_>>()),
 			)
 			.select_only()
 			.columns(media::MediaIdentSelect::columns())
@@ -892,8 +891,8 @@ impl LibraryMutation {
 			[library.id],
 			series
 				.iter()
-				.map(|s| s.id.clone())
-				.chain(books.iter().map(|b| b.id.clone())),
+				.map(|s| s.id)
+				.chain(books.iter().map(|b| b.id)),
 		)
 		.collect::<Vec<_>>();
 
@@ -948,7 +947,7 @@ impl LibraryMutation {
 			.ok_or("Library not found")?;
 
 		let active_model = last_library_visit::ActiveModel {
-			library_id: Set(library.id.clone()),
+			library_id: Set(library.id),
 			user_id: Set(user.id),
 			timestamp: Set(Utc::now().into()),
 			..Default::default()

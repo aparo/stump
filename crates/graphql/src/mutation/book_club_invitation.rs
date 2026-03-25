@@ -143,7 +143,7 @@ fn create_invitation_active_model(
 	let id: Uuid = Uuid::parse_str(id.as_ref()).unwrap_or_else(|_| Uuid::new_v4());
 	book_club_invitation::ActiveModel {
 		role: Set(input.role.unwrap_or(BookClubMemberRole::Member)),
-		user_id: Set(input.user_id.clone()),
+		user_id: Set(input.user_id),
 		book_club_id: Set(id),
 		..Default::default()
 	}
@@ -158,7 +158,7 @@ fn create_member_active_model(
 		id: Set(Uuid::new_v4()),
 		display_name: Set(input.display_name),
 		user_id: Set(user.id),
-		book_club_id: Set(invitation.book_club_id.clone()),
+		book_club_id: Set(invitation.book_club_id),
 		role: Set(invitation.role),
 		hide_progress: Set(false),
 		bio: Set(None),

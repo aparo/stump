@@ -98,14 +98,14 @@ impl JobExt for AnalyzeMediaJob {
 
 		let tasks = match &self.config.scope {
 			MediaAnalysisJobScope::Book(id) => {
-				vec![AnalyzeMediaTask::ProcessBook(id.clone())]
+				vec![AnalyzeMediaTask::ProcessBook(*id)]
 			},
 			MediaAnalysisJobScope::Library(id) => {
 				let books = media::Entity::find()
 					.select_only()
 					.columns(media::MediaIdentSelect::columns())
 					.inner_join(series::Entity)
-					.filter(series::Column::LibraryId.eq(id.clone()))
+					.filter(series::Column::LibraryId.eq(*id))
 					.into_model::<media::MediaIdentSelect>()
 					.all(ctx.conn.as_ref())
 					.await
@@ -120,7 +120,7 @@ impl JobExt for AnalyzeMediaJob {
 				let books = media::Entity::find()
 					.select_only()
 					.columns(media::MediaIdentSelect::columns())
-					.filter(media::Column::SeriesId.eq(id.clone()))
+					.filter(media::Column::SeriesId.eq(*id))
 					.into_model::<media::MediaIdentSelect>()
 					.all(ctx.conn.as_ref())
 					.await?;
@@ -132,7 +132,7 @@ impl JobExt for AnalyzeMediaJob {
 			},
 			MediaAnalysisJobScope::Books(ids) => ids
 				.iter()
-				.map(|id| AnalyzeMediaTask::ProcessBook(id.clone()))
+				.map(|id| AnalyzeMediaTask::ProcessBook(*id))
 				.collect(),
 		};
 
@@ -164,7 +164,7 @@ impl JobExt for AnalyzeMediaJob {
 					.column(media_metadata::Column::PageCount)
 					.left_join(media_metadata::Entity)
 					.find_also_related(media_analysis::Entity)
-					.filter(media::Column::Id.eq(id.clone()))
+					.filter(media::Column::Id.eq(id))
 					.into_model::<MediaForProcessing, media_analysis::Model>()
 					.one(ctx.conn.as_ref())
 					.await

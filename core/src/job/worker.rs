@@ -78,11 +78,9 @@ pub struct WorkerCtx {
 impl WorkerCtx {
 	/// Emit a [`CoreEvent`] to any clients listening to the server that a job has started
 	pub fn report_started(&self) {
-		let send_result =
-			self.core_event_tx
-				.send(CoreEvent::JobStarted(event::JobStarted {
-					id: self.job_id.clone(),
-				}));
+		let send_result = self
+			.core_event_tx
+			.send(CoreEvent::JobStarted(event::JobStarted { id: self.job_id }));
 		if let Err(send_error) = send_result {
 			tracing::error!(?send_error, "Failed to send started event");
 		}
@@ -91,7 +89,7 @@ impl WorkerCtx {
 	/// Emit a [`CoreEvent`] to any clients listening to the server
 	pub fn report_progress(&self, payload: JobProgress) {
 		let send_result = self.core_event_tx.send(CoreEvent::JobUpdate(JobUpdate {
-			id: self.job_id.clone(),
+			id: self.job_id,
 			payload,
 		}));
 		if let Err(send_error) = send_result {

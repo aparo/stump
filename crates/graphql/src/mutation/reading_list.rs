@@ -34,7 +34,7 @@ impl ReadingListMutation {
 		let media_ids = input.media_ids.clone();
 		let reading_list = create_reading_list_for_user_id(user_id, input, &txn).await?;
 
-		create_reading_list_items(reading_list.id.clone(), media_ids, &txn).await?;
+		create_reading_list_items(reading_list.id, media_ids, &txn).await?;
 		txn.commit().await?;
 
 		Ok(ReadingList {
@@ -103,8 +103,8 @@ async fn create_reading_list_items(
 		.enumerate()
 		.map(|(idx, media_id)| reading_list_item::ActiveModel {
 			display_order: Set(idx as i32),
-			media_id: Set(media_id.clone()),
-			reading_list_id: Set(reading_list_id.clone()),
+			media_id: Set(*media_id),
+			reading_list_id: Set(reading_list_id),
 			..Default::default()
 		})
 		.collect::<Vec<_>>();

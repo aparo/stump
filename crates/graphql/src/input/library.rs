@@ -39,7 +39,7 @@ impl CreateOrUpdateLibraryInput {
 
 		let id = Uuid::new_v4();
 		let library = library::ActiveModel {
-			id: Set(id.clone()),
+			id: Set(id),
 			name: Set(name),
 			description: Set(description),
 			path: Set(path),

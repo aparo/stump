@@ -38,7 +38,7 @@ impl BookClub {
 		let creator = book_club_member::Entity::find()
 			.filter(
 				book_club_member::Column::BookClubId
-					.eq(self.model.id.clone())
+					.eq(self.model.id)
 					.and(book_club_member::Column::Role.eq(BookClubMemberRole::Creator)),
 			)
 			.one(conn)
@@ -103,7 +103,7 @@ impl BookClub {
 	async fn invitations(&self, ctx: &Context<'_>) -> Result<Vec<BookClubInvitation>> {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 		let book_club_invitations =
-			book_club_invitation::Entity::find_for_book_club_id(self.model.id.clone())
+			book_club_invitation::Entity::find_for_book_club_id(self.model.id)
 				.into_model::<book_club_invitation::Model>()
 				.all(conn)
 				.await?;
@@ -120,7 +120,7 @@ impl BookClub {
 		let book_club_members =
 			book_club_member::Entity::find_members_accessible_to_user_for_book_club_id(
 				user,
-				self.model.id.clone(),
+				self.model.id,
 			)
 			.into_model::<book_club_member::Model>()
 			.all(conn)
@@ -139,7 +139,7 @@ impl BookClub {
 		let book_club_members =
 			book_club_member::Entity::find_members_accessible_to_user_for_book_club_id(
 				user,
-				self.model.id.clone(),
+				self.model.id,
 			)
 			.filter(book_club_member::Column::Role.eq(BookClubMemberRole::Moderator))
 			.into_model::<book_club_member::Model>()
@@ -158,7 +158,7 @@ impl BookClub {
 		let count =
 			book_club_member::Entity::find_members_accessible_to_user_for_book_club_id(
 				user,
-				self.model.id.clone(),
+				self.model.id,
 			)
 			.count(conn)
 			.await?;
@@ -173,7 +173,7 @@ impl BookClub {
 		let membership = book_club_member::Entity::find()
 			.filter(
 				book_club_member::Column::BookClubId
-					.eq(self.model.id.clone())
+					.eq(self.model.id)
 					.and(book_club_member::Column::UserId.eq(user.id)),
 			)
 			.into_model::<book_club_member::Model>()
@@ -235,7 +235,7 @@ impl BookClub {
 									sea_orm::sea_query::Expr::col(
 										book_club_book::Column::BookClubId,
 									)
-									.eq(self.model.id.clone()),
+									.eq(self.model.id),
 								)
 								.and_where(
 									sea_orm::sea_query::Expr::col(

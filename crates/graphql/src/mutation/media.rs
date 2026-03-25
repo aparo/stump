@@ -147,7 +147,7 @@ impl MediaMutation {
 			let last_insert_id =
 				favorite_media::Entity::insert(favorite_media::ActiveModel {
 					user_id: Set(user.id),
-					media_id: Set(model.media.id.clone()),
+					media_id: Set(model.media.id),
 					favorited_at: Set(DateTimeWithTimeZone::from(Utc::now())),
 				})
 				.on_conflict(OnConflict::new().do_nothing().to_owned())
@@ -160,7 +160,7 @@ impl MediaMutation {
 				.filter(
 					favorite_media::Column::UserId
 						.eq(user.id)
-						.and(favorite_media::Column::MediaId.eq(model.media.id.clone())),
+						.and(favorite_media::Column::MediaId.eq(model.media.id)),
 				)
 				.exec(core.conn.as_ref())
 				.await?
@@ -191,11 +191,7 @@ impl MediaMutation {
 			.await?
 			.ok_or("Book not found")?;
 
-		let series_id = book
-			.media
-			.series_id
-			.clone()
-			.ok_or("Series ID not set on book")?;
+		let series_id = book.media.series_id.ok_or("Series ID not set on book")?;
 
 		let (_library, config) = library::Entity::find_for_user(user)
 			.filter(
@@ -260,11 +256,11 @@ impl MediaMutation {
 		let updated_metadata = if let Some(existing) = model.metadata {
 			let mut active_model = input.into_active_model();
 			active_model.id = Set(existing.id);
-			active_model.media_id = Set(Some(model.media.id.clone()));
+			active_model.media_id = Set(Some(model.media.id));
 			active_model.update(conn).await?
 		} else {
 			let mut active_model = input.into_active_model();
-			active_model.media_id = Set(Some(model.media.id.clone()));
+			active_model.media_id = Set(Some(model.media.id));
 			active_model.insert(conn).await?
 		};
 
@@ -290,7 +286,7 @@ impl MediaMutation {
 		let affected_sessions = reading_session::Entity::delete_many()
 			.filter(
 				reading_session::Column::MediaId
-					.eq(model.media.id.clone())
+					.eq(model.media.id)
 					.and(reading_session::Column::UserId.eq(user.id)),
 			)
 			.exec(conn)
@@ -322,7 +318,7 @@ impl MediaMutation {
 		let affected_sessions = finished_reading_session::Entity::delete_many()
 			.filter(
 				finished_reading_session::Column::MediaId
-					.eq(model.media.id.clone())
+					.eq(model.media.id)
 					.and(finished_reading_session::Column::UserId.eq(user.id)),
 			)
 			.exec(conn)

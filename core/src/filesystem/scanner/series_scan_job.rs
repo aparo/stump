@@ -67,7 +67,7 @@ impl SeriesScanJob {
 	}
 
 	fn library_id(&self) -> Option<Uuid> {
-		self.config.as_ref().and_then(|c| c.library_id.clone())
+		self.config.as_ref().and_then(|c| c.library_id)
 	}
 }
 
@@ -124,7 +124,7 @@ impl JobExt for SeriesScanJob {
 						Query::select()
 							.column(series::Column::LibraryId)
 							.from(series::Entity)
-							.and_where(series::Column::Id.eq(self.id.clone()))
+							.and_where(series::Column::Id.eq(self.id))
 							.and_where(series::Column::Path.eq(self.path.clone()))
 							.to_owned(),
 					),
@@ -220,7 +220,7 @@ impl JobExt for SeriesScanJob {
 		output: &Self::Output,
 	) -> Result<Option<Vec<Box<dyn Executor>>>, JobError> {
 		ctx.send_core_event(CoreEvent::JobOutput(event::JobOutput {
-			id: ctx.job_id.clone(),
+			id: ctx.job_id,
 			output: CoreJobOutput::SeriesScan(output.clone()),
 		}));
 		let did_create = output.created_media > 0;
@@ -237,10 +237,7 @@ impl JobExt for SeriesScanJob {
 				tracing::trace!("Thumbnail generation job should be enqueued");
 				jobs.push(WrappedJob::new(ThumbnailGenerationJob {
 					options,
-					params: ThumbnailGenerationJobParams::books_in_series(
-						self.id.clone(),
-						false,
-					),
+					params: ThumbnailGenerationJobParams::books_in_series(self.id, false),
 				}));
 			},
 			_ => {
@@ -258,7 +255,7 @@ impl JobExt for SeriesScanJob {
 			tracing::trace!("Thumbnail color processing job should be enqueued");
 			jobs.push(
 				PlaceholderGenerationJob::new(PlaceholderGenerationJobConfig::new(
-					PlaceholderGenerationJobScope::BooksInLibrary(self.id.clone()),
+					PlaceholderGenerationJobScope::BooksInLibrary(self.id),
 					false,
 				))
 				.wrapped(),
@@ -292,7 +289,7 @@ impl JobExt for SeriesScanJob {
 						CoreEvent::CreatedOrUpdatedManyMedia(
 							event::CreatedOrUpdatedManyMedia {
 								count: updated_media,
-								series_id: self.id.clone(),
+								series_id: self.id,
 								library_id,
 							},
 						)
@@ -315,7 +312,7 @@ impl JobExt for SeriesScanJob {
 						CoreEvent::CreatedOrUpdatedManyMedia(
 							event::CreatedOrUpdatedManyMedia {
 								count: updated_media,
-								series_id: self.id.clone(),
+								series_id: self.id,
 								library_id,
 							},
 						)
@@ -335,7 +332,7 @@ impl JobExt for SeriesScanJob {
 					..
 				} = safely_build_and_insert_media(
 					MediaBuildOperation {
-						series_id: self.id.clone(),
+						series_id: self.id,
 						library_config: self.config.clone().ok_or(
 							JobError::TaskFailed(
 								"Library configuration is missing".to_string(),
@@ -353,7 +350,7 @@ impl JobExt for SeriesScanJob {
 						CoreEvent::CreatedOrUpdatedManyMedia(
 							event::CreatedOrUpdatedManyMedia {
 								count: created_media,
-								series_id: self.id.clone(),
+								series_id: self.id,
 								library_id,
 							},
 						)
@@ -373,7 +370,7 @@ impl JobExt for SeriesScanJob {
 					..
 				} = visit_and_update_media(
 					MediaBuildOperation {
-						series_id: self.id.clone(),
+						series_id: self.id,
 						library_config: self.config.clone().ok_or(
 							JobError::TaskFailed(
 								"Library configuration is missing".to_string(),
@@ -391,7 +388,7 @@ impl JobExt for SeriesScanJob {
 						CoreEvent::CreatedOrUpdatedManyMedia(
 							event::CreatedOrUpdatedManyMedia {
 								count: updated_media,
-								series_id: self.id.clone(),
+								series_id: self.id,
 								library_id,
 							},
 						)

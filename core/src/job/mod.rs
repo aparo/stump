@@ -164,7 +164,7 @@ pub trait JobExt: Send + Sync + Sized + Clone + 'static {
 	) -> Result<Option<WorkingState<Self::Output, Self::Task>>, JobError> {
 		let conn = ctx.conn.as_ref();
 
-		let stored_job = job::Entity::find_by_id(ctx.job_id.clone())
+		let stored_job = job::Entity::find_by_id(ctx.job_id)
 			.select_only()
 			.column(job::Column::SaveState)
 			.into_model::<job::SaveStateSelect>()
@@ -209,7 +209,7 @@ pub trait JobExt: Send + Sync + Sized + Clone + 'static {
 		logs: &Vec<JobExecuteLog>,
 	) -> Result<(), JobError> {
 		let conn = ctx.conn.as_ref();
-		let job_id = ctx.job_id.clone();
+		let job_id = ctx.job_id;
 
 		let json_output = serde_json::to_value(output)
 			.map_err(|error| JobError::StateSaveFailed(error.to_string()))?;
@@ -229,7 +229,7 @@ pub trait JobExt: Send + Sync + Sized + Clone + 'static {
 			.map_err(|error| JobError::StateSaveFailed(error.to_string()))?;
 
 		let affected_rows = job::Entity::update_many()
-			.filter(job::Column::Id.eq(job_id.clone()))
+			.filter(job::Column::Id.eq(job_id))
 			.col_expr(job::Column::SaveState, Expr::value(Some(save_state)))
 			.exec(conn)
 			.await?

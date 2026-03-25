@@ -48,12 +48,12 @@ async fn group_by_series(
 	let mut series_map: HashMap<Uuid, Vec<Media>> = HashMap::new();
 
 	books.into_iter().for_each(|book| {
-		if let Some(series_id) = book.model.series_id.clone() {
-			series_ids.insert(series_id.clone());
+		if let Some(series_id) = book.model.series_id {
+			series_ids.insert(series_id);
 		}
 
 		series_map
-			.entry(book.model.series_id.clone().unwrap_or_default())
+			.entry(book.model.series_id.unwrap_or_default())
 			.or_default()
 			.push(book);
 	});
@@ -90,7 +90,7 @@ async fn group_by_library(
 	let mut series_map: HashMap<Uuid, Vec<Media>> = HashMap::new();
 
 	books.into_iter().for_each(|book| {
-		if let Some(series_id) = book.model.series_id.clone() {
+		if let Some(series_id) = book.model.series_id {
 			series_ids.insert(series_id);
 		}
 
@@ -117,9 +117,7 @@ async fn group_by_library(
 		});
 
 	let library_models = library::Entity::find_for_user(user)
-		.filter(
-			library::Column::Id.is_in(library_to_series_ids.keys().map(|m| m.clone())),
-		)
+		.filter(library::Column::Id.is_in(library_to_series_ids.keys().copied()))
 		.into_model::<library::Model>()
 		.all(txn)
 		.await?;
@@ -127,7 +125,7 @@ async fn group_by_library(
 	let items: Vec<SmartListGroupedItem> = library_models
 		.into_iter()
 		.map(|library_model| {
-			let library_id = library_model.id.clone();
+			let library_id = library_model.id;
 			let series_ids = library_to_series_ids
 				.get(&library_id)
 				.cloned()

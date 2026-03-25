@@ -24,7 +24,7 @@ impl UserLoginActivity {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 
 		let first = user::Entity::find()
-			.filter(user::Column::Id.eq(self.model.user_id.clone()))
+			.filter(user::Column::Id.eq(self.model.user_id))
 			.one(conn)
 			.await?
 			.unwrap();

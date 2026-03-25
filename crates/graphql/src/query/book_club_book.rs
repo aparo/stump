@@ -29,7 +29,7 @@ impl BookClubBookQuery {
 			// doesn't exist, what matters is if the user cannot access it we don't return details
 			let accessible = media::Entity::apply_for_user(
 				user,
-				media::Entity::find().filter(media::Column::Id.eq(entity_id.clone())),
+				media::Entity::find().filter(media::Column::Id.eq(*entity_id)),
 			)
 			.select_only()
 			.column(media::Column::Id)

@@ -28,7 +28,7 @@ pub struct BookClubBook {
 
 impl From<book_club_book::Model> for BookClubBook {
 	fn from(book_club_book: book_club_book::Model) -> Self {
-		match book_club_book.book_entity_id.clone() {
+		match book_club_book.book_entity_id {
 			Some(book_entity_id) => Self {
 				value: BookClubBookVariant::Stored(BookClubInternalBook {
 					id: book_entity_id,
@@ -57,7 +57,7 @@ impl BookClubBook {
 
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 
-		let model = media::ModelWithMetadata::find_by_id(book_entity_id.clone())
+		let model = media::ModelWithMetadata::find_by_id(*book_entity_id)
 			.into_model::<media::ModelWithMetadata>()
 			.one(conn)
 			.await?;

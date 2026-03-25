@@ -220,7 +220,7 @@ impl UserMutation {
 		if let Some(ar) = input.age_restriction {
 			let created_restriction = age_restriction::ActiveModel {
 				id: NotSet,
-				user_id: Set(user_model.id.clone()),
+				user_id: Set(user_model.id),
 				age: Set(ar.age),
 				restrict_on_unset: Set(ar.restrict_on_unset),
 			}
@@ -235,7 +235,7 @@ impl UserMutation {
 
 		let user_preferences = models::entity::user_preferences::ActiveModel {
 			id: NotSet,
-			user_id: Set(Some(user_model.id.clone())),
+			user_id: Set(Some(user_model.id)),
 			..Default::default()
 		};
 

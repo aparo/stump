@@ -33,25 +33,18 @@ impl Loader<ActiveReadingSessionLoaderKey> for ReadingSessionLoader {
 		&self,
 		keys: &[ActiveReadingSessionLoaderKey],
 	) -> Result<HashMap<ActiveReadingSessionLoaderKey, Self::Value>, Self::Error> {
-		let progresses = reading_session::Entity::find()
-			.filter(
-				reading_session::Column::MediaId
-					.is_in(
-						keys.iter()
-							.map(|key| key.media_id.clone())
-							.collect::<Vec<_>>(),
-					)
-					.and(
-						reading_session::Column::UserId.is_in(
-							keys.iter()
-								.map(|key| key.user_id.clone())
-								.collect::<Vec<_>>(),
-						),
-					),
-			)
-			.into_model::<reading_session::Model>()
-			.all(self.conn.as_ref())
-			.await?;
+		let progresses =
+			reading_session::Entity::find()
+				.filter(
+					reading_session::Column::MediaId
+						.is_in(keys.iter().map(|key| key.media_id).collect::<Vec<_>>())
+						.and(reading_session::Column::UserId.is_in(
+							keys.iter().map(|key| key.user_id).collect::<Vec<_>>(),
+						)),
+				)
+				.into_model::<reading_session::Model>()
+				.all(self.conn.as_ref())
+				.await?;
 
 		let mut result = HashMap::new();
 
@@ -88,25 +81,18 @@ impl Loader<FinishedReadingSessionLoaderKey> for ReadingSessionLoader {
 		&self,
 		keys: &[FinishedReadingSessionLoaderKey],
 	) -> Result<HashMap<FinishedReadingSessionLoaderKey, Self::Value>, Self::Error> {
-		let progresses = finished_reading_session::Entity::find()
-			.filter(
-				finished_reading_session::Column::MediaId
-					.is_in(
-						keys.iter()
-							.map(|key| key.media_id.clone())
-							.collect::<Vec<_>>(),
-					)
-					.and(
-						finished_reading_session::Column::UserId.is_in(
-							keys.iter()
-								.map(|key| key.user_id.clone())
-								.collect::<Vec<_>>(),
-						),
-					),
-			)
-			.into_model::<finished_reading_session::Model>()
-			.all(self.conn.as_ref())
-			.await?;
+		let progresses =
+			finished_reading_session::Entity::find()
+				.filter(
+					finished_reading_session::Column::MediaId
+						.is_in(keys.iter().map(|key| key.media_id).collect::<Vec<_>>())
+						.and(finished_reading_session::Column::UserId.is_in(
+							keys.iter().map(|key| key.user_id).collect::<Vec<_>>(),
+						)),
+				)
+				.into_model::<finished_reading_session::Model>()
+				.all(self.conn.as_ref())
+				.await?;
 
 		let mut result = HashMap::new();
 

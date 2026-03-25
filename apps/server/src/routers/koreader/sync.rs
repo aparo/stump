@@ -153,7 +153,7 @@ async fn get_progress(
 					.timestamp_millis() as u64,
 			),
 			device: active_session.device.as_ref().map(|d| d.name.clone()),
-			device_id: active_session.device.as_ref().map(|d| d.id.clone()),
+			device_id: active_session.device.as_ref().map(|d| d.id),
 			progress: active_session
 				.model
 				.koreader_progress
@@ -164,7 +164,7 @@ async fn get_progress(
 			percentage: Some(1.0),
 			timestamp: Some(finished_session.model.completed_at.timestamp_millis() as u64),
 			device: finished_session.device.as_ref().map(|d| d.name.clone()),
-			device_id: finished_session.device.as_ref().map(|d| d.id.clone()),
+			device_id: finished_session.device.as_ref().map(|d| d.id),
 			..Default::default()
 		},
 		_ => GetProgressResponse {
@@ -255,7 +255,7 @@ async fn put_progress(
 
 	let _device_record = registered_reading_device::Entity::insert(
 		registered_reading_device::ActiveModel {
-			id: Set(device_id.clone()),
+			id: Set(device_id),
 			name: Set(device.clone()),
 			..Default::default()
 		},
@@ -281,7 +281,7 @@ async fn put_progress(
 		let finished_session = finished_reading_session::ActiveModel {
 			user_id: Set(user.id),
 			media_id: Set(book.id),
-			device_id: Set(Some(device_id.clone())),
+			device_id: Set(Some(device_id)),
 			started_at: Set(started_at.unwrap_or_else(|| chrono::Utc::now().into())),
 			..Default::default()
 		};
@@ -292,7 +292,7 @@ async fn put_progress(
 		let mut active_model = reading_session::ActiveModel {
 			user_id: Set(user.id),
 			media_id: Set(book.id),
-			device_id: Set(Some(device_id.clone())),
+			device_id: Set(Some(device_id)),
 			percentage_completed: Set(Some(percentage as f64)),
 			koreader_progress: Set(Some(progress.clone())),
 			started_at: Set(existing_active_session

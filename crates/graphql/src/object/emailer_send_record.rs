@@ -36,7 +36,7 @@ impl EmailerSendRecord {
 	async fn sent_by(&self, ctx: &Context<'_>) -> Result<Option<User>> {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 
-		if let Some(id) = self.model.sent_by_user_id.clone() {
+		if let Some(id) = self.model.sent_by_user_id {
 			let user = user::Entity::find_by_id(id)
 				.one(conn)
 				.await?
@@ -82,7 +82,7 @@ impl AttachmentMeta {
 			return Ok(None);
 		};
 
-		let model = media::ModelWithMetadata::find_by_id_for_user(media_id.clone(), user)
+		let model = media::ModelWithMetadata::find_by_id_for_user(*media_id, user)
 			.into_model::<media::ModelWithMetadata>()
 			.one(conn)
 			.await?;

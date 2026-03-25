@@ -861,9 +861,7 @@ where
 		})
 		.apply_if(
 			(order_by_entity == *"reading_sessions").then_some(()),
-			|query, _| {
-				query.filter(reading_session::Column::UserId.eq(for_user_id.clone()))
-			},
+			|query, _| query.filter(reading_session::Column::UserId.eq(for_user_id)),
 		)
 		.limit(take)
 		.offset(pagination.offset())
@@ -876,9 +874,7 @@ where
 		.apply_if(condition, |query, condition| query.filter(condition))
 		.apply_if(
 			(order_by_entity == *"reading_sessions").then_some(()),
-			|query, _| {
-				query.filter(reading_session::Column::UserId.eq(for_user_id.clone()))
-			},
+			|query, _| query.filter(reading_session::Column::UserId.eq(for_user_id)),
 		)
 		.count(ctx.conn.as_ref())
 		.await?;
@@ -1328,7 +1324,7 @@ async fn update_book_progression(
 		.map_err(|_| APIError::BadRequest("Invalid book ID".to_string()))?;
 
 	let book = media::Entity::find_for_user(&user)
-		.filter(media::Column::Id.eq(id.clone()))
+		.filter(media::Column::Id.eq(id))
 		.one(conn)
 		.await?
 		.ok_or(APIError::NotFound("Book not found".to_string()))?;

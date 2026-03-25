@@ -75,16 +75,16 @@ impl OPDSPublication {
 
 		for book in &books {
 			series_to_books_map
-				.entry(book.series.id.clone())
+				.entry(book.series.id)
 				.or_insert_with(Vec::new)
-				.push(book.media.id.clone());
-			series_id_to_series_map.insert(book.series.id.clone(), book.series.clone());
+				.push(book.media.id);
+			series_id_to_series_map.insert(book.series.id, book.series.clone());
 		}
 
 		let mut all_positions = HashMap::new();
 		for (series_id, book_ids) in &series_to_books_map {
 			let positions = conn
-				.book_positions_in_series(book_ids.clone(), series_id.clone())
+				.book_positions_in_series(book_ids.clone(), *series_id)
 				.await?;
 			all_positions.extend(positions);
 		}
@@ -173,7 +173,7 @@ impl OPDSPublication {
 		let description = metadata.summary.clone();
 
 		let analysis_data = media_analysis::Entity::find()
-			.filter(media_analysis::Column::MediaId.eq(book.media.id.clone()))
+			.filter(media_analysis::Column::MediaId.eq(book.media.id))
 			.one(conn)
 			.await?;
 

@@ -47,16 +47,14 @@ impl BookClubDiscussionMutation {
 		let member = get_member_for_user(discussion.book_club_id, user, conn).await?;
 
 		if let Some(ref parent_id) = input.parent_message_id {
-			let parent =
-				book_club_discussion_message::Entity::find_by_id(parent_id.clone())
-					.filter(
-						book_club_discussion_message::Column::DiscussionId
-							.eq(discussion.id),
-					)
-					.filter(book_club_discussion_message::Column::DeletedAt.is_null())
-					.one(conn)
-					.await?
-					.ok_or("Parent message not found or deleted")?;
+			let parent = book_club_discussion_message::Entity::find_by_id(*parent_id)
+				.filter(
+					book_club_discussion_message::Column::DiscussionId.eq(discussion.id),
+				)
+				.filter(book_club_discussion_message::Column::DeletedAt.is_null())
+				.one(conn)
+				.await?
+				.ok_or("Parent message not found or deleted")?;
 
 			if parent.parent_message_id.is_some() {
 				return Err(
@@ -68,7 +66,7 @@ impl BookClubDiscussionMutation {
 
 		if let Some(ref reply_to_id) = input.reply_to_message_id {
 			let reply_exists =
-				book_club_discussion_message::Entity::find_by_id(reply_to_id.clone())
+				book_club_discussion_message::Entity::find_by_id(*reply_to_id)
 					.filter(
 						book_club_discussion_message::Column::DiscussionId
 							.eq(discussion.id),
@@ -89,10 +87,10 @@ impl BookClubDiscussionMutation {
 			timestamp: Set(DateTimeWithTimeZone::from(Utc::now())),
 			parent_message_id: Set(input.parent_message_id),
 			reply_to_message_id: Set(input.reply_to_message_id),
-			discussion_id: Set(discussion.id.clone()),
-			member_id: Set(Some(member.id.clone())),
+			discussion_id: Set(discussion.id),
+			member_id: Set(Some(member.id)),
 			is_pinned_message: Set(false),
-			book_club_id: Set(discussion.book_club_id.clone()),
+			book_club_id: Set(discussion.book_club_id),
 			..Default::default()
 		};
 
@@ -272,7 +270,7 @@ impl BookClubDiscussionMutation {
 				created_at: Set(DateTimeWithTimeZone::from(Utc::now())),
 				emoji: Set(emoji),
 				custom_emoji_id: Set(custom_emoji_id),
-				member_id: Set(member.id.clone()),
+				member_id: Set(member.id),
 				message_id: Set(message_id),
 			};
 			reaction.insert(conn).await?;
@@ -399,8 +397,7 @@ impl BookClubDiscussionMutation {
 			is_archived: Set(false),
 			book_club_book_id: Set(input
 				.book_club_book_id
-				.map(|id| Uuid::parse_str(&id).ok())
-				.flatten()),
+				.and_then(|id| Uuid::parse_str(&id).ok())),
 			title: Set(input.title),
 			is_pinned: Set(input.is_pinned),
 			created_at: Set(DateTimeWithTimeZone::from(Utc::now())),

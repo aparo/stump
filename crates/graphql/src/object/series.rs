@@ -57,7 +57,7 @@ impl Series {
 		let is_favorite = loader
 			.load_one(FavoriteSeriesLoaderKey {
 				user_id: user.id,
-				series_id: self.model.id.clone(),
+				series_id: self.model.id,
 			})
 			.await?;
 
@@ -81,7 +81,7 @@ impl Series {
 	async fn library(&self, ctx: &Context<'_>) -> Result<Library> {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 
-		let library_id = self.model.library_id.clone().ok_or("Library ID not set")?;
+		let library_id = self.model.library_id.ok_or("Library ID not set")?;
 		let model = library::Entity::find()
 			.filter(library::Column::Id.eq(library_id))
 			.one(conn)
@@ -103,7 +103,7 @@ impl Series {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 
 		let models = media::ModelWithMetadata::find_for_user(user)
-			.filter(media::Column::SeriesId.eq(self.model.id.clone()))
+			.filter(media::Column::SeriesId.eq(self.model.id))
 			// TODO: Consider allowing custom ordering?
 			.order_by_asc(media::Column::Name)
 			.apply_if(take, |query, take| query.limit(take))
@@ -117,7 +117,7 @@ impl Series {
 
 	async fn media_count(&self, ctx: &Context<'_>) -> Result<i64> {
 		let loader = ctx.data::<DataLoader<SeriesCountLoader>>()?;
-		let series_id = self.model.id.clone();
+		let series_id = self.model.id;
 		let media_count = loader.load_one(series_id).await?.unwrap_or(0i64);
 
 		Ok(media_count)
@@ -143,7 +143,7 @@ impl Series {
 				ORDER BY
 					letter ASC;
 				",
-				[self.model.id.clone().into()],
+				[self.model.id.into()],
 			))
 			.await?;
 
@@ -190,13 +190,12 @@ impl Series {
 					.from(finished_reading_session::Column::MediaId)
 					.to(media::Column::Id)
 					.on_condition(move |_left, _right| {
-						Condition::all().add(
-							finished_reading_session::Column::UserId.eq(user_id.clone()),
-						)
+						Condition::all()
+							.add(finished_reading_session::Column::UserId.eq(user_id))
 					})
 					.into(),
 			)
-			.filter(media::Column::SeriesId.eq(self.model.id.clone()))
+			.filter(media::Column::SeriesId.eq(self.model.id))
 			// We only want to consider media that the user hasn't started or is in progress
 			.filter(
 				Condition::any()
@@ -270,7 +269,7 @@ impl Series {
 		let finished_count = finished_loader
 			.load_one(FinishedCountLoaderKey {
 				user_id: user.id,
-				series_id: self.model.id.clone(),
+				series_id: self.model.id,
 			})
 			.await?
 			.unwrap_or(0i64);
@@ -280,7 +279,7 @@ impl Series {
 
 	async fn unread_count(&self, ctx: &Context<'_>) -> Result<i64> {
 		let (media_count, finished_count) =
-			get_series_progress(ctx, self.model.id.clone()).await?;
+			get_series_progress(ctx, self.model.id).await?;
 
 		Ok(std::cmp::max(0, media_count - finished_count))
 	}
@@ -294,7 +293,7 @@ impl Series {
 					Query::select()
 						.column(series_tag::Column::TagId)
 						.from(series_tag::Entity)
-						.and_where(series_tag::Column::SeriesId.eq(self.model.id.clone()))
+						.and_where(series_tag::Column::SeriesId.eq(self.model.id))
 						.to_owned(),
 				),
 			)
@@ -370,7 +369,7 @@ impl Series {
 				FROM base_counts, finished_stats, active_stats;
 				",
 				[
-					self.model.id.clone().into(),
+					self.model.id.into(),
 					all_users.unwrap_or(false).into(),
 					user.id.into(),
 				],

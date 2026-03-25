@@ -31,10 +31,9 @@ impl BookClubDiscussion {
 
 		let core = ctx.data::<CoreContext>()?;
 
-		let book =
-			models::entity::book_club_book::Entity::find_by_id(book_club_book_id.clone())
-				.one(core.conn.as_ref())
-				.await?;
+		let book = models::entity::book_club_book::Entity::find_by_id(*book_club_book_id)
+			.one(core.conn.as_ref())
+			.await?;
 
 		Ok(book.map(BookClubBook::from))
 	}
@@ -48,7 +47,7 @@ impl BookClubDiscussion {
 		if let Some(ref book_id) = self.model.book_club_book_id {
 			let core = ctx.data::<CoreContext>()?;
 			if let Some(book) =
-				models::entity::book_club_book::Entity::find_by_id(book_id.clone())
+				models::entity::book_club_book::Entity::find_by_id(*book_id)
 					.one(core.conn.as_ref())
 					.await?
 			{
@@ -57,12 +56,12 @@ impl BookClubDiscussion {
 				}
 
 				if let Some(ref book_entity_id) = book.book_entity_id {
-					let record = media::Entity::find_by_id(book_entity_id.clone())
+					let record = media::Entity::find_by_id(*book_entity_id)
 						.left_join(media_metadata::Entity)
 						.select_only()
 						.column(media::Column::Name)
 						.column(media_metadata::Column::Title)
-						.filter(media::Column::Id.eq(book_entity_id.clone()))
+						.filter(media::Column::Id.eq(*book_entity_id))
 						.into_tuple::<(Option<String>, Option<String>)>()
 						.one(core.conn.as_ref())
 						.await?;

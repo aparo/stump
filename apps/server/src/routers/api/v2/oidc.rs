@@ -302,7 +302,7 @@ async fn callback(
 	};
 
 	let auth_user = user::LoginUser::find()
-		.filter(user::Column::Id.eq(user_model.id.clone()))
+		.filter(user::Column::Id.eq(user_model.id))
 		.into_model::<user::LoginUser>()
 		.one(ctx.conn.as_ref())
 		.await?
@@ -340,7 +340,7 @@ async fn callback(
 		}
 	} else {
 		session
-			.insert(SESSION_USER_KEY, user_model.id.clone())
+			.insert(SESSION_USER_KEY, user_model.id)
 			.await
 			.map_err(|e| {
 				tracing::error!("Failed to create session: {:?}", e);

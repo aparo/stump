@@ -65,11 +65,11 @@ impl MediaBuilder {
 		let generated = self.build()?;
 		Ok(BuiltMedia {
 			media: media::ActiveModel {
-				id: Set(media.media.id.clone()),
+				id: Set(media.media.id),
 				..generated.media
 			},
 			metadata: generated.metadata.map(|meta| media_metadata::ActiveModel {
-				media_id: Set(Some(media.media.id.clone())),
+				media_id: Set(Some(media.media.id)),
 				..meta
 			}),
 		})

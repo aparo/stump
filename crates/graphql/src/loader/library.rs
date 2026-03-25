@@ -37,8 +37,8 @@ impl Loader<LibraryLoaderKey> for LibraryLoader {
 		let mut result = HashMap::new();
 
 		for library in library_list {
-			let library_id = library.id.clone();
-			result.insert(library_id.clone(), Library::from(library));
+			let library_id = library.id;
+			result.insert(library_id, Library::from(library));
 		}
 
 		Ok(result)

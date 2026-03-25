@@ -98,7 +98,7 @@ async fn get_library_thumbnail_handler(
 	}
 
 	let first_series = series::Entity::find_for_user(&user)
-		.filter(series::Column::LibraryId.eq(library.id.clone()))
+		.filter(series::Column::LibraryId.eq(library.id))
 		.order_by_asc(series::Column::Name)
 		.into_model::<series::SeriesThumbSelect>()
 		.one(ctx.conn.as_ref())
@@ -106,7 +106,7 @@ async fn get_library_thumbnail_handler(
 
 	let first_book = if let Some(ref series) = first_series {
 		media::Entity::find_for_user(&user)
-			.filter(media::Column::SeriesId.eq(series.id.clone()))
+			.filter(media::Column::SeriesId.eq(series.id))
 			.order_by_asc(media::Column::Name)
 			.into_model::<media::MediaThumbSelect>()
 			.one(ctx.conn.as_ref())

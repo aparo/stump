@@ -29,7 +29,7 @@ impl BookClubMember {
 		let core = ctx.data::<CoreContext>()?;
 		let service = ctx.data::<ServiceContext>()?;
 		let user_avatar_path: Option<String> =
-			user::Entity::find_by_id(self.model.user_id.clone())
+			user::Entity::find_by_id(self.model.user_id)
 				.select_only()
 				.column(user::Column::AvatarPath)
 				.into_tuple()
@@ -54,7 +54,7 @@ impl BookClubMember {
 
 		let core = ctx.data::<CoreContext>()?;
 
-		let user_username: String = user::Entity::find_by_id(self.model.user_id.clone())
+		let user_username: String = user::Entity::find_by_id(self.model.user_id)
 			.select_only()
 			.column(user::Column::Username)
 			.into_tuple()
@@ -67,7 +67,7 @@ impl BookClubMember {
 
 	async fn user(&self, ctx: &Context<'_>) -> Result<User> {
 		let core = ctx.data::<CoreContext>()?;
-		let model = user::Entity::find_by_id(self.model.user_id.clone())
+		let model = user::Entity::find_by_id(self.model.user_id)
 			.one(core.conn.as_ref())
 			.await?
 			.ok_or_else(|| async_graphql::Error::new("User not found"))?;

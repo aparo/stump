@@ -37,8 +37,8 @@ impl Loader<SeriesLoaderKey> for SeriesLoader {
 		let mut result = HashMap::new();
 
 		for series in series_list {
-			let series_id = series.series.id.clone();
-			result.insert(series_id.clone(), Series::from(series));
+			let series_id = series.series.id;
+			result.insert(series_id, Series::from(series));
 		}
 
 		Ok(result)

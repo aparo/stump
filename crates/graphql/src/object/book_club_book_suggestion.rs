@@ -39,7 +39,7 @@ impl BookClubBookSuggestion {
 		let core = ctx.data::<CoreContext>()?;
 
 		if let Some(ref resolved_by_id) = self.model.resolved_by_id {
-			let member = book_club_member::Entity::find_by_id(resolved_by_id.clone())
+			let member = book_club_member::Entity::find_by_id(*resolved_by_id)
 				.one(core.conn.as_ref())
 				.await?;
 

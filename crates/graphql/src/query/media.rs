@@ -51,7 +51,7 @@ pub fn add_sessions_join_for_filter(
 
 	if should_join_sessions {
 		let user_id = user.id;
-		let user_id_cpy = user_id.clone();
+		let user_id_cpy = user_id;
 		query
 			.join_rev(
 				JoinType::LeftJoin,
@@ -59,8 +59,7 @@ pub fn add_sessions_join_for_filter(
 					.from(reading_session::Column::MediaId)
 					.to(media::Column::Id)
 					.on_condition(move |_left, _right| {
-						Condition::all()
-							.add(reading_session::Column::UserId.eq(user_id.clone()))
+						Condition::all().add(reading_session::Column::UserId.eq(user_id))
 					})
 					.into(),
 			)
@@ -70,10 +69,8 @@ pub fn add_sessions_join_for_filter(
 					.from(finished_reading_session::Column::MediaId)
 					.to(media::Column::Id)
 					.on_condition(move |_left, _right| {
-						Condition::all().add(
-							finished_reading_session::Column::UserId
-								.eq(user_id_cpy.clone()),
-						)
+						Condition::all()
+							.add(finished_reading_session::Column::UserId.eq(user_id_cpy))
 					})
 					.into(),
 			)
@@ -329,8 +326,7 @@ impl MediaQuery {
 					.from(reading_session::Column::MediaId)
 					.to(media::Column::Id)
 					.on_condition(move |_left, _right| {
-						Condition::all()
-							.add(reading_session::Column::UserId.eq(user_id.clone()))
+						Condition::all().add(reading_session::Column::UserId.eq(user_id))
 					})
 					.into(),
 			)
@@ -538,7 +534,7 @@ impl MediaQuery {
 				LIMIT $2
 				OFFSET $3
 				"#,
-				[user_id.clone().into(), limit.into(), offset.into()],
+				[user_id.into(), limit.into(), offset.into()],
 			))
 			.all(conn)
 			.await?;
@@ -562,7 +558,7 @@ impl MediaQuery {
 			.await?;
 
 		for model in models {
-			media_map.insert(model.media.id.clone(), model);
+			media_map.insert(model.media.id, model);
 		}
 
 		// Note: The requery likely lost original order, so manually reorder

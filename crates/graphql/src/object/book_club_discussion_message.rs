@@ -39,7 +39,7 @@ impl BookClubDiscussionMessage {
 		let core = ctx.data::<CoreContext>()?;
 
 		if let Some(ref member_id) = self.model.member_id {
-			let member = book_club_member::Entity::find_by_id(member_id.clone())
+			let member = book_club_member::Entity::find_by_id(*member_id)
 				.one(core.conn.as_ref())
 				.await?;
 
@@ -134,10 +134,9 @@ impl BookClubDiscussionMessage {
 
 		let core = ctx.data::<CoreContext>()?;
 
-		let message =
-			book_club_discussion_message::Entity::find_by_id(reply_to_id.clone())
-				.one(core.conn.as_ref())
-				.await?;
+		let message = book_club_discussion_message::Entity::find_by_id(*reply_to_id)
+			.one(core.conn.as_ref())
+			.await?;
 
 		Ok(message.map(BookClubDiscussionMessage::from))
 	}

@@ -175,17 +175,17 @@ impl JobExt for ThumbnailGenerationJob {
 					.select_only()
 					.columns(media::MediaThumbSelect::columns())
 					.inner_join(series::Entity)
-					.filter(series::Column::LibraryId.eq(id.clone()))
+					.filter(series::Column::LibraryId.eq(*id))
 					.apply_if(truthy_thumb_filter, |query, f| query.filter(f))
 					.into_model::<media::MediaThumbSelect>()
 					.all(ctx.conn.as_ref())
 					.await
 					.map_err(|e| JobError::InitFailed(e.to_string()))?;
-				let media_ids = books.iter().map(|m| m.id.clone()).collect::<Vec<_>>();
+				let media_ids = books.iter().map(|m| m.id).collect::<Vec<_>>();
 
 				let series_ids = books
 					.iter()
-					.map(|m| m.series_id.clone())
+					.map(|m| m.series_id)
 					.collect::<std::collections::HashSet<_>>() // Unique
 					.into_iter()
 					.collect::<Vec<_>>();
@@ -201,7 +201,7 @@ impl JobExt for ThumbnailGenerationJob {
 
 				let library_ids = series
 					.iter()
-					.filter_map(|s| s.library_id.clone())
+					.filter_map(|s| s.library_id)
 					.collect::<std::collections::HashSet<_>>() // Unique
 					.into_iter()
 					.collect::<Vec<_>>();
@@ -216,7 +216,7 @@ impl JobExt for ThumbnailGenerationJob {
 				let books = media::Entity::find()
 					.select_only()
 					.columns(media::MediaThumbSelect::columns())
-					.filter(media::Column::SeriesId.eq(id.clone()))
+					.filter(media::Column::SeriesId.eq(*id))
 					.apply_if(truthy_thumb_filter, |query, f| query.filter(f))
 					.into_model::<media::MediaIdentSelect>()
 					.all(ctx.conn.as_ref())
@@ -227,7 +227,7 @@ impl JobExt for ThumbnailGenerationJob {
 
 				ThumbnailGenerationInit {
 					media_ids,
-					series_ids: vec![id.clone()],
+					series_ids: vec![*id],
 					library_ids: vec![],
 				}
 			},

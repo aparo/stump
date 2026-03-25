@@ -29,11 +29,8 @@ impl Loader<PageDimensionLoaderKey> for MediaAnalysisLoader {
 	) -> Result<HashMap<PageDimensionLoaderKey, Self::Value>, Self::Error> {
 		let analysis_records = media_analysis::Entity::find()
 			.filter(
-				media_analysis::Column::MediaId.is_in(
-					keys.iter()
-						.map(|key| key.media_id.clone())
-						.collect::<Vec<_>>(),
-				),
+				media_analysis::Column::MediaId
+					.is_in(keys.iter().map(|key| key.media_id).collect::<Vec<_>>()),
 			)
 			.all(self.conn.as_ref())
 			.await?;

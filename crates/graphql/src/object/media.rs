@@ -72,7 +72,7 @@ impl Media {
 		}
 
 		let model = media::MediaIdentSelect {
-			id: self.model.id.clone(),
+			id: self.model.id,
 			path: self.model.path.clone(),
 		};
 
@@ -87,7 +87,7 @@ impl Media {
 		let is_favorite = loader
 			.load_one(FavoriteMediaLoaderKey {
 				user_id: user.id,
-				media_id: self.model.id.clone(),
+				media_id: self.model.id,
 			})
 			.await?;
 
@@ -97,7 +97,7 @@ impl Media {
 	/// The tags associated with the media
 	async fn tags(&self, ctx: &Context<'_>) -> Result<Vec<Tag>> {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
-		let model = tag::Entity::find_for_media_id(self.model.id.clone())
+		let model = tag::Entity::find_for_media_id(self.model.id)
 			.all(conn)
 			.await?;
 		Ok(model.into_iter().map(Tag::from).collect())
@@ -107,7 +107,7 @@ impl Media {
 	async fn series(&self, ctx: &Context<'_>) -> Result<Series> {
 		let loader = ctx.data::<DataLoader<SeriesLoader>>()?;
 
-		let series_id = self.model.series_id.clone().ok_or("Series ID not set")?;
+		let series_id = self.model.series_id.ok_or("Series ID not set")?;
 
 		let series = loader
 			.load_one(series_id)
@@ -120,7 +120,7 @@ impl Media {
 	async fn library_id(&self, ctx: &Context<'_>) -> Result<String> {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 
-		let series_id = self.model.series_id.clone().ok_or("Series ID not set")?;
+		let series_id = self.model.series_id.ok_or("Series ID not set")?;
 		let id: String = library::Entity::find()
 			.select_only()
 			.column(library::Column::Id)
@@ -144,7 +144,7 @@ impl Media {
 	async fn library(&self, ctx: &Context<'_>) -> Result<Library> {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 
-		let series_id = self.model.series_id.clone().ok_or("Series ID not set")?;
+		let series_id = self.model.series_id.ok_or("Series ID not set")?;
 		let model = library::Entity::find()
 			.filter(
 				library::Column::Id.in_subquery(
@@ -164,7 +164,7 @@ impl Media {
 
 	async fn library_config(&self, ctx: &Context<'_>) -> Result<LibraryConfig> {
 		let loader = ctx.data::<DataLoader<LibraryConfigLoader>>()?;
-		let series_id = self.model.series_id.clone().ok_or("Series ID not set")?;
+		let series_id = self.model.series_id.ok_or("Series ID not set")?;
 
 		loader
 			.load_one(LibraryConfigLoaderKey { series_id })
@@ -180,7 +180,7 @@ impl Media {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 
 		let model = media_analysis::Entity::find()
-			.filter(media_analysis::Column::MediaId.eq(self.model.id.clone()))
+			.filter(media_analysis::Column::MediaId.eq(self.model.id))
 			.one(conn)
 			.await?;
 
@@ -203,7 +203,7 @@ impl Media {
 			None => {
 				let page_dimension = loader
 					.load_one(PageDimensionLoaderKey {
-						media_id: self.model.id.clone(),
+						media_id: self.model.id,
 					})
 					.await?;
 				page_dimension.map(|dim| (dim.width, dim.height))
@@ -239,7 +239,7 @@ impl Media {
 		let progress = loader
 			.load_one(ActiveReadingSessionLoaderKey {
 				user_id: user.id,
-				media_id: self.model.id.clone(),
+				media_id: self.model.id,
 			})
 			.await?;
 
@@ -257,7 +257,7 @@ impl Media {
 		let history = loader
 			.load_one(FinishedReadingSessionLoaderKey {
 				user_id: user.id,
-				media_id: self.model.id.clone(),
+				media_id: self.model.id,
 			})
 			.await?
 			.unwrap_or_default();
@@ -279,7 +279,7 @@ impl Media {
 			position: i32,
 		}
 
-		let series_id = self.model.series_id.clone().ok_or("Series ID not set")?;
+		let series_id = self.model.series_id.ok_or("Series ID not set")?;
 
 		let position = PositionResult::find_by_statement(Statement::from_sql_and_values(
 			DatabaseBackend::Sqlite,
@@ -298,7 +298,7 @@ impl Media {
             ) ranked
             WHERE id = ?
             "#,
-			[series_id.into(), self.model.id.clone().into()],
+			[series_id.into(), self.model.id.into()],
 		))
 		.one(conn)
 		.await?
@@ -326,22 +326,23 @@ impl Media {
 		};
 
 		let mut cursor = media::ModelWithMetadata::find_for_user(user)
-			.filter(media::Column::SeriesId.eq(self.model.series_id.clone()))
+			.filter(media::Column::SeriesId.eq(self.model.series_id))
 			.cursor_by(media::Column::Name);
 
 		let after = match pagination.after.clone() {
 			Some(after) if after != self.model.id.to_string() => {
-				let media =
-					media::Entity::find_for_user(user)
-						.select_only()
-						.column(media::Column::Name)
-						.filter(media::Column::Id.eq(after).and(
-							media::Column::SeriesId.eq(self.model.series_id.clone()),
-						))
-						.into_model::<media::MediaNameCmpSelect>()
-						.one(conn)
-						.await?
-						.ok_or("Cursor not found")?;
+				let media = media::Entity::find_for_user(user)
+					.select_only()
+					.column(media::Column::Name)
+					.filter(
+						media::Column::Id
+							.eq(after)
+							.and(media::Column::SeriesId.eq(self.model.series_id)),
+					)
+					.into_model::<media::MediaNameCmpSelect>()
+					.one(conn)
+					.await?
+					.ok_or("Cursor not found")?;
 				media.name
 			},
 			_ => self.model.name.clone(),
@@ -356,7 +357,7 @@ impl Media {
 		let current_cursor = pagination
 			.after
 			.or_else(|| next.first().map(|m| m.media.id.clone().to_string()));
-		let next_cursor = match next.last().map(|m| m.media.id.clone()) {
+		let next_cursor = match next.last().map(|m| m.media.id) {
 			Some(id) if next.len() == pagination.limit as usize => Some(id.to_string()),
 			_ => None,
 		};
@@ -386,7 +387,7 @@ impl Media {
 					Query::select()
 						.column(series::Column::LibraryId)
 						.from(series::Entity)
-						.and_where(series::Column::Id.eq(self.model.series_id.clone()))
+						.and_where(series::Column::Id.eq(self.model.series_id))
 						.to_owned(),
 				),
 			)

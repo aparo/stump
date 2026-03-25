@@ -86,7 +86,7 @@ impl SeriesMutation {
 			let last_insert_id =
 				favorite_series::Entity::insert(favorite_series::ActiveModel {
 					user_id: Set(user.id),
-					series_id: Set(model.series.id.clone()),
+					series_id: Set(model.series.id),
 					favorited_at: Set(DateTimeWithTimeZone::from(Utc::now())),
 				})
 				.on_conflict(OnConflict::new().do_nothing().to_owned())
@@ -95,14 +95,15 @@ impl SeriesMutation {
 				.last_insert_id;
 			tracing::debug!(?last_insert_id, "Added favorite series");
 		} else {
-			let affected_rows =
-				favorite_series::Entity::delete_many()
-					.filter(favorite_series::Column::UserId.eq(user.id).and(
-						favorite_series::Column::SeriesId.eq(model.series.id.clone()),
-					))
-					.exec(core.conn.as_ref())
-					.await?
-					.rows_affected;
+			let affected_rows = favorite_series::Entity::delete_many()
+				.filter(
+					favorite_series::Column::UserId
+						.eq(user.id)
+						.and(favorite_series::Column::SeriesId.eq(model.series.id)),
+				)
+				.exec(core.conn.as_ref())
+				.await?
+				.rows_affected;
 			tracing::debug!(?affected_rows, "Removed favorite series");
 		}
 
@@ -128,7 +129,7 @@ impl SeriesMutation {
 			.one(core.conn.as_ref())
 			.await?
 			.ok_or("Series not found")?;
-		let series_id = series.series.id.clone();
+		let series_id = series.series.id;
 
 		let (_library, config) = library::Entity::find_for_user(user)
 			.filter(
@@ -197,7 +198,7 @@ impl SeriesMutation {
 			.ok_or("Series not found")?;
 
 		let mut active_model = input.into_active_model();
-		active_model.series_id = Set(model.series.id.clone());
+		active_model.series_id = Set(model.series.id);
 
 		let updated_metadata = if model.metadata.is_some() {
 			active_model.update(conn).await?
@@ -254,9 +255,7 @@ impl SeriesMutation {
 						Query::select()
 							.column(media::Column::Id)
 							.from(media::Entity)
-							.and_where(
-								media::Column::SeriesId.eq(model.series.id.clone()),
-							)
+							.and_where(media::Column::SeriesId.eq(model.series.id))
 							.to_owned(),
 					),
 				)
@@ -339,7 +338,7 @@ async fn set_series_completed(
 		.select_only()
 		.column(media::Column::Id)
 		.filter(
-			media::Column::SeriesId.eq(series.series.id.clone()).and(
+			media::Column::SeriesId.eq(series.series.id).and(
 				media::Column::Id.in_subquery(
 					Query::select()
 						.column(finished_reading_session::Column::MediaId)
@@ -367,7 +366,7 @@ async fn set_series_completed(
 					Query::select()
 						.column(media::Column::Id)
 						.from(media::Entity)
-						.and_where(media::Column::SeriesId.eq(series.series.id.clone()))
+						.and_where(media::Column::SeriesId.eq(series.series.id))
 						.to_owned(),
 				),
 			),
@@ -417,7 +416,7 @@ async fn unset_series_completed(
 					Query::select()
 						.column(media::Column::Id)
 						.from(media::Entity)
-						.and_where(media::Column::SeriesId.eq(series.series.id.clone()))
+						.and_where(media::Column::SeriesId.eq(series.series.id))
 						.to_owned(),
 				),
 			),

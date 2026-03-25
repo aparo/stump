@@ -134,7 +134,7 @@ impl Epub {
 		ctx: &Context<'_>,
 	) -> Result<Vec<media_annotation::Model>> {
 		let user_id = ctx.data::<AuthContext>()?.id();
-		let media_id = self.media_id.clone();
+		let media_id = self.media_id;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 
 		let sessions = media_annotation::Entity::find()
@@ -153,7 +153,7 @@ impl Epub {
 		// 	return Err("Media ID not set".into());
 		// }
 
-		let id = self.media_id.clone();
+		let id = self.media_id;
 
 		Ok(bookmark::Entity::find_for_user_and_media_id(user, id)
 			.into_model::<bookmark::Model>()
@@ -167,7 +167,7 @@ impl Epub {
 	async fn media(&self, ctx: &Context<'_>) -> Result<Media> {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 
-		let model = media::ModelWithMetadata::find_by_id(self.media_id.clone())
+		let model = media::ModelWithMetadata::find_by_id(self.media_id)
 			.into_model::<media::ModelWithMetadata>()
 			.one(conn)
 			.await?
