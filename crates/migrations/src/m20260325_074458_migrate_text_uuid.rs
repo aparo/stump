@@ -17,483 +17,90 @@ impl MigrationTrait for Migration {
 			return Ok(());
 		}
 		if manager.get_database_backend() == DatabaseBackend::Postgres {
-			manager
-				.alter_table(
-					Table::alter()
-						.table(AgeRestrictions::Table)
-						.modify_column(ColumnDef::new(AgeRestrictions::UserId).uuid())
-						.to_owned(),
-				)
-				.await?;
-
-			manager
-				.alter_table(
-					Table::alter()
-						.table(ApiKeys::Table)
-						.modify_column(ColumnDef::new(ApiKeys::UserId).uuid())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(BookClubBookSuggestionLikes::Table)
-						.modify_column(
-							ColumnDef::new(BookClubBookSuggestionLikes::LikedById).uuid(),
-						)
-						.modify_column(
-							ColumnDef::new(BookClubBookSuggestionLikes::SuggestionId)
-								.uuid(),
-						)
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(BookClubBookSuggestions::Table)
-						.modify_column(ColumnDef::new(BookClubBookSuggestions::Id).uuid())
-						.modify_column(
-							ColumnDef::new(BookClubBookSuggestions::SuggestedById).uuid(),
-						)
-						.modify_column(
-							ColumnDef::new(BookClubBookSuggestions::BookId)
-								.uuid()
-								.null(),
-						)
-						.to_owned(),
-				)
-				.await?;
-
-			manager
-				.alter_table(
-					Table::alter()
-						.table(BookClubBooks::Table)
-						.modify_column(ColumnDef::new(BookClubBooks::Id).uuid())
-						.modify_column(ColumnDef::new(BookClubBooks::BookClubId).uuid())
-						.modify_column(
-							ColumnDef::new(BookClubBooks::BookEntityId).uuid().null(),
-						)
-						.to_owned(),
-				)
-				.await?;
-
-			manager
-				.alter_table(
-					Table::alter()
-						.table(BookClubDiscussionMessageReactions::Table)
-						.modify_column(
-							ColumnDef::new(BookClubDiscussionMessageReactions::Id).uuid(),
-						)
-						.modify_column(
-							ColumnDef::new(BookClubDiscussionMessageReactions::MemberId)
-								.uuid(),
-						)
-						.modify_column(
-							ColumnDef::new(BookClubDiscussionMessageReactions::MessageId)
-								.uuid(),
-						)
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(BookClubDiscussionMessage::Table)
-						.modify_column(
-							ColumnDef::new(BookClubDiscussionMessage::Id).uuid(),
-						)
-						.modify_column(
-							ColumnDef::new(BookClubDiscussionMessage::ParentMessageId)
-								.uuid()
-								.null(),
-						)
-						.modify_column(
-							ColumnDef::new(BookClubDiscussionMessage::ReplyToMessageId)
-								.uuid()
-								.null(),
-						)
-						.modify_column(
-							ColumnDef::new(BookClubDiscussionMessage::DiscussionId)
-								.uuid(),
-						)
-						.modify_column(
-							ColumnDef::new(BookClubDiscussionMessage::BookClubId).uuid(),
-						)
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(BookClubDiscussions::Table)
-						.modify_column(ColumnDef::new(BookClubDiscussions::Id).uuid())
-						.modify_column(
-							ColumnDef::new(BookClubDiscussions::BookClubBookId)
-								.uuid()
-								.null(),
-						)
-						.modify_column(
-							ColumnDef::new(BookClubDiscussions::BookClubId).uuid(),
-						)
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(BookClubInvitations::Table)
-						.modify_column(ColumnDef::new(BookClubInvitations::Id).uuid())
-						.modify_column(
-							ColumnDef::new(BookClubInvitations::BookClubId).uuid(),
-						)
-						.modify_column(ColumnDef::new(BookClubInvitations::UserId).uuid())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(BookClubMemberFavoriteBooks::Table)
-						.modify_column(
-							ColumnDef::new(BookClubMemberFavoriteBooks::Id).uuid(),
-						)
-						.modify_column(
-							ColumnDef::new(BookClubMemberFavoriteBooks::MemberId).uuid(),
-						)
-						.modify_column(
-							ColumnDef::new(BookClubMemberFavoriteBooks::BookId)
-								.uuid()
-								.null(),
-						)
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(BookClubMembers::Table)
-						.modify_column(ColumnDef::new(BookClubMembers::Id).uuid())
-						.modify_column(ColumnDef::new(BookClubMembers::UserId).uuid())
-						.modify_column(ColumnDef::new(BookClubMembers::BookClubId).uuid())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(BookClubs::Table)
-						.modify_column(ColumnDef::new(BookClubs::Id).uuid())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(Bookmarks::Table)
-						.modify_column(ColumnDef::new(Bookmarks::Id).uuid())
-						.modify_column(ColumnDef::new(Bookmarks::MediaId).uuid())
-						.modify_column(ColumnDef::new(Bookmarks::UserId).uuid())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(CustomEmojis::Table)
-						.modify_column(ColumnDef::new(CustomEmojis::Id).uuid())
-						.modify_column(ColumnDef::new(CustomEmojis::CreatedById).uuid())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(EmailerSendRecords::Table)
-						.modify_column(
-							ColumnDef::new(EmailerSendRecords::SentByUserId)
-								.uuid()
-								.null(),
-						)
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(FavoriteLibraries::Table)
-						.modify_column(ColumnDef::new(FavoriteLibraries::UserId).uuid())
-						.modify_column(
-							ColumnDef::new(FavoriteLibraries::LibraryId).uuid(),
-						)
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(FavoriteMedia::Table)
-						.modify_column(ColumnDef::new(FavoriteMedia::UserId).uuid())
-						.modify_column(ColumnDef::new(FavoriteMedia::MediaId).uuid())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(FavoriteSeries::Table)
-						.modify_column(ColumnDef::new(FavoriteSeries::UserId).uuid())
-						.modify_column(ColumnDef::new(FavoriteSeries::SeriesId).uuid())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(FinishedReadingSessions::Table)
-						.modify_column(
-							ColumnDef::new(FinishedReadingSessions::UserId).uuid(),
-						)
-						.modify_column(
-							ColumnDef::new(FinishedReadingSessions::MediaId).uuid(),
-						)
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(Jobs::Table)
-						.modify_column(ColumnDef::new(Jobs::Id).uuid())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(LastLibraryVisits::Table)
-						.modify_column(ColumnDef::new(LastLibraryVisits::UserId).uuid())
-						.modify_column(
-							ColumnDef::new(LastLibraryVisits::LibraryId).uuid(),
-						)
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(LibraryConfigs::Table)
-						.modify_column(
-							ColumnDef::new(LibraryConfigs::LibraryId).uuid().null(),
-						)
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(LibraryExclusions::Table)
-						.modify_column(ColumnDef::new(LibraryExclusions::UserId).uuid())
-						.modify_column(
-							ColumnDef::new(LibraryExclusions::LibraryId).uuid(),
-						)
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(LibraryScanRecords::Table)
-						.modify_column(
-							ColumnDef::new(LibraryScanRecords::LibraryId).uuid().null(),
-						)
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(LibraryTags::Table)
-						.modify_column(
-							ColumnDef::new(LibraryTags::LibraryId).uuid().null(),
-						)
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(Libraries::Table)
-						.modify_column(ColumnDef::new(Libraries::Id).uuid())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(Logs::Table)
-						.modify_column(ColumnDef::new(Logs::JobId).uuid().null())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(MediaAnalysis::Table)
-						.modify_column(ColumnDef::new(MediaAnalysis::MediaId).uuid())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(MediaAnnotations::Table)
-						.modify_column(ColumnDef::new(MediaAnnotations::Id).uuid())
-						.modify_column(ColumnDef::new(MediaAnnotations::MediaId).uuid())
-						.modify_column(ColumnDef::new(MediaAnnotations::UserId).uuid())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(MediaMetadata::Table)
-						.modify_column(ColumnDef::new(MediaMetadata::MediaId).uuid())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(MediaTags::Table)
-						.modify_column(ColumnDef::new(MediaMetadata::MediaId).uuid())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(Media::Table)
-						.modify_column(ColumnDef::new(Media::Id).uuid())
-						.modify_column(ColumnDef::new(Media::SeriesId).uuid().null())
-						.to_owned(),
-				)
-				.await?;
-			// ReadingListItem
-			// ReadingListRule
-			// ReadingList
-
-			manager
-				.alter_table(
-					Table::alter()
-						.table(ReadingSessions::Table)
-						.modify_column(ColumnDef::new(ReadingSessions::MediaId).uuid())
-						.modify_column(ColumnDef::new(ReadingSessions::UserId).uuid())
-						.modify_column(
-							ColumnDef::new(ReadingSessions::DeviceId).uuid().null(),
-						)
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(RefreshTokens::Table)
-						.modify_column(ColumnDef::new(RefreshTokens::UserId).uuid())
-						.to_owned(),
-				)
-				.await?;
-
-			manager
-				.alter_table(
-					Table::alter()
-						.table(SeriesMetadata::Table)
-						.modify_column(ColumnDef::new(SeriesMetadata::SeriesId).uuid())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(SeriesTags::Table)
-						.modify_column(ColumnDef::new(SeriesTags::SeriesId).uuid())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(Series::Table)
-						.modify_column(ColumnDef::new(Series::Id).uuid())
-						.modify_column(ColumnDef::new(Series::LibraryId).uuid().null())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(Sessions::Table)
-						.modify_column(ColumnDef::new(Sessions::UserId).uuid())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(SmartListAccessRules::Table)
-						.modify_column(
-							ColumnDef::new(SmartListAccessRules::UserId).uuid(),
-						)
-						.modify_column(
-							ColumnDef::new(SmartListAccessRules::SmartListId).uuid(),
-						)
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(SmartListViews::Table)
-						.modify_column(ColumnDef::new(SmartListViews::Id).uuid())
-						.modify_column(ColumnDef::new(SmartListViews::ListId).uuid())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(SmartLists::Table)
-						.modify_column(ColumnDef::new(SmartLists::Id).uuid())
-						.modify_column(ColumnDef::new(SmartLists::CreatorId).uuid())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(UserLoginActivity::Table)
-						.modify_column(ColumnDef::new(UserLoginActivity::UserId).uuid())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(UserPreferences::Table)
-						.modify_column(
-							ColumnDef::new(UserPreferences::UserId).uuid().null(),
-						)
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(Users::Table)
-						.modify_column(ColumnDef::new(Users::Id).uuid())
-						.to_owned(),
-				)
-				.await?;
+			let sql = r#"
+				ALTER TABLE "users" ALTER COLUMN "id" TYPE UUID USING "id"::uuid;
+				ALTER TABLE "libraries" ALTER COLUMN "id" TYPE UUID USING "id"::uuid;
+				ALTER TABLE "series" ALTER COLUMN "id" TYPE UUID USING "id"::uuid;
+				ALTER TABLE "series" ALTER COLUMN "library_id" TYPE UUID USING "library_id"::uuid;
+				ALTER TABLE "media" ALTER COLUMN "series_id" TYPE UUID USING "series_id"::uuid;
+				ALTER TABLE "media" ALTER COLUMN "id" TYPE UUID USING "id"::uuid;
+				ALTER TABLE "jobs" ALTER COLUMN "id" TYPE UUID USING "id"::uuid;
+				ALTER TABLE "age_restrictions" ALTER COLUMN "user_id" TYPE UUID USING "user_id"::uuid;
+				ALTER TABLE "api_keys" ALTER COLUMN "user_id" TYPE UUID USING "user_id"::uuid;
+				ALTER TABLE "book_club_book_suggestion_likes" ALTER COLUMN "liked_by_id" TYPE UUID USING "liked_by_id"::uuid;
+				ALTER TABLE "book_club_book_suggestion_likes" ALTER COLUMN "suggestion_id" TYPE UUID USING "suggestion_id"::uuid;
+				ALTER TABLE "book_club_book_suggestions" ALTER COLUMN "id" TYPE UUID USING "id"::uuid;
+				ALTER TABLE "book_club_book_suggestions" ALTER COLUMN "suggested_by_id" TYPE UUID USING "suggested_by_id"::uuid;
+				ALTER TABLE "book_club_book_suggestions" ALTER COLUMN "book_id" TYPE UUID USING "book_id"::uuid;
+				ALTER TABLE "book_club_books" ALTER COLUMN "id" TYPE UUID USING "id"::uuid;
+				ALTER TABLE "book_club_books" ALTER COLUMN "book_club_id" TYPE UUID USING "book_club_id"::uuid;
+				ALTER TABLE "book_club_books" ALTER COLUMN "book_entity_id" TYPE UUID USING "book_entity_id"::uuid;
+				ALTER TABLE "book_club_discussion_message_reactions" ALTER COLUMN "id" TYPE UUID USING "id"::uuid;
+				ALTER TABLE "book_club_discussion_message_reactions" ALTER COLUMN "member_id" TYPE UUID USING "member_id"::uuid;
+				ALTER TABLE "book_club_discussion_message_reactions" ALTER COLUMN "message_id" TYPE UUID USING "message_id"::uuid;
+				ALTER TABLE "book_club_discussion_message" ALTER COLUMN "id" TYPE UUID USING "id"::uuid;
+				ALTER TABLE "book_club_discussion_message" ALTER COLUMN "parent_message_id" TYPE UUID USING "parent_message_id"::uuid;
+				ALTER TABLE "book_club_discussion_message" ALTER COLUMN "reply_to_message_id" TYPE UUID USING "reply_to_message_id"::uuid;
+				ALTER TABLE "book_club_discussion_message" ALTER COLUMN "discussion_id" TYPE UUID USING "discussion_id"::uuid;
+				ALTER TABLE "book_club_discussion_message" ALTER COLUMN "book_club_id" TYPE UUID USING "book_club_id"::uuid;
+				ALTER TABLE "book_club_discussions" ALTER COLUMN "id" TYPE UUID USING "id"::uuid;
+				ALTER TABLE "book_club_discussions" ALTER COLUMN "book_club_book_id" TYPE UUID USING "book_club_book_id"::uuid;
+				ALTER TABLE "book_club_discussions" ALTER COLUMN "book_club_id" TYPE UUID USING "book_club_id"::uuid;
+				ALTER TABLE "book_club_invitations" ALTER COLUMN "id" TYPE UUID USING "id"::uuid;
+				ALTER TABLE "book_club_invitations" ALTER COLUMN "book_club_id" TYPE UUID USING "book_club_id"::uuid;
+				ALTER TABLE "book_club_invitations" ALTER COLUMN "user_id" TYPE UUID USING "user_id"::uuid;
+				ALTER TABLE "book_club_member_favorite_books" ALTER COLUMN "id" TYPE UUID USING "id"::uuid;
+				ALTER TABLE "book_club_member_favorite_books" ALTER COLUMN "member_id" TYPE UUID USING "member_id"::uuid;
+				ALTER TABLE "book_club_member_favorite_books" ALTER COLUMN "book_id" TYPE UUID USING "book_id"::uuid;
+				ALTER TABLE "book_club_members" ALTER COLUMN "id" TYPE UUID USING "id"::uuid;
+				ALTER TABLE "book_club_members" ALTER COLUMN "user_id" TYPE UUID USING "user_id"::uuid;
+				ALTER TABLE "book_club_members" ALTER COLUMN "book_club_id" TYPE UUID USING "book_club_id"::uuid;
+				ALTER TABLE "book_clubs" ALTER COLUMN "id" TYPE UUID USING "id"::uuid;
+				ALTER TABLE "bookmarks" ALTER COLUMN "id" TYPE UUID USING "id"::uuid;
+				ALTER TABLE "bookmarks" ALTER COLUMN "media_id" TYPE UUID USING "media_id"::uuid;
+				ALTER TABLE "bookmarks" ALTER COLUMN "user_id" TYPE UUID USING "user_id"::uuid;
+				ALTER TABLE "custom_emojis" ALTER COLUMN "id" TYPE UUID USING "id"::uuid;
+				ALTER TABLE "custom_emojis" ALTER COLUMN "created_by_id" TYPE UUID USING "created_by_id"::uuid;
+				ALTER TABLE "emailer_send_records" ALTER COLUMN "sent_by_user_id" TYPE UUID USING "sent_by_user_id"::uuid;
+				ALTER TABLE "favorite_libraries" ALTER COLUMN "library_id" TYPE UUID USING "library_id"::uuid;
+				ALTER TABLE "favorite_libraries" ALTER COLUMN "user_id" TYPE UUID USING "user_id"::uuid;
+				ALTER TABLE "favorite_media" ALTER COLUMN "user_id" TYPE UUID USING "user_id"::uuid;
+				ALTER TABLE "favorite_media" ALTER COLUMN "media_id" TYPE UUID USING "media_id"::uuid;
+				ALTER TABLE "favorite_series" ALTER COLUMN "user_id" TYPE UUID USING "user_id"::uuid;
+				ALTER TABLE "favorite_series" ALTER COLUMN "series_id" TYPE UUID USING "series_id"::uuid;
+				ALTER TABLE "finished_reading_sessions" ALTER COLUMN "user_id" TYPE UUID USING "user_id"::uuid;
+				ALTER TABLE "finished_reading_sessions" ALTER COLUMN "media_id" TYPE UUID USING "media_id"::uuid;
+				ALTER TABLE "last_library_visits" ALTER COLUMN "user_id" TYPE UUID USING "user_id"::uuid;
+				ALTER TABLE "last_library_visits" ALTER COLUMN "library_id" TYPE UUID USING "library_id"::uuid;
+				ALTER TABLE "library_configs" ALTER COLUMN "library_id" TYPE UUID USING "library_id"::uuid;
+				ALTER TABLE "library_exclusions" ALTER COLUMN "user_id" TYPE UUID USING "user_id"::uuid;
+				ALTER TABLE "library_exclusions" ALTER COLUMN "library_id" TYPE UUID USING "library_id"::uuid;
+				ALTER TABLE "library_scan_records" ALTER COLUMN "library_id" TYPE UUID USING "library_id"::uuid;
+				ALTER TABLE "library_tags" ALTER COLUMN "library_id" TYPE UUID USING "library_id"::uuid;
+				ALTER TABLE "logs" ALTER COLUMN "job_id" TYPE UUID USING "job_id"::uuid;
+				ALTER TABLE "media_analysis" ALTER COLUMN "media_id" TYPE UUID USING "media_id"::uuid;
+				ALTER TABLE "media_annotations" ALTER COLUMN "id" TYPE UUID USING "id"::uuid;
+				ALTER TABLE "media_annotations" ALTER COLUMN "media_id" TYPE UUID USING "media_id"::uuid;
+				ALTER TABLE "media_annotations" ALTER COLUMN "user_id" TYPE UUID USING "user_id"::uuid;
+				ALTER TABLE "media_metadata" ALTER COLUMN "media_id" TYPE UUID USING "media_id"::uuid;
+				ALTER TABLE "media_tags" ALTER COLUMN "media_id" TYPE UUID USING "media_id"::uuid;
+				ALTER TABLE "reading_sessions" ALTER COLUMN "media_id" TYPE UUID USING "media_id"::uuid;
+				ALTER TABLE "reading_sessions" ALTER COLUMN "user_id" TYPE UUID USING "user_id"::uuid;
+				ALTER TABLE "reading_sessions" ALTER COLUMN "device_id" TYPE UUID USING "device_id"::uuid;
+				ALTER TABLE "refresh_tokens" ALTER COLUMN "user_id" TYPE UUID USING "user_id"::uuid;
+				ALTER TABLE "series_metadata" ALTER COLUMN "series_id" TYPE UUID USING "series_id"::uuid;
+				ALTER TABLE "series_tags" ALTER COLUMN "series_id" TYPE UUID USING "series_id"::uuid;
+				ALTER TABLE "sessions" ALTER COLUMN "user_id" TYPE UUID USING "user_id"::uuid;
+				ALTER TABLE "smart_list_access_rules" ALTER COLUMN "user_id" TYPE UUID USING "user_id"::uuid;
+				ALTER TABLE "smart_list_access_rules" ALTER COLUMN "smart_list_id" TYPE UUID USING "smart_list_id"::uuid;
+				ALTER TABLE "smart_list_views" ALTER COLUMN "id" TYPE UUID USING "id"::uuid;
+				ALTER TABLE "smart_list_views" ALTER COLUMN "list_id" TYPE UUID USING "list_id"::uuid;
+				ALTER TABLE "smart_lists" ALTER COLUMN "id" TYPE UUID USING "id"::uuid;
+				ALTER TABLE "smart_lists" ALTER COLUMN "creator_id" TYPE UUID USING "creator_id"::uuid;
+				ALTER TABLE "user_login_activity" ALTER COLUMN "user_id" TYPE UUID USING "user_id"::uuid;
+				ALTER TABLE "user_preferences" ALTER COLUMN "user_id" TYPE UUID USING "user_id"::uuid;
+			"#;
+			manager.get_connection().execute_unprepared(sql).await?;
 		}
 		return Ok(());
 	}
@@ -504,483 +111,90 @@ impl MigrationTrait for Migration {
 			return Ok(());
 		}
 		if manager.get_database_backend() == DatabaseBackend::Postgres {
-			manager
-				.alter_table(
-					Table::alter()
-						.table(AgeRestrictions::Table)
-						.modify_column(ColumnDef::new(AgeRestrictions::UserId).text())
-						.to_owned(),
-				)
-				.await?;
-
-			manager
-				.alter_table(
-					Table::alter()
-						.table(ApiKeys::Table)
-						.modify_column(ColumnDef::new(ApiKeys::UserId).text())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(BookClubBookSuggestionLikes::Table)
-						.modify_column(
-							ColumnDef::new(BookClubBookSuggestionLikes::LikedById).text(),
-						)
-						.modify_column(
-							ColumnDef::new(BookClubBookSuggestionLikes::SuggestionId)
-								.text(),
-						)
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(BookClubBookSuggestions::Table)
-						.modify_column(ColumnDef::new(BookClubBookSuggestions::Id).text())
-						.modify_column(
-							ColumnDef::new(BookClubBookSuggestions::SuggestedById).text(),
-						)
-						.modify_column(
-							ColumnDef::new(BookClubBookSuggestions::BookId)
-								.text()
-								.null(),
-						)
-						.to_owned(),
-				)
-				.await?;
-
-			manager
-				.alter_table(
-					Table::alter()
-						.table(BookClubBooks::Table)
-						.modify_column(ColumnDef::new(BookClubBooks::Id).text())
-						.modify_column(ColumnDef::new(BookClubBooks::BookClubId).text())
-						.modify_column(
-							ColumnDef::new(BookClubBooks::BookEntityId).text().null(),
-						)
-						.to_owned(),
-				)
-				.await?;
-
-			manager
-				.alter_table(
-					Table::alter()
-						.table(BookClubDiscussionMessageReactions::Table)
-						.modify_column(
-							ColumnDef::new(BookClubDiscussionMessageReactions::Id).text(),
-						)
-						.modify_column(
-							ColumnDef::new(BookClubDiscussionMessageReactions::MemberId)
-								.text(),
-						)
-						.modify_column(
-							ColumnDef::new(BookClubDiscussionMessageReactions::MessageId)
-								.text(),
-						)
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(BookClubDiscussionMessage::Table)
-						.modify_column(
-							ColumnDef::new(BookClubDiscussionMessage::Id).text(),
-						)
-						.modify_column(
-							ColumnDef::new(BookClubDiscussionMessage::ParentMessageId)
-								.text()
-								.null(),
-						)
-						.modify_column(
-							ColumnDef::new(BookClubDiscussionMessage::ReplyToMessageId)
-								.text()
-								.null(),
-						)
-						.modify_column(
-							ColumnDef::new(BookClubDiscussionMessage::DiscussionId)
-								.text(),
-						)
-						.modify_column(
-							ColumnDef::new(BookClubDiscussionMessage::BookClubId).text(),
-						)
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(BookClubDiscussions::Table)
-						.modify_column(ColumnDef::new(BookClubDiscussions::Id).text())
-						.modify_column(
-							ColumnDef::new(BookClubDiscussions::BookClubBookId)
-								.text()
-								.null(),
-						)
-						.modify_column(
-							ColumnDef::new(BookClubDiscussions::BookClubId).text(),
-						)
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(BookClubInvitations::Table)
-						.modify_column(ColumnDef::new(BookClubInvitations::Id).text())
-						.modify_column(
-							ColumnDef::new(BookClubInvitations::BookClubId).text(),
-						)
-						.modify_column(ColumnDef::new(BookClubInvitations::UserId).text())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(BookClubMemberFavoriteBooks::Table)
-						.modify_column(
-							ColumnDef::new(BookClubMemberFavoriteBooks::Id).text(),
-						)
-						.modify_column(
-							ColumnDef::new(BookClubMemberFavoriteBooks::MemberId).text(),
-						)
-						.modify_column(
-							ColumnDef::new(BookClubMemberFavoriteBooks::BookId)
-								.text()
-								.null(),
-						)
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(BookClubMembers::Table)
-						.modify_column(ColumnDef::new(BookClubMembers::Id).text())
-						.modify_column(ColumnDef::new(BookClubMembers::UserId).text())
-						.modify_column(ColumnDef::new(BookClubMembers::BookClubId).text())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(BookClubs::Table)
-						.modify_column(ColumnDef::new(BookClubs::Id).text())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(Bookmarks::Table)
-						.modify_column(ColumnDef::new(Bookmarks::Id).text())
-						.modify_column(ColumnDef::new(Bookmarks::MediaId).text())
-						.modify_column(ColumnDef::new(Bookmarks::UserId).text())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(CustomEmojis::Table)
-						.modify_column(ColumnDef::new(CustomEmojis::Id).text())
-						.modify_column(ColumnDef::new(CustomEmojis::CreatedById).text())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(EmailerSendRecords::Table)
-						.modify_column(
-							ColumnDef::new(EmailerSendRecords::SentByUserId)
-								.text()
-								.null(),
-						)
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(FavoriteLibraries::Table)
-						.modify_column(ColumnDef::new(FavoriteLibraries::UserId).text())
-						.modify_column(
-							ColumnDef::new(FavoriteLibraries::LibraryId).text(),
-						)
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(FavoriteMedia::Table)
-						.modify_column(ColumnDef::new(FavoriteMedia::UserId).text())
-						.modify_column(ColumnDef::new(FavoriteMedia::MediaId).text())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(FavoriteSeries::Table)
-						.modify_column(ColumnDef::new(FavoriteSeries::UserId).text())
-						.modify_column(ColumnDef::new(FavoriteSeries::SeriesId).text())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(FinishedReadingSessions::Table)
-						.modify_column(
-							ColumnDef::new(FinishedReadingSessions::UserId).text(),
-						)
-						.modify_column(
-							ColumnDef::new(FinishedReadingSessions::MediaId).text(),
-						)
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(Jobs::Table)
-						.modify_column(ColumnDef::new(Jobs::Id).text())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(LastLibraryVisits::Table)
-						.modify_column(ColumnDef::new(LastLibraryVisits::UserId).text())
-						.modify_column(
-							ColumnDef::new(LastLibraryVisits::LibraryId).text(),
-						)
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(LibraryConfigs::Table)
-						.modify_column(
-							ColumnDef::new(LibraryConfigs::LibraryId).text().null(),
-						)
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(LibraryExclusions::Table)
-						.modify_column(ColumnDef::new(LibraryExclusions::UserId).text())
-						.modify_column(
-							ColumnDef::new(LibraryExclusions::LibraryId).text(),
-						)
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(LibraryScanRecords::Table)
-						.modify_column(
-							ColumnDef::new(LibraryScanRecords::LibraryId).text().null(),
-						)
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(LibraryTags::Table)
-						.modify_column(
-							ColumnDef::new(LibraryTags::LibraryId).text().null(),
-						)
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(Libraries::Table)
-						.modify_column(ColumnDef::new(Libraries::Id).text())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(Logs::Table)
-						.modify_column(ColumnDef::new(Logs::JobId).text().null())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(MediaAnalysis::Table)
-						.modify_column(ColumnDef::new(MediaAnalysis::MediaId).text())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(MediaAnnotations::Table)
-						.modify_column(ColumnDef::new(MediaAnnotations::Id).text())
-						.modify_column(ColumnDef::new(MediaAnnotations::MediaId).text())
-						.modify_column(ColumnDef::new(MediaAnnotations::UserId).text())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(MediaMetadata::Table)
-						.modify_column(ColumnDef::new(MediaMetadata::MediaId).text())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(MediaTags::Table)
-						.modify_column(ColumnDef::new(MediaMetadata::MediaId).text())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(Media::Table)
-						.modify_column(ColumnDef::new(Media::Id).text())
-						.modify_column(ColumnDef::new(Media::SeriesId).text().null())
-						.to_owned(),
-				)
-				.await?;
-			// ReadingListItem
-			// ReadingListRule
-			// ReadingList
-
-			manager
-				.alter_table(
-					Table::alter()
-						.table(ReadingSessions::Table)
-						.modify_column(ColumnDef::new(ReadingSessions::MediaId).text())
-						.modify_column(ColumnDef::new(ReadingSessions::UserId).text())
-						.modify_column(
-							ColumnDef::new(ReadingSessions::DeviceId).text().null(),
-						)
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(RefreshTokens::Table)
-						.modify_column(ColumnDef::new(RefreshTokens::UserId).text())
-						.to_owned(),
-				)
-				.await?;
-
-			manager
-				.alter_table(
-					Table::alter()
-						.table(SeriesMetadata::Table)
-						.modify_column(ColumnDef::new(SeriesMetadata::SeriesId).text())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(SeriesTags::Table)
-						.modify_column(ColumnDef::new(SeriesTags::SeriesId).text())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(Series::Table)
-						.modify_column(ColumnDef::new(Series::Id).text())
-						.modify_column(ColumnDef::new(Series::LibraryId).text().null())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(Sessions::Table)
-						.modify_column(ColumnDef::new(Sessions::UserId).text())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(SmartListAccessRules::Table)
-						.modify_column(
-							ColumnDef::new(SmartListAccessRules::UserId).text(),
-						)
-						.modify_column(
-							ColumnDef::new(SmartListAccessRules::SmartListId).text(),
-						)
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(SmartListViews::Table)
-						.modify_column(ColumnDef::new(SmartListViews::Id).text())
-						.modify_column(ColumnDef::new(SmartListViews::ListId).text())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(SmartLists::Table)
-						.modify_column(ColumnDef::new(SmartLists::Id).text())
-						.modify_column(ColumnDef::new(SmartLists::CreatorId).text())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(UserLoginActivity::Table)
-						.modify_column(ColumnDef::new(UserLoginActivity::UserId).text())
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(UserPreferences::Table)
-						.modify_column(
-							ColumnDef::new(UserPreferences::UserId).text().null(),
-						)
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(Users::Table)
-						.modify_column(ColumnDef::new(Users::Id).text())
-						.to_owned(),
-				)
-				.await?;
+			let sql = r#"
+				ALTER TABLE "age_restrictions" ALTER COLUMN "user_id" TYPE TEXT;
+				ALTER TABLE "api_keys" ALTER COLUMN "user_id" TYPE TEXT;
+				ALTER TABLE "book_club_book_suggestion_likes" ALTER COLUMN "liked_by_id" TYPE TEXT;
+				ALTER TABLE "book_club_book_suggestion_likes" ALTER COLUMN "suggestion_id" TYPE TEXT;
+				ALTER TABLE "book_club_book_suggestions" ALTER COLUMN "id" TYPE TEXT;
+				ALTER TABLE "book_club_book_suggestions" ALTER COLUMN "suggested_by_id" TYPE TEXT;
+				ALTER TABLE "book_club_book_suggestions" ALTER COLUMN "book_id" TYPE TEXT;
+				ALTER TABLE "book_club_books" ALTER COLUMN "id" TYPE TEXT;
+				ALTER TABLE "book_club_books" ALTER COLUMN "book_club_id" TYPE TEXT;
+				ALTER TABLE "book_club_books" ALTER COLUMN "book_entity_id" TYPE TEXT;
+				ALTER TABLE "book_club_discussion_message_reactions" ALTER COLUMN "id" TYPE TEXT;
+				ALTER TABLE "book_club_discussion_message_reactions" ALTER COLUMN "member_id" TYPE TEXT;
+				ALTER TABLE "book_club_discussion_message_reactions" ALTER COLUMN "message_id" TYPE TEXT;
+				ALTER TABLE "book_club_discussion_message" ALTER COLUMN "id" TYPE TEXT;
+				ALTER TABLE "book_club_discussion_message" ALTER COLUMN "parent_message_id" TYPE TEXT;
+				ALTER TABLE "book_club_discussion_message" ALTER COLUMN "reply_to_message_id" TYPE TEXT;
+				ALTER TABLE "book_club_discussion_message" ALTER COLUMN "discussion_id" TYPE TEXT;
+				ALTER TABLE "book_club_discussion_message" ALTER COLUMN "book_club_id" TYPE TEXT;
+				ALTER TABLE "book_club_discussions" ALTER COLUMN "id" TYPE TEXT;
+				ALTER TABLE "book_club_discussions" ALTER COLUMN "book_club_book_id" TYPE TEXT;
+				ALTER TABLE "book_club_discussions" ALTER COLUMN "book_club_id" TYPE TEXT;
+				ALTER TABLE "book_club_invitations" ALTER COLUMN "id" TYPE TEXT;
+				ALTER TABLE "book_club_invitations" ALTER COLUMN "book_club_id" TYPE TEXT;
+				ALTER TABLE "book_club_invitations" ALTER COLUMN "user_id" TYPE TEXT;
+				ALTER TABLE "book_club_member_favorite_books" ALTER COLUMN "id" TYPE TEXT;
+				ALTER TABLE "book_club_member_favorite_books" ALTER COLUMN "member_id" TYPE TEXT;
+				ALTER TABLE "book_club_member_favorite_books" ALTER COLUMN "book_id" TYPE TEXT;
+				ALTER TABLE "book_club_members" ALTER COLUMN "id" TYPE TEXT;
+				ALTER TABLE "book_club_members" ALTER COLUMN "user_id" TYPE TEXT;
+				ALTER TABLE "book_club_members" ALTER COLUMN "book_club_id" TYPE TEXT;
+				ALTER TABLE "book_clubs" ALTER COLUMN "id" TYPE TEXT;
+				ALTER TABLE "bookmarks" ALTER COLUMN "id" TYPE TEXT;
+				ALTER TABLE "bookmarks" ALTER COLUMN "media_id" TYPE TEXT;
+				ALTER TABLE "bookmarks" ALTER COLUMN "user_id" TYPE TEXT;
+				ALTER TABLE "custom_emojis" ALTER COLUMN "id" TYPE TEXT;
+				ALTER TABLE "custom_emojis" ALTER COLUMN "created_by_id" TYPE TEXT;
+				ALTER TABLE "emailer_send_records" ALTER COLUMN "sent_by_user_id" TYPE TEXT;
+				ALTER TABLE "favorite_libraries" ALTER COLUMN "user_id" TYPE TEXT;
+				ALTER TABLE "favorite_libraries" ALTER COLUMN "library_id" TYPE TEXT;
+				ALTER TABLE "favorite_media" ALTER COLUMN "user_id" TYPE TEXT;
+				ALTER TABLE "favorite_media" ALTER COLUMN "media_id" TYPE TEXT;
+				ALTER TABLE "favorite_series" ALTER COLUMN "user_id" TYPE TEXT;
+				ALTER TABLE "favorite_series" ALTER COLUMN "series_id" TYPE TEXT;
+				ALTER TABLE "finished_reading_sessions" ALTER COLUMN "user_id" TYPE TEXT;
+				ALTER TABLE "finished_reading_sessions" ALTER COLUMN "media_id" TYPE TEXT;
+				ALTER TABLE "jobs" ALTER COLUMN "id" TYPE TEXT;
+				ALTER TABLE "last_library_visits" ALTER COLUMN "user_id" TYPE TEXT;
+				ALTER TABLE "last_library_visits" ALTER COLUMN "library_id" TYPE TEXT;
+				ALTER TABLE "library_configs" ALTER COLUMN "library_id" TYPE TEXT;
+				ALTER TABLE "library_exclusions" ALTER COLUMN "user_id" TYPE TEXT;
+				ALTER TABLE "library_exclusions" ALTER COLUMN "library_id" TYPE TEXT;
+				ALTER TABLE "library_scan_records" ALTER COLUMN "library_id" TYPE TEXT;
+				ALTER TABLE "library_tags" ALTER COLUMN "library_id" TYPE TEXT;
+				ALTER TABLE "libraries" ALTER COLUMN "id" TYPE TEXT;
+				ALTER TABLE "logs" ALTER COLUMN "job_id" TYPE TEXT;
+				ALTER TABLE "media_analysis" ALTER COLUMN "media_id" TYPE TEXT;
+				ALTER TABLE "media_annotations" ALTER COLUMN "id" TYPE TEXT;
+				ALTER TABLE "media_annotations" ALTER COLUMN "media_id" TYPE TEXT;
+				ALTER TABLE "media_annotations" ALTER COLUMN "user_id" TYPE TEXT;
+				ALTER TABLE "media_metadata" ALTER COLUMN "media_id" TYPE TEXT;
+				ALTER TABLE "media_tags" ALTER COLUMN "media_id" TYPE TEXT;
+				ALTER TABLE "media" ALTER COLUMN "id" TYPE TEXT;
+				ALTER TABLE "media" ALTER COLUMN "series_id" TYPE TEXT;
+				ALTER TABLE "reading_sessions" ALTER COLUMN "media_id" TYPE TEXT;
+				ALTER TABLE "reading_sessions" ALTER COLUMN "user_id" TYPE TEXT;
+				ALTER TABLE "reading_sessions" ALTER COLUMN "device_id" TYPE TEXT;
+				ALTER TABLE "refresh_tokens" ALTER COLUMN "user_id" TYPE TEXT;
+				ALTER TABLE "series_metadata" ALTER COLUMN "series_id" TYPE TEXT;
+				ALTER TABLE "series_tags" ALTER COLUMN "series_id" TYPE TEXT;
+				ALTER TABLE "series" ALTER COLUMN "id" TYPE TEXT;
+				ALTER TABLE "series" ALTER COLUMN "library_id" TYPE TEXT;
+				ALTER TABLE "sessions" ALTER COLUMN "user_id" TYPE TEXT;
+				ALTER TABLE "smart_list_access_rules" ALTER COLUMN "user_id" TYPE TEXT;
+				ALTER TABLE "smart_list_access_rules" ALTER COLUMN "smart_list_id" TYPE TEXT;
+				ALTER TABLE "smart_list_views" ALTER COLUMN "id" TYPE TEXT;
+				ALTER TABLE "smart_list_views" ALTER COLUMN "list_id" TYPE TEXT;
+				ALTER TABLE "smart_lists" ALTER COLUMN "id" TYPE TEXT;
+				ALTER TABLE "smart_lists" ALTER COLUMN "creator_id" TYPE TEXT;
+				ALTER TABLE "user_login_activity" ALTER COLUMN "user_id" TYPE TEXT;
+				ALTER TABLE "user_preferences" ALTER COLUMN "user_id" TYPE TEXT;
+				ALTER TABLE "users" ALTER COLUMN "id" TYPE TEXT;
+			"#;
+			manager.get_connection().execute_unprepared(sql).await?;
 		}
 		return Ok(());
 	}
