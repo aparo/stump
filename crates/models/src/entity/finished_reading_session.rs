@@ -98,10 +98,6 @@ impl Related<super::user::Entity> for Entity {
 
 impl ActiveModelBehavior for ActiveModel {}
 
-// TODO: Make this configurable via server settings
-/// The number of minutes after which a book can be re-completed
-pub const COMPLETION_DEDUP_TIMEOUT_MINUTES: i64 = 5;
-
 impl Entity {
 	pub fn find_finished_in_series(user: &AuthUser, series_id: String) -> Select<Self> {
 		Self::find()
@@ -115,9 +111,9 @@ impl Entity {
 		conn: &DatabaseConnection,
 		user_id: Uuid,
 		media_id: Uuid,
-		timeout_minutes: i64,
+		timeout_secs: i64,
 	) -> Result<Option<Model>, DbErr> {
-		let cutoff = chrono::Utc::now() - chrono::Duration::minutes(timeout_minutes);
+		let cutoff = chrono::Utc::now() - chrono::Duration::seconds(timeout_secs);
 		Self::find()
 			.filter(Column::UserId.eq(user_id))
 			.filter(Column::MediaId.eq(media_id))

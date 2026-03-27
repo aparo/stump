@@ -18,13 +18,13 @@ export default function DescriptionSection({ description }: Props) {
 
 	const colors = useColors()
 
-	const plainPreview = stripHtml(description).result
+	const strippedDescription = stripHtml(description).result
 
 	return (
 		<Fragment>
 			<View className="gap-4 px-2">
 				<Text className="text-base leading-5 text-foreground-muted" numberOfLines={4}>
-					{plainPreview}
+					{strippedDescription}
 				</Text>
 
 				<View className="flex-row items-center gap-1">
@@ -59,7 +59,7 @@ export default function DescriptionSection({ description }: Props) {
 				grabberOptions={{ color: colors.sheet.grabber }}
 			>
 				<ScrollView className="flex-1 p-6">
-					<Markdown>{description}</Markdown>
+					<Markdown>{strippedDescription}</Markdown>
 				</ScrollView>
 			</TrueSheet>
 		</Fragment>
