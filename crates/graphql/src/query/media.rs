@@ -167,12 +167,14 @@ impl MediaQuery {
 			Pagination::Cursor(info) => {
 				let mut cursor = query.cursor_by(media::Column::Name);
 				if let Some(ref id) = info.after {
+					let id = Uuid::parse_str(id.as_str())
+						.map_err(|_| "Invalid cursor ID format")?;
 					let media = media::Entity::find_for_user(user)
 						.select_only()
 						.column(media::Column::Name)
 						.filter(
 							media::Column::Id
-								.eq(id.clone())
+								.eq(id)
 								.and(media::Column::DeletedAt.is_null()),
 						)
 						.into_model::<media::MediaNameCmpSelect>()

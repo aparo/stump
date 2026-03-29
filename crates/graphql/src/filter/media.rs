@@ -26,7 +26,7 @@ fn apply_reading_status_filter(
 		ReadingStatus::Finished => finished_reading_session::Column::Id.is_not_null(),
 		// TODO: add a field to reading_session for marking DNF
 		ReadingStatus::Abandoned => {
-			media::Column::Id.eq("").and(media::Column::Id.ne(""))
+			media::Column::Id.is_null().and(media::Column::Id.ne(""))
 		},
 		ReadingStatus::NotStarted => reading_session::Column::Id
 			.is_null()

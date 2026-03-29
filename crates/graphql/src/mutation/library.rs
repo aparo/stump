@@ -57,9 +57,10 @@ impl LibraryMutation {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let core = ctx.data::<CoreContext>()?;
 		let conn = core.conn.as_ref();
+		let id = Uuid::parse_str(id.as_str()).map_err(|_| "Invalid library ID format")?;
 
 		let model = library::Entity::find_for_user(user)
-			.filter(library::Column::Id.eq(id.to_string()))
+			.filter(library::Column::Id.eq(id))
 			.into_model::<LibraryIdentSelect>()
 			.one(conn)
 			.await?
@@ -91,10 +92,10 @@ impl LibraryMutation {
 	) -> Result<CleanLibraryResponse> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let core = ctx.data::<CoreContext>()?;
-
+		let id = Uuid::parse_str(id.as_str()).map_err(|_| "Invalid library ID format")?;
 		// This is primarily for access control assertion
 		let _library = library::Entity::find_for_user(user)
-			.filter(library::Column::Id.eq(id.to_string()))
+			.filter(library::Column::Id.eq(id))
 			.into_model::<library::LibraryIdentSelect>()
 			.one(core.conn.as_ref())
 			.await?
@@ -111,7 +112,7 @@ impl LibraryMutation {
 						Query::select()
 							.column(series::Column::Id)
 							.from(series::Entity)
-							.and_where(series::Column::LibraryId.eq(id.to_string()))
+							.and_where(series::Column::LibraryId.eq(id))
 							.to_owned(),
 					),
 				),
@@ -124,7 +125,7 @@ impl LibraryMutation {
 		tracing::trace!(?deleted_media_ids, "Deleted media ids");
 
 		let deleted_series_ids = series::Entity::delete_many()
-			.filter(series::Column::LibraryId.eq(id.to_string()))
+			.filter(series::Column::LibraryId.eq(id))
 			.filter(
 				Condition::any()
 					.add(series::Column::Status.ne(FileStatus::Ready.to_string()))
@@ -147,7 +148,7 @@ impl LibraryMutation {
 		tracing::trace!(?deleted_series_ids, "Deleted series ids");
 
 		let is_library_empty = series::Entity::find()
-			.filter(series::Column::LibraryId.eq(id.to_string()))
+			.filter(series::Column::LibraryId.eq(id))
 			.count(&txn)
 			.await? == 0;
 
@@ -183,10 +184,11 @@ impl LibraryMutation {
 	async fn clear_scan_history(&self, ctx: &Context<'_>, id: ID) -> Result<u64> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let core = ctx.data::<CoreContext>()?;
+		let id = Uuid::parse_str(id.as_str()).map_err(|_| "Invalid library ID format")?;
 
 		// This is primarily for access control assertion
 		let library = library::Entity::find_for_user(user)
-			.filter(library::Column::Id.eq(id.to_string()))
+			.filter(library::Column::Id.eq(id))
 			.into_model::<library::LibraryIdentSelect>()
 			.one(core.conn.as_ref())
 			.await?
@@ -324,16 +326,17 @@ impl LibraryMutation {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let core = ctx.data::<CoreContext>()?;
 		let conn = core.conn.as_ref();
+		let id = Uuid::parse_str(id.as_str()).map_err(|_| "Invalid library ID format")?;
 
 		let library = library::Entity::find_for_user(user)
-			.filter(library::Column::Id.eq(id.to_string()))
+			.filter(library::Column::Id.eq(id))
 			.one(conn)
 			.await?
 			.ok_or("Library not found")?;
 
 		let tx = conn.begin().await?;
 
-		let series_ids: Vec<String> = series::Entity::find()
+		let series_ids: Vec<Uuid> = series::Entity::find()
 			.select_only()
 			.column(series::Column::Id)
 			.filter(series::Column::LibraryId.eq(library.id))
@@ -403,9 +406,10 @@ impl LibraryMutation {
 	) -> Result<Library> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let core = ctx.data::<CoreContext>()?;
+		let id = Uuid::parse_str(id.as_str()).map_err(|_| "Invalid library ID format")?;
 
 		let (existing_library, existing_config) = library::Entity::find_for_user(user)
-			.filter(library::Column::Id.eq(id.to_string()))
+			.filter(library::Column::Id.eq(id))
 			.find_also_related(library_config::Entity)
 			.one(core.conn.as_ref())
 			.await?
@@ -580,9 +584,10 @@ impl LibraryMutation {
 	) -> Result<Library> {
 		let core = ctx.data::<CoreContext>()?;
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
+		let id = Uuid::parse_str(id.as_str()).map_err(|_| "Invalid library ID format")?;
 
 		let existing_library = library::Entity::find_for_user(user)
-			.filter(library::Column::Id.eq(id.to_string()))
+			.filter(library::Column::Id.eq(id))
 			.one(core.conn.as_ref())
 			.await?
 			.ok_or("Library not found")?;
@@ -607,9 +612,10 @@ impl LibraryMutation {
 	) -> Result<Library> {
 		let core = ctx.data::<CoreContext>()?;
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
+		let id = Uuid::parse_str(id.as_str()).map_err(|_| "Invalid library ID format")?;
 
 		let (library, config) = library::Entity::find_for_user(user)
-			.filter(library::Column::Id.eq(id.to_string()))
+			.filter(library::Column::Id.eq(id))
 			.find_also_related(library_config::Entity)
 			.one(core.conn.as_ref())
 			.await?
@@ -666,6 +672,7 @@ impl LibraryMutation {
 	) -> Result<Library> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let core = ctx.data::<CoreContext>()?;
+		let id = Uuid::parse_str(id.as_str()).map_err(|_| "Invalid library ID format")?;
 
 		if user_ids.contains(&user.id) {
 			return Err("Cannot exclude self from library".into());
@@ -691,7 +698,7 @@ impl LibraryMutation {
 		}
 
 		let library = library::Entity::find_for_user(user)
-			.filter(library::Column::Id.eq(id.to_string()))
+			.filter(library::Column::Id.eq(id))
 			.one(core.conn.as_ref())
 			.await?
 			.ok_or("Library not found")?;
@@ -757,8 +764,10 @@ impl LibraryMutation {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let core = ctx.data::<CoreContext>()?;
 
+		let id = Uuid::parse_str(id.as_str()).map_err(|_| "Invalid library ID format")?;
+
 		let library = library::Entity::find_for_user(user)
-			.filter(library::Column::Id.eq(id.to_string()))
+			.filter(library::Column::Id.eq(id))
 			.one(core.conn.as_ref())
 			.await?
 			.ok_or("Library not found")?;
@@ -778,9 +787,10 @@ impl LibraryMutation {
 	async fn delete_library(&self, ctx: &Context<'_>, id: ID) -> Result<Library> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let core = ctx.data::<CoreContext>()?;
+		let id = Uuid::parse_str(id.as_str()).map_err(|_| "Invalid library ID format")?;
 
 		let library = library::Entity::find_for_user(user)
-			.filter(library::Column::Id.eq(id.to_string()))
+			.filter(library::Column::Id.eq(id))
 			.one(core.conn.as_ref())
 			.await?
 			.ok_or("Library not found")?;
@@ -802,9 +812,10 @@ impl LibraryMutation {
 	) -> Result<bool> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let core = ctx.data::<CoreContext>()?;
+		let id = Uuid::parse_str(id.as_str()).map_err(|_| "Invalid library ID format")?;
 
 		let (library, config) = library::Entity::find_for_user(user)
-			.filter(library::Column::Id.eq(id.to_string()))
+			.filter(library::Column::Id.eq(id))
 			.find_also_related(library_config::Entity)
 			.one(core.conn.as_ref())
 			.await?
@@ -833,9 +844,10 @@ impl LibraryMutation {
 	) -> Result<bool> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let core = ctx.data::<CoreContext>()?;
+		let id = Uuid::parse_str(id.as_str()).map_err(|_| "Invalid library ID format")?;
 
 		let library = library::Entity::find_for_user(user)
-			.filter(library::Column::Id.eq(id.to_string()))
+			.filter(library::Column::Id.eq(id))
 			.one(core.conn.as_ref())
 			.await?
 			.ok_or("Library not found")?;
@@ -858,11 +870,12 @@ impl LibraryMutation {
 	async fn delete_library_thumbnails(&self, ctx: &Context<'_>, id: ID) -> Result<bool> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let core = ctx.data::<CoreContext>()?;
+		let id = Uuid::parse_str(id.as_str()).map_err(|_| "Invalid library ID format")?;
 
 		let library = library::Entity::find_for_user(user)
 			.select_only()
 			.columns(LibraryIdentSelect::columns())
-			.filter(library::Column::Id.eq(id.to_string()))
+			.filter(library::Column::Id.eq(id))
 			.into_model::<library::LibraryIdentSelect>()
 			.one(core.conn.as_ref())
 			.await?
@@ -916,9 +929,10 @@ impl LibraryMutation {
 	) -> Result<bool> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let core = ctx.data::<CoreContext>()?;
+		let id = Uuid::parse_str(id.as_str()).map_err(|_| "Invalid library ID format")?;
 
 		let library = library::Entity::find_for_user(user)
-			.filter(library::Column::Id.eq(id.to_string()))
+			.filter(library::Column::Id.eq(id))
 			.into_model::<library::LibraryIdentSelect>()
 			.one(core.conn.as_ref())
 			.await?
@@ -939,9 +953,10 @@ impl LibraryMutation {
 	async fn visit_library(&self, ctx: &Context<'_>, id: ID) -> Result<Library> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let core = ctx.data::<CoreContext>()?;
+		let id = Uuid::parse_str(id.as_str()).map_err(|_| "Invalid library ID format")?;
 
 		let library = library::Entity::find_for_user(user)
-			.filter(library::Column::Id.eq(id.to_string()))
+			.filter(library::Column::Id.eq(id))
 			.one(core.conn.as_ref())
 			.await?
 			.ok_or("Library not found")?;

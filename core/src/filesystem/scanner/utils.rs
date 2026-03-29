@@ -788,7 +788,7 @@ pub(crate) async fn visit_and_update_media(
 			media::Column::Path
 				.is_in(paths.iter().map(|p| p.to_string()).collect::<Vec<String>>()),
 		)
-		.filter(media::Column::SeriesId.eq(series_id.to_string()))
+		.filter(media::Column::SeriesId.eq(series_id))
 		.into_model::<media::ModelWithMetadata>()
 		.all(conn)
 		.await?;

@@ -50,7 +50,7 @@ impl Loader<LibraryLoaderKey> for LibraryLoader {
 /// direct relationship with a library, but a media does not.
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct LibraryToMediaLoaderKey {
-	pub series_id: String,
+	pub series_id: Uuid,
 }
 
 impl Loader<LibraryToMediaLoaderKey> for LibraryLoader {
@@ -61,10 +61,7 @@ impl Loader<LibraryToMediaLoaderKey> for LibraryLoader {
 		&self,
 		keys: &[LibraryToMediaLoaderKey],
 	) -> Result<HashMap<LibraryToMediaLoaderKey, Self::Value>, Self::Error> {
-		let series_ids = keys
-			.iter()
-			.map(|key| key.series_id.clone())
-			.collect::<Vec<_>>();
+		let series_ids = keys.iter().map(|key| key.series_id).collect::<Vec<_>>();
 
 		// TODO: I think we will need a more custom query here, since we need to
 		// map the libraries which are related to the series IDs... So this actually

@@ -20,7 +20,7 @@ fn list_str_to_vec(list: String) -> Vec<String> {
 
 fn get_base_query(
 	column: media_metadata::Column,
-	series_id: Option<String>,
+	series_id: Option<Uuid>,
 ) -> Select<media_metadata::Entity> {
 	let query = media_metadata::Entity::find_for_column(column);
 
@@ -49,62 +49,62 @@ macro_rules! get_unique_values_inner {
 
 #[derive(Default, Debug, Clone)]
 pub struct MediaMetadataOverview {
-	pub series_id: Option<String>,
+	pub series_id: Option<Uuid>,
 }
 
 #[Object]
 impl MediaMetadataOverview {
 	async fn genres(&self, ctx: &Context<'_>) -> Result<Vec<String>> {
 		let conn: &DatabaseConnection = ctx.data::<CoreContext>()?.conn.as_ref();
-		let series_id = self.series_id.clone();
+		let series_id = self.series_id;
 		get_unique_values_inner!(Genres, conn, series_id)
 	}
 
 	async fn writers(&self, ctx: &Context<'_>) -> Result<Vec<String>> {
 		let conn: &DatabaseConnection = ctx.data::<CoreContext>()?.conn.as_ref();
-		let series_id = self.series_id.clone();
+		let series_id = self.series_id;
 		get_unique_values_inner!(Writers, conn, series_id)
 	}
 
 	async fn pencillers(&self, ctx: &Context<'_>) -> Result<Vec<String>> {
 		let conn: &DatabaseConnection = ctx.data::<CoreContext>()?.conn.as_ref();
-		let series_id = self.series_id.clone();
+		let series_id = self.series_id;
 		get_unique_values_inner!(Pencillers, conn, series_id)
 	}
 
 	async fn inkers(&self, ctx: &Context<'_>) -> Result<Vec<String>> {
 		let conn: &DatabaseConnection = ctx.data::<CoreContext>()?.conn.as_ref();
-		let series_id = self.series_id.clone();
+		let series_id = self.series_id;
 		get_unique_values_inner!(Inkers, conn, series_id)
 	}
 
 	async fn colorists(&self, ctx: &Context<'_>) -> Result<Vec<String>> {
 		let conn: &DatabaseConnection = ctx.data::<CoreContext>()?.conn.as_ref();
-		let series_id = self.series_id.clone();
+		let series_id = self.series_id;
 		get_unique_values_inner!(Colorists, conn, series_id)
 	}
 
 	async fn letterers(&self, ctx: &Context<'_>) -> Result<Vec<String>> {
 		let conn: &DatabaseConnection = ctx.data::<CoreContext>()?.conn.as_ref();
-		let series_id = self.series_id.clone();
+		let series_id = self.series_id;
 		get_unique_values_inner!(Letterers, conn, series_id)
 	}
 
 	async fn cover_artists(&self, ctx: &Context<'_>) -> Result<Vec<String>> {
 		let conn: &DatabaseConnection = ctx.data::<CoreContext>()?.conn.as_ref();
-		let series_id = self.series_id.clone();
+		let series_id = self.series_id;
 		get_unique_values_inner!(CoverArtists, conn, series_id)
 	}
 
 	async fn editors(&self, ctx: &Context<'_>) -> Result<Vec<String>> {
 		let conn: &DatabaseConnection = ctx.data::<CoreContext>()?.conn.as_ref();
-		let series_id = self.series_id.clone();
+		let series_id = self.series_id;
 		get_unique_values_inner!(Editors, conn, series_id)
 	}
 
 	async fn publishers(&self, ctx: &Context<'_>) -> Result<Vec<String>> {
 		let conn: &DatabaseConnection = ctx.data::<CoreContext>()?.conn.as_ref();
-		let series_id = self.series_id.clone();
+		let series_id = self.series_id;
 		let values: Vec<String> =
 			get_base_query(media_metadata::Column::Publisher, series_id)
 				.into_tuple()
@@ -115,19 +115,19 @@ impl MediaMetadataOverview {
 
 	async fn characters(&self, ctx: &Context<'_>) -> Result<Vec<String>> {
 		let conn: &DatabaseConnection = ctx.data::<CoreContext>()?.conn.as_ref();
-		let series_id = self.series_id.clone();
+		let series_id = self.series_id;
 		get_unique_values_inner!(Characters, conn, series_id)
 	}
 
 	async fn teams(&self, ctx: &Context<'_>) -> Result<Vec<String>> {
 		let conn: &DatabaseConnection = ctx.data::<CoreContext>()?.conn.as_ref();
-		let series_id = self.series_id.clone();
+		let series_id = self.series_id;
 		get_unique_values_inner!(Teams, conn, series_id)
 	}
 
 	async fn series(&self, ctx: &Context<'_>) -> Result<Vec<String>> {
 		let conn: &DatabaseConnection = ctx.data::<CoreContext>()?.conn.as_ref();
-		let series_id = self.series_id.clone();
+		let series_id = self.series_id;
 		get_unique_values_inner!(Series, conn, series_id)
 	}
 }
@@ -145,13 +145,14 @@ mod tests {
 
 	#[test]
 	fn get_base_query_test() {
-		let series_id = Some("test_series".to_string());
+		let series_id =
+			Some(Uuid::parse_str("01223d5d-9096-4ca8-bbdf-398844d93221").unwrap());
 		let query = get_base_query(media_metadata::Column::Genres, series_id);
 		assert_eq!(
 			query.to_owned().into_query().to_string(SqliteQueryBuilder),
 			r#"SELECT DISTINCT "media_metadata"."genres" FROM "media_metadata" "#
 				.to_string() + r#"INNER JOIN "media" ON "media"."id" = "media_metadata"."media_id" "#
-				+ r#"WHERE "media_metadata"."genres" IS NOT NULL AND "media"."series_id" = 'test_series' "#
+				+ r#"WHERE "media_metadata"."genres" IS NOT NULL AND "media"."series_id" = '01223d5d-9096-4ca8-bbdf-398844d93221' "#
 				+ r#"ORDER BY "media_metadata"."genres" ASC"#
 		);
 	}

@@ -317,7 +317,7 @@ async fn handle_bearer_auth(
 	let user_id = extract_user_from_jwt(&token)?;
 
 	let fetched_user = user::LoginUser::find()
-		.filter(user::Column::Id.eq(user_id.clone()))
+		.filter(user::Column::Id.eq(user_id))
 		.into_model::<user::LoginUser>()
 		.one(conn)
 		.await?;

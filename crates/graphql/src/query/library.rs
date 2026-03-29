@@ -125,9 +125,10 @@ impl LibraryQuery {
 	async fn library_by_id(&self, ctx: &Context<'_>, id: ID) -> Result<Option<Library>> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
+		let id = Uuid::parse_str(id.as_str()).map_err(|_| "Invalid library ID format")?;
 
 		let model = library::Entity::find_for_user(user)
-			.filter(library::Column::Id.eq(id.to_string()))
+			.filter(library::Column::Id.eq(id))
 			.one(conn)
 			.await?;
 
@@ -183,7 +184,7 @@ impl LibraryQuery {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 
 		let last_visited = last_library_visit::Entity::find()
-			.filter(last_library_visit::Column::UserId.eq(user.id.to_string()))
+			.filter(last_library_visit::Column::UserId.eq(user.id))
 			.find_also_related(library::Entity)
 			.order_by_desc(last_library_visit::Column::Timestamp)
 			.one(conn)

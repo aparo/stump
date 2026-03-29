@@ -5,6 +5,7 @@ use std::collections::HashMap;
 
 use crate::{error::CoreError, opds::v1_2::link::OpdsLink, utils::chain_optional_iter};
 use chrono::{DateTime, Utc};
+use uuid::Uuid;
 use xml::{writer::XmlEvent, EventWriter};
 
 use super::{
@@ -93,7 +94,7 @@ pub struct OPDSFeedBuilderPageParams {
 
 #[derive(Debug, Default)]
 pub struct OPDSFeedBuilderParams {
-	pub id: String,
+	pub id: Uuid,
 	pub title: String,
 	pub entries: Vec<OpdsEntry>,
 	pub href_postfix: String,

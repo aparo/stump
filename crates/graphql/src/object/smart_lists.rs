@@ -13,6 +13,7 @@ use models::{
 };
 use sea_orm::{QuerySelect, TransactionTrait};
 use std::collections::HashSet;
+use uuid::Uuid;
 
 #[derive(Debug, SimpleObject)]
 pub struct SmartListMeta {
@@ -148,7 +149,7 @@ impl SmartList {
 		let books_query =
 			build_books_query(user, smart_list.joiner, &deserialized_filters, None);
 
-		let ids: Vec<(String, Option<String>)> = books_query
+		let ids: Vec<(Uuid, Option<Uuid>)> = books_query
 			.select_only()
 			.column(media::Column::SeriesId)
 			.column(series::Column::LibraryId)
@@ -157,8 +158,8 @@ impl SmartList {
 			.await?;
 
 		let matched_books = ids.len() as i64;
-		let mut matched_series: HashSet<String> = HashSet::new();
-		let mut matched_libraries: HashSet<String> = HashSet::new();
+		let mut matched_series: HashSet<Uuid> = HashSet::new();
+		let mut matched_libraries: HashSet<Uuid> = HashSet::new();
 
 		for (series_id, library_id) in ids {
 			matched_series.insert(series_id);

@@ -243,10 +243,12 @@ impl StumpCore {
 	}
 
 	pub async fn init_scheduler(&self) -> Result<Arc<JobScheduler>, CoreError> {
+		tracing::trace!("Initializing job scheduler");
 		JobScheduler::init(self.ctx.arced()).await
 	}
 
 	pub async fn init_library_watcher(&self) -> CoreResult<()> {
+		tracing::trace!("Initializing library watcher");
 		self.ctx.library_watcher.init().await
 	}
 }

@@ -43,7 +43,7 @@ pub(crate) fn mount(app_state: AppState) -> Router<AppState> {
 
 /// Download the file associated with the media.
 pub(crate) async fn get_media_file(
-	Path(id): Path<String>,
+	Path(id): Path<Uuid>,
 	State(ctx): State<AppState>,
 	Extension(req): Extension<AuthContext>,
 	headers: HeaderMap,
@@ -56,7 +56,7 @@ pub(crate) async fn get_media_file(
 		})?;
 
 	let book = media::Entity::find_for_user(&user)
-		.filter(media::Column::Id.eq(id.clone()))
+		.filter(media::Column::Id.eq(id))
 		.into_model::<media::MediaIdentSelect>()
 		.one(ctx.conn.as_ref())
 		.await?
@@ -129,7 +129,7 @@ pub(crate) async fn get_media_thumbnail(
 pub(crate) async fn get_media_thumbnail_by_id(
 	ctx: &Ctx,
 	user: &AuthUser,
-	book_id: String,
+	book_id: Uuid,
 ) -> APIResult<ImageResponse> {
 	let book = media::Entity::find_for_user(user)
 		.columns(media::MediaThumbSelect::columns())
@@ -178,7 +178,7 @@ pub(crate) async fn get_media_thumbnail_by_id(
 }
 
 pub(crate) async fn get_media_thumbnail_handler(
-	Path(id): Path<String>,
+	Path(id): Path<Uuid>,
 	State(ctx): State<AppState>,
 	Extension(req): Extension<AuthContext>,
 ) -> APIResult<ImageResponse> {
@@ -186,12 +186,12 @@ pub(crate) async fn get_media_thumbnail_handler(
 }
 
 async fn get_media_page(
-	Path((id, page)): Path<(String, u32)>,
+	Path((id, page)): Path<(Uuid, u32)>,
 	State(ctx): State<AppState>,
 	Extension(req): Extension<AuthContext>,
 ) -> APIResult<ImageResponse> {
 	let book = media::Entity::find_for_user(&req.user())
-		.filter(media::Column::Id.eq(id.clone()))
+		.filter(media::Column::Id.eq(id))
 		.into_model::<media::MediaIdentSelect>()
 		.one(ctx.conn.as_ref())
 		.await?

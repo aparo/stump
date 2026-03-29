@@ -431,20 +431,22 @@ async fn handle_missing_series(
 		tracing::warn!(?path, "Updated more than expected");
 	}
 
-	let affected_media = media::Entity::update_many()
-		.filter(media::Column::SeriesId.eq(path))
-		.col_expr(
-			media::Column::Status,
-			Expr::value(FileStatus::Missing.to_string()),
-		)
-		.exec(conn)
-		.await
-		.unwrap_or_else(|error| {
-			tracing::error!(error = ?error, "Failed to update missing media");
-			UpdateResult::default()
-		})
-		.rows_affected;
-	tracing::trace!(?affected_media, "Marked media as missing");
+	if let Ok(series_id) = Uuid::parse_str(path) {
+		let affected_media = media::Entity::update_many()
+			.filter(media::Column::SeriesId.eq(series_id))
+			.col_expr(
+				media::Column::Status,
+				Expr::value(FileStatus::Missing.to_string()),
+			)
+			.exec(conn)
+			.await
+			.unwrap_or_else(|error| {
+				tracing::error!(error = ?error, "Failed to update missing media");
+				UpdateResult::default()
+			})
+			.rows_affected;
+		tracing::trace!(?affected_media, "Marked media as missing");
+	}
 
 	Ok(())
 }

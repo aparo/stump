@@ -1,4 +1,5 @@
 use async_graphql::InputObject;
+use uuid::Uuid;
 
 #[derive(Debug, Default, InputObject)]
 pub struct PageBasedThumbnailInput {
@@ -24,7 +25,7 @@ impl PageBasedThumbnailInput {
 #[derive(Debug, Default, InputObject)]
 pub struct UpdateThumbnailInput {
 	/// The ID of the media inside the series to fetch
-	pub media_id: String,
+	pub media_id: Uuid,
 	#[graphql(flatten)]
 	pub params: PageBasedThumbnailInput,
 }

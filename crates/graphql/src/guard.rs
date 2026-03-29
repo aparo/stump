@@ -129,16 +129,14 @@ impl Guard for OptionalFeatureGuard {
 }
 
 pub struct BookClubRoleGuard {
-	club_id: String,
+	club_id: Uuid,
 	role: BookClubMemberRole,
 }
 
 impl BookClubRoleGuard {
 	pub fn new(club_id: &str, role: BookClubMemberRole) -> Self {
-		Self {
-			club_id: club_id.to_string(),
-			role,
-		}
+		let club_id = Uuid::parse_str(club_id).expect("Invalid club ID format");
+		Self { club_id, role }
 	}
 }
 
@@ -150,10 +148,9 @@ impl Guard for BookClubRoleGuard {
 		if user.is_server_owner {
 			return Ok(());
 		}
-		let club_id = Uuid::parse_str(self.club_id.as_ref())?;
 
 		let Some(membership) =
-			book_club_member::Entity::find_by_club_for_user(user, club_id)
+			book_club_member::Entity::find_by_club_for_user(user, self.club_id)
 				.one(core.conn.as_ref())
 				.await?
 		else {

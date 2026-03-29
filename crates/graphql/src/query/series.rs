@@ -54,7 +54,7 @@ impl SeriesQuery {
 					let series = series::ModelWithMetadata::find_for_user(user)
 						.select_only()
 						.column(series::Column::Name)
-						.filter(series::Column::Id.eq(id.clone()))
+						.filter(series::Column::Id.eq(id))
 						.into_model::<series::SeriesNameCmpSelect>()
 						.one(conn)
 						.await?
@@ -118,8 +118,11 @@ impl SeriesQuery {
 	async fn series_by_id(&self, ctx: &Context<'_>, id: ID) -> Result<Option<Series>> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
+		let id =
+			Uuid::parse_str(id.to_string().as_str()).map_err(|_| "Invalid series ID")?;
+
 		let model = series::ModelWithMetadata::find_for_user(user)
-			.filter(series::Column::Id.eq(id.to_string()))
+			.filter(series::Column::Id.eq(id))
 			.into_model::<series::ModelWithMetadata>()
 			.one(conn)
 			.await?;
@@ -185,7 +188,7 @@ impl SeriesQuery {
 					let series = series::Entity::find_for_user(user)
 						.select_only()
 						.column(series::Column::CreatedAt)
-						.filter(series::Column::Id.eq(id.clone()))
+						.filter(series::Column::Id.eq(id))
 						.into_model::<series::SeriesCreatedAtCmpSelect>()
 						.one(conn)
 						.await?

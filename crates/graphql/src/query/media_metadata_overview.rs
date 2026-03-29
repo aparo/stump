@@ -1,5 +1,6 @@
 use crate::object::media_metadata_overview::MediaMetadataOverview;
 use async_graphql::{Context, Object, Result, ID};
+use uuid::Uuid;
 
 #[derive(Default)]
 pub struct MediaMetadataOverviewQuery;
@@ -12,7 +13,7 @@ impl MediaMetadataOverviewQuery {
 		series_id: Option<ID>,
 	) -> Result<MediaMetadataOverview> {
 		Ok(MediaMetadataOverview {
-			series_id: series_id.map(|id| id.to_string()),
+			series_id: series_id.map(|id| Uuid::parse_str(&id).unwrap()),
 		})
 	}
 }

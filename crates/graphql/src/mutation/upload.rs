@@ -179,9 +179,10 @@ impl UploadMutation {
 	) -> Result<Library> {
 		let AuthContext { user, .. } = ctx.data()?;
 		let core = ctx.data::<CoreContext>()?;
+		let id = Uuid::parse_str(id.as_str()).map_err(|_| "Invalid library ID format")?;
 
 		let (library, config) = library::Entity::find_for_user(user)
-			.filter(library::Column::Id.eq(id.to_string()))
+			.filter(library::Column::Id.eq(id))
 			.find_also_related(library_config::Entity)
 			.one(core.conn.as_ref())
 			.await?
@@ -274,9 +275,11 @@ impl UploadMutation {
 		let AuthContext { user, .. } = ctx.data()?;
 		let core = ctx.data::<CoreContext>()?;
 		let _conn = core.conn.as_ref();
+		let id =
+			Uuid::parse_str(id.to_string().as_str()).map_err(|_| "Invalid series ID")?;
 
 		let series = series::ModelWithMetadata::find_for_user(user)
-			.filter(series::Column::Id.eq(id.to_string()))
+			.filter(series::Column::Id.eq(id))
 			.into_model::<series::ModelWithMetadata>()
 			.one(core.conn.as_ref())
 			.await?
@@ -373,9 +376,11 @@ impl UploadMutation {
 	) -> Result<Media> {
 		let AuthContext { user, .. } = ctx.data()?;
 		let core = ctx.data::<CoreContext>()?;
+		let id = Uuid::parse_str(id.to_string().as_str())
+			.map_err(|_| "Invalid media ID format")?;
 
 		let book = media::ModelWithMetadata::find_for_user(user)
-			.filter(media::Column::Id.eq(id.to_string()))
+			.filter(media::Column::Id.eq(id))
 			.into_model::<media::ModelWithMetadata>()
 			.one(core.conn.as_ref())
 			.await?
@@ -487,9 +492,11 @@ impl UploadMutation {
 	) -> Result<Series> {
 		let AuthContext { user, .. } = ctx.data()?;
 		let core = ctx.data::<CoreContext>()?;
+		let id =
+			Uuid::parse_str(id.to_string().as_str()).map_err(|_| "Invalid series ID")?;
 
 		let series = series::ModelWithMetadata::find_for_user(user)
-			.filter(series::Column::Id.eq(id.to_string()))
+			.filter(series::Column::Id.eq(id))
 			.into_model::<series::ModelWithMetadata>()
 			.one(core.conn.as_ref())
 			.await?
@@ -575,9 +582,11 @@ impl UploadMutation {
 	) -> Result<Media> {
 		let AuthContext { user, .. } = ctx.data()?;
 		let core = ctx.data::<CoreContext>()?;
+		let id = Uuid::parse_str(id.to_string().as_str())
+			.map_err(|_| "Invalid media ID format")?;
 
 		let book = media::ModelWithMetadata::find_for_user(user)
-			.filter(media::Column::Id.eq(id.to_string()))
+			.filter(media::Column::Id.eq(id))
 			.into_model::<media::ModelWithMetadata>()
 			.one(core.conn.as_ref())
 			.await?

@@ -51,6 +51,9 @@ impl MigrationTrait for Migration {
 						.drop_foreign_key(sea_query::Alias::new(
 							"fk-book_club_invitations-book_club",
 						))
+						.drop_foreign_key(sea_query::Alias::new(
+							"fk-book_club_invitations-user",
+						))
 						.to_owned(),
 				)
 				.await?;
@@ -60,6 +63,9 @@ impl MigrationTrait for Migration {
 						.table(sea_query::Alias::new("book_club_member_favorite_books"))
 						.drop_foreign_key(sea_query::Alias::new(
 							"fk-book_club_member_favorite_books-member",
+						))
+						.drop_foreign_key(sea_query::Alias::new(
+							"fk-book_club_member_favorite_books-book",
 						))
 						.to_owned(),
 				)
@@ -71,9 +77,25 @@ impl MigrationTrait for Migration {
 						.drop_foreign_key(sea_query::Alias::new(
 							"fk-book_club_books-book_entity",
 						))
+						.drop_foreign_key(sea_query::Alias::new(
+							"fk-book_club_books-book_club",
+						))
 						.to_owned(),
 				)
 				.await?;
+
+			manager
+				.alter_table(
+					Table::alter()
+						.table(sea_query::Alias::new(
+							"book_club_discussion_message_reactions",
+						))
+						.drop_foreign_key(sea_query::Alias::new("fk-bcdmr-member"))
+						.drop_foreign_key(sea_query::Alias::new("fk-bcdmr-message"))
+						.to_owned(),
+				)
+				.await?;
+
 			manager
 				.alter_table(
 					Table::alter()
@@ -81,9 +103,41 @@ impl MigrationTrait for Migration {
 						.drop_foreign_key(sea_query::Alias::new(
 							"fk-book_club_book_suggestions-club",
 						))
+						.drop_foreign_key(sea_query::Alias::new(
+							"fk-book_club_book_suggestions-book",
+						))
+						.drop_foreign_key(sea_query::Alias::new(
+							"fk-book_club_book_suggestions-member",
+						))
+						.drop_foreign_key(sea_query::Alias::new(
+							"fk-book_club_book_suggestions-resolved_by",
+						))
 						.to_owned(),
 				)
 				.await?;
+
+			manager
+				.alter_table(
+					Table::alter()
+						.table(sea_query::Alias::new("book_club_discussions"))
+						.drop_foreign_key(sea_query::Alias::new(
+							"fk-book_club_discussions-book",
+						))
+						.drop_foreign_key(sea_query::Alias::new(
+							"fk-book_club_discussions-book_club",
+						))
+						.to_owned(),
+				)
+				.await?;
+			// manager
+			// 	.alter_table(
+			// 		Table::alter()
+			// 			.table(sea_query::Alias::new("book_club_schedules"))
+			// 			.drop_foreign_key(sea_query::Alias::new("idx_bcm_user_club"))
+			// 			.to_owned(),
+			// 	)
+			// 	.await?;
+
 			// manager
 			// 	.alter_table(
 			// 		Table::alter()
@@ -364,6 +418,9 @@ impl MigrationTrait for Migration {
 						.drop_foreign_key(sea_query::Alias::new(
 							"fk-emailer_send_records-emailer",
 						))
+						.drop_foreign_key(sea_query::Alias::new(
+							"fk-emailer_send_records-user",
+						))
 						.to_owned(),
 				)
 				.await?;
@@ -393,6 +450,17 @@ impl MigrationTrait for Migration {
 						.table(sea_query::Alias::new("media_metadata"))
 						.drop_foreign_key(sea_query::Alias::new(
 							"fk-media_metadata-media",
+						))
+						.to_owned(),
+				)
+				.await?;
+
+			manager
+				.alter_table(
+					Table::alter()
+						.table(sea_query::Alias::new("smart_list_views"))
+						.drop_foreign_key(sea_query::Alias::new(
+							"fk-smart_list_views-smart_list",
 						))
 						.to_owned(),
 				)
@@ -454,6 +522,17 @@ impl MigrationTrait for Migration {
 						.drop_foreign_key(sea_query::Alias::new(
 							"fk-smart_list_access_rules-smart_list",
 						))
+						.drop_foreign_key(sea_query::Alias::new(
+							"fk-smart_list_access_rules-user",
+						))
+						.to_owned(),
+				)
+				.await?;
+			manager
+				.alter_table(
+					Table::alter()
+						.table(sea_query::Alias::new("smart_lists"))
+						.drop_foreign_key(sea_query::Alias::new("fk-smart_lists-user"))
 						.to_owned(),
 				)
 				.await?;
@@ -474,6 +553,9 @@ impl MigrationTrait for Migration {
 						.drop_foreign_key(sea_query::Alias::new(
 							"fk-book_club_book_suggestion_likes-suggestion",
 						))
+						.drop_foreign_key(sea_query::Alias::new(
+							"fk-book_club_book_suggestion_likes-member",
+						))
 						.to_owned(),
 				)
 				.await?;
@@ -483,6 +565,26 @@ impl MigrationTrait for Migration {
 						.table(sea_query::Alias::new("book_club_discussion_message"))
 						.drop_foreign_key(sea_query::Alias::new(
 							"fk-book_club_discussion_message-parent",
+						))
+						.drop_foreign_key(sea_query::Alias::new("fk-bcdm-reply_to"))
+						.drop_foreign_key(sea_query::Alias::new(
+							"fk-book_club_discussion_message-book_club",
+						))
+						.drop_foreign_key(sea_query::Alias::new(
+							"fk-book_club_discussion_message-discussion",
+						))
+						.drop_foreign_key(sea_query::Alias::new(
+							"fk-book_club_discussion_message-member",
+						))
+						.to_owned(),
+				)
+				.await?;
+			manager
+				.alter_table(
+					Table::alter()
+						.table(sea_query::Alias::new("custom_emojis"))
+						.drop_foreign_key(sea_query::Alias::new(
+							"fk-custom_emojis-created_by",
 						))
 						.to_owned(),
 				)
@@ -511,6 +613,9 @@ impl MigrationTrait for Migration {
 						.table(sea_query::Alias::new("finished_reading_sessions"))
 						.drop_foreign_key(sea_query::Alias::new(
 							"fk-finished_reading_sessions-media",
+						))
+						.drop_foreign_key(sea_query::Alias::new(
+							"fk-finished_reading_sessions-user",
 						))
 						.to_owned(),
 				)
@@ -541,6 +646,16 @@ impl MigrationTrait for Migration {
 						.table(sea_query::Alias::new("reading_sessions"))
 						.drop_foreign_key(sea_query::Alias::new(
 							"fk-reading_sessions-user",
+						))
+						.to_owned(),
+				)
+				.await?;
+			manager
+				.alter_table(
+					Table::alter()
+						.table(sea_query::Alias::new("scheduled_job_libraries"))
+						.drop_foreign_key(sea_query::Alias::new(
+							"fk-scheduled_job_libraries-library",
 						))
 						.to_owned(),
 				)

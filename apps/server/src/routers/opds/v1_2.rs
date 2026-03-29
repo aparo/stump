@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, str::FromStr};
 
 use axum::{
 	body::Body,
@@ -110,7 +110,7 @@ struct OPDSURLParams<D> {
 
 #[derive(Debug, Serialize, Deserialize)]
 struct OPDSIDURLParams {
-	id: String,
+	id: Uuid,
 }
 
 fn number_or_string_deserializer<'de, D>(deserializer: D) -> Result<i32, D::Error>
@@ -130,7 +130,7 @@ struct OPDSPageURLParams {
 
 #[derive(Debug, Serialize, Deserialize)]
 struct OPDSFilenameURLParams {
-	id: String,
+	id: Uuid,
 	filename: String,
 }
 
@@ -378,7 +378,7 @@ async fn get_library_by_id(
 	let library = library::Entity::find_for_user(&user)
 		.select_only()
 		.columns(library::LibraryIdentSelect::columns())
-		.filter(library::Column::Id.eq(id.clone()))
+		.filter(library::Column::Id.eq(id))
 		.into_model::<library::LibraryIdentSelect>()
 		.one(ctx.conn.as_ref())
 		.await?
@@ -464,8 +464,10 @@ async fn get_series(
 		})
 		.collect::<Vec<OpdsEntry>>();
 
+	let all_series_uuid = Uuid::from_str("45b7274f-4ac4-400b-8441-68e969183051").unwrap();
+
 	let feed = OPDSFeedBuilder::new(req.api_key()).paginated(OPDSFeedBuilderParams {
-		id: "allSeries".to_string(),
+		id: all_series_uuid,
 		title: "All Series".to_string(),
 		entries,
 		href_postfix: "series".to_string(),
@@ -503,7 +505,7 @@ async fn get_latest_series(
 		.collect::<Vec<OpdsEntry>>();
 
 	let feed = OPDSFeedBuilder::new(req.api_key()).paginated(OPDSFeedBuilderParams {
-		id: "latestSeries".to_string(),
+		id: Uuid::from_str("59a91c07-5782-4b9b-a9fa-8c5a85e2e535").unwrap(),
 		title: "Latest Series".to_string(),
 		entries,
 		href_postfix: "series/latest".to_string(),
@@ -529,14 +531,14 @@ async fn get_series_by_id(
 	let user = req.user();
 	let series::ModelWithMetadata { series, metadata } =
 		series::ModelWithMetadata::find_for_user(&user)
-			.filter(series::Column::Id.eq(id.clone()))
+			.filter(series::Column::Id.eq(id))
 			.into_model::<series::ModelWithMetadata>()
 			.one(ctx.conn.as_ref())
 			.await?
 			.ok_or(APIError::NotFound(format!("Series {id} not found")))?;
 
 	let books = OPDSPublicationEntity::find_for_user(&user)
-		.filter(media::Column::SeriesId.eq(id.clone()))
+		.filter(media::Column::SeriesId.eq(id))
 		.order_by_asc(media::Column::Name)
 		.offset(pagination.offset())
 		.limit(pagination.limit())
@@ -544,7 +546,7 @@ async fn get_series_by_id(
 		.all(ctx.conn.as_ref())
 		.await?;
 	let count = OPDSPublicationEntity::find_for_user(&user)
-		.filter(media::Column::SeriesId.eq(id.clone()))
+		.filter(media::Column::SeriesId.eq(id))
 		.count(ctx.conn.as_ref())
 		.await?;
 
@@ -561,7 +563,7 @@ async fn get_series_by_id(
 		.unwrap_or_else(|| series.name.clone());
 
 	let feed = OPDSFeedBuilder::new(req.api_key()).paginated(OPDSFeedBuilderParams {
-		id: series.id.to_string(),
+		id: series.id,
 		title,
 		entries,
 		href_postfix: format!("series/{}", &series.id),
@@ -726,7 +728,7 @@ async fn get_books(
 		.collect::<Vec<OpdsEntry>>();
 
 	let feed = OPDSFeedBuilder::new(req.api_key()).paginated(OPDSFeedBuilderParams {
-		id: "allBooks".to_string(),
+		id: Uuid::from_str("981e9e42-9bbd-4e33-ac7a-30f437d909fb").unwrap(),
 		title: "All Books".to_string(),
 		entries,
 		href_postfix: "books".to_string(),
@@ -769,7 +771,7 @@ async fn get_latest_books(
 		.collect::<Vec<OpdsEntry>>();
 
 	let feed = OPDSFeedBuilder::new(req.api_key()).paginated(OPDSFeedBuilderParams {
-		id: "latestBooks".to_string(),
+		id: Uuid::from_str("40435509-0419-4210-b75a-04704882e7d6").unwrap(),
 		title: "Latest Books".to_string(),
 		entries,
 		href_postfix: "books/latest".to_string(),
@@ -949,7 +951,7 @@ async fn download_book(
 		})?;
 
 	let book = media::Entity::find_for_user(&user)
-		.filter(media::Column::Id.eq(id.clone()))
+		.filter(media::Column::Id.eq(id))
 		.into_model::<media::MediaIdentSelect>()
 		.one(ctx.conn.as_ref())
 		.await?

@@ -126,9 +126,10 @@ impl SessionStore for StumpSessionStore {
 	#[tracing::instrument(skip(self))]
 	async fn load(&self, session_id: &Id) -> session_store::Result<Option<Record>> {
 		tracing::trace!(?session_id, "Loading session");
-
+		let session_id = Uuid::from_str(session_id.clone().to_string().as_str())
+			.map_err(|_| SessionError::DecodeFailed)?;
 		let record = session::Entity::find()
-			.filter(session::Column::SessionId.eq(session_id.to_string()).and(
+			.filter(session::Column::SessionId.eq(session_id).and(
 				session::Column::ExpiryTime.gt::<DateTimeWithTimeZone>(Utc::now().into()),
 			))
 			.one(self.conn.as_ref())
@@ -159,9 +160,11 @@ impl SessionStore for StumpSessionStore {
 	#[tracing::instrument(skip(self))]
 	async fn delete(&self, session_id: &Id) -> session_store::Result<()> {
 		tracing::trace!(session_id = ?session_id, "Deleting session");
+		let session_id = Uuid::from_str(session_id.clone().to_string().as_str())
+			.map_err(|_| SessionError::DecodeFailed)?;
 
 		let affected_rows = session::Entity::delete_many()
-			.filter(session::Column::SessionId.eq(session_id.to_string()))
+			.filter(session::Column::SessionId.eq(session_id))
 			.exec(self.conn.as_ref())
 			.await
 			.map_err(SessionError::DbError)?

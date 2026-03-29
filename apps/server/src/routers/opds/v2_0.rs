@@ -692,7 +692,7 @@ async fn browse_libraries(
 async fn browse_library_by_id(
 	State(ctx): State<AppState>,
 	HostExtractor(host): HostExtractor,
-	Path(id): Path<String>,
+	Path(id): Path<Uuid>,
 	Extension(req): Extension<AuthContext>,
 ) -> APIResult<Json<OPDSFeed>> {
 	let link_finalizer = OPDSLinkFinalizer::from(host);
@@ -700,20 +700,20 @@ async fn browse_library_by_id(
 	let user = req.user();
 
 	let library = library::Entity::find_for_user(&user)
-		.filter(library::Column::Id.eq(id.clone()))
+		.filter(library::Column::Id.eq(id))
 		.one(ctx.conn.as_ref())
 		.await?
 		.ok_or(APIError::NotFound("Library not found".to_string()))?;
 
 	let library_books = OPDSPublicationEntity::find_for_user(&user)
-		.filter(series::Column::LibraryId.eq(id.clone()))
+		.filter(series::Column::LibraryId.eq(id))
 		.limit(DEFAULT_LIMIT)
 		.order_by_asc(media::Column::Name)
 		.into_model::<OPDSPublicationEntity>()
 		.all(ctx.conn.as_ref())
 		.await?;
 	let library_books_count = OPDSPublicationEntity::find_for_user(&user)
-		.filter(series::Column::LibraryId.eq(id.clone()))
+		.filter(series::Column::LibraryId.eq(id))
 		.count(ctx.conn.as_ref())
 		.await?;
 
@@ -747,7 +747,7 @@ async fn browse_library_by_id(
 		.build()?;
 
 	let latest_library_books = OPDSPublicationEntity::find_for_user(&user)
-		.filter(series::Column::LibraryId.eq(id.clone()))
+		.filter(series::Column::LibraryId.eq(id))
 		.limit(DEFAULT_LIMIT)
 		.order_by_asc(media::Column::CreatedAt)
 		.into_model::<OPDSPublicationEntity>()
@@ -783,13 +783,13 @@ async fn browse_library_by_id(
 		.build()?;
 
 	let library_series = series::Entity::find_for_user(&user)
-		.filter(series::Column::LibraryId.eq(id.clone()))
+		.filter(series::Column::LibraryId.eq(id))
 		.limit(DEFAULT_LIMIT)
 		.order_by_asc(series::Column::Name)
 		.all(ctx.conn.as_ref())
 		.await?;
 	let library_series_count = series::Entity::find_for_user(&user)
-		.filter(series::Column::LibraryId.eq(id.clone()))
+		.filter(series::Column::LibraryId.eq(id))
 		.count(ctx.conn.as_ref())
 		.await?;
 
@@ -946,7 +946,7 @@ where
 async fn browse_library_books(
 	State(ctx): State<AppState>,
 	HostExtractor(host): HostExtractor,
-	Path(id): Path<String>,
+	Path(id): Path<Uuid>,
 	pagination: Query<OffsetPagination>,
 	Extension(req): Extension<AuthContext>,
 ) -> APIResult<Json<OPDSFeed>> {
@@ -956,7 +956,7 @@ async fn browse_library_books(
 		&ctx,
 		OPDSLinkFinalizer::from(host),
 		&user,
-		Some(Condition::all().add(series::Column::LibraryId.eq(id.clone()))),
+		Some(Condition::all().add(series::Column::LibraryId.eq(id))),
 		(media::Column::Name, Order::Asc),
 		pagination.0,
 		"Library Books - All",
@@ -970,7 +970,7 @@ async fn browse_library_books(
 async fn latest_library_books(
 	State(ctx): State<AppState>,
 	HostExtractor(host): HostExtractor,
-	Path(id): Path<String>,
+	Path(id): Path<Uuid>,
 	pagination: Query<OffsetPagination>,
 	Extension(req): Extension<AuthContext>,
 ) -> APIResult<Json<OPDSFeed>> {
@@ -980,7 +980,7 @@ async fn latest_library_books(
 		&ctx,
 		OPDSLinkFinalizer::from(host),
 		&user,
-		Some(Condition::all().add(series::Column::LibraryId.eq(id.clone()))),
+		Some(Condition::all().add(series::Column::LibraryId.eq(id))),
 		(media::Column::CreatedAt, Order::Desc),
 		pagination.0,
 		"Library Books - Latest",
@@ -1084,14 +1084,14 @@ async fn browse_series_by_id(
 	State(ctx): State<AppState>,
 	HostExtractor(host): HostExtractor,
 	pagination: Query<OffsetPagination>,
-	Path(id): Path<String>,
+	Path(id): Path<Uuid>,
 	Extension(req): Extension<AuthContext>,
 ) -> APIResult<Json<OPDSFeed>> {
 	let user = req.user();
 
 	let series::ModelWithMetadata { series, metadata } =
 		series::ModelWithMetadata::find_for_user(&user)
-			.filter(series::Column::Id.eq(id.clone()))
+			.filter(series::Column::Id.eq(id))
 			.into_model::<series::ModelWithMetadata>()
 			.one(ctx.conn.as_ref())
 			.await?
@@ -1107,7 +1107,7 @@ async fn browse_series_by_id(
 		&ctx,
 		OPDSLinkFinalizer::from(host),
 		&user,
-		Some(Condition::all().add(media::Column::SeriesId.eq(id.clone()))),
+		Some(Condition::all().add(media::Column::SeriesId.eq(id))),
 		(media::Column::Name, Order::Asc),
 		pagination.0,
 		&title,
@@ -1213,13 +1213,13 @@ async fn keep_reading(
 
 #[tracing::instrument(skip(ctx))]
 async fn get_book_by_id(
-	Path(id): Path<String>,
+	Path(id): Path<Uuid>,
 	HostExtractor(host): HostExtractor,
 	State(ctx): State<AppState>,
 	Extension(req): Extension<AuthContext>,
 ) -> APIResult<Json<OPDSPublication>> {
 	let book = OPDSPublicationEntity::find_for_user(&req.user())
-		.filter(media::Column::Id.eq(id.clone()))
+		.filter(media::Column::Id.eq(id))
 		.into_model::<OPDSPublicationEntity>()
 		.one(ctx.conn.as_ref())
 		.await?
@@ -1238,7 +1238,7 @@ async fn get_book_by_id(
 /// A route handler which returns a book thumbnail for a user as a valid image response.
 #[tracing::instrument(skip(ctx))]
 async fn get_book_thumbnail(
-	Path(id): Path<String>,
+	Path(id): Path<Uuid>,
 	State(ctx): State<AppState>,
 	Extension(req): Extension<AuthContext>,
 ) -> APIResult<ImageResponse> {
@@ -1249,7 +1249,7 @@ async fn get_book_thumbnail(
 /// response.
 #[tracing::instrument(skip(ctx))]
 async fn get_book_page(
-	Path((id, page)): Path<(String, i32)>,
+	Path((id, page)): Path<(Uuid, i32)>,
 	State(ctx): State<AppState>,
 	Extension(req): Extension<AuthContext>,
 ) -> APIResult<ImageResponse> {
@@ -1274,7 +1274,7 @@ async fn get_book_page(
 /// A route handler which returns the progression of a book for a user.
 #[tracing::instrument(skip(ctx))]
 async fn get_book_progression(
-	Path(id): Path<String>,
+	Path(id): Path<Uuid>,
 	State(ctx): State<AppState>,
 	HostExtractor(host): HostExtractor,
 	Extension(req): Extension<AuthContext>,
@@ -1287,7 +1287,7 @@ async fn get_book_progression(
 		.filter(
 			reading_session::Column::UserId
 				.eq(user.id)
-				.and(reading_session::Column::MediaId.eq(id.clone())),
+				.and(reading_session::Column::MediaId.eq(id)),
 		)
 		.filter(
 			Condition::any()
@@ -1310,7 +1310,7 @@ async fn get_book_progression(
 /// Returns 204 on success, 409 Conflict if the timestamp is older.
 #[tracing::instrument(skip(ctx))]
 async fn update_book_progression(
-	Path(id): Path<String>,
+	Path(id): Path<Uuid>,
 	State(ctx): State<AppState>,
 	Extension(req): Extension<AuthContext>,
 	Json(input): Json<OPDSProgressionInput>,
@@ -1320,8 +1320,6 @@ async fn update_book_progression(
 
 	let user = req.user();
 	let conn = ctx.conn.as_ref();
-	let id = Uuid::parse_str(&id)
-		.map_err(|_| APIError::BadRequest("Invalid book ID".to_string()))?;
 
 	let book = media::Entity::find_for_user(&user)
 		.filter(media::Column::Id.eq(id))
@@ -1421,7 +1419,7 @@ async fn update_book_progression(
 /// A route handler which downloads a book for a user.
 #[tracing::instrument(skip(ctx))]
 async fn download_book(
-	Path(id): Path<String>,
+	Path(id): Path<Uuid>,
 	State(ctx): State<AppState>,
 	Extension(req): Extension<AuthContext>,
 	headers: HeaderMap,
@@ -1434,7 +1432,7 @@ async fn download_book(
 		})?;
 
 	let book = media::Entity::find_for_user(&user)
-		.filter(media::Column::Id.eq(id.clone()))
+		.filter(media::Column::Id.eq(id))
 		.into_model::<media::MediaIdentSelect>()
 		.one(ctx.conn.as_ref())
 		.await?

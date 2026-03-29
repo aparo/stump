@@ -99,7 +99,7 @@ impl Related<super::user::Entity> for Entity {
 impl ActiveModelBehavior for ActiveModel {}
 
 impl Entity {
-	pub fn find_finished_in_series(user: &AuthUser, series_id: String) -> Select<Self> {
+	pub fn find_finished_in_series(user: &AuthUser, series_id: Uuid) -> Select<Self> {
 		Self::find()
 			.inner_join(media::Entity)
 			.filter(media::Column::SeriesId.eq(series_id))
@@ -133,11 +133,14 @@ mod tests {
 	#[test]
 	fn test_find_finished_in_series() {
 		let user = get_default_user();
-		let select = Entity::find_finished_in_series(&user, "123".to_string());
+		let select = Entity::find_finished_in_series(
+			&user,
+			Uuid::parse_str("123e4567-e89b-12d3-a456-426614174000").unwrap(),
+		);
 		let stmt_str = select_no_cols_to_string(select);
 		assert_eq!(
 			stmt_str,
-			r#"SELECT   FROM "finished_reading_sessions" INNER JOIN "media" ON "finished_reading_sessions"."media_id" = "media"."id" WHERE "media"."series_id" = '123' AND "finished_reading_sessions"."user_id" = '42'"#.to_string()
+			r#"SELECT   FROM "finished_reading_sessions" INNER JOIN "media" ON "finished_reading_sessions"."media_id" = "media"."id" WHERE "media"."series_id" = '123e4567-e89b-12d3-a456-426614174000' AND "finished_reading_sessions"."user_id" = '0ad39398-ce6a-4bcc-b044-719163a07c53'"#.to_string()
 		);
 	}
 }

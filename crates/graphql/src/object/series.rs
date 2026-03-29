@@ -161,7 +161,7 @@ impl Series {
 		&self,
 		ctx: &Context<'_>,
 		#[graphql(default = 1, validator(minimum = 1))] take: u64,
-		cursor: Option<String>,
+		cursor: Option<Uuid>,
 	) -> Result<Vec<Media>> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
@@ -172,7 +172,7 @@ impl Series {
 			let media = media::Entity::find_for_user(user)
 				.select_only()
 				.column(media::Column::Name)
-				.filter(media::Column::Id.eq(id.clone()))
+				.filter(media::Column::Id.eq(id))
 				.into_model::<media::MediaNameCmpSelect>()
 				.one(conn)
 				.await?

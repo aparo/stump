@@ -59,7 +59,6 @@ impl MigrationTrait for Migration {
 				ALTER TABLE "bookmarks" ALTER COLUMN "id" TYPE UUID USING "id"::uuid;
 				ALTER TABLE "bookmarks" ALTER COLUMN "media_id" TYPE UUID USING "media_id"::uuid;
 				ALTER TABLE "bookmarks" ALTER COLUMN "user_id" TYPE UUID USING "user_id"::uuid;
-				ALTER TABLE "custom_emojis" ALTER COLUMN "id" TYPE UUID USING "id"::uuid;
 				ALTER TABLE "custom_emojis" ALTER COLUMN "created_by_id" TYPE UUID USING "created_by_id"::uuid;
 				ALTER TABLE "emailer_send_records" ALTER COLUMN "sent_by_user_id" TYPE UUID USING "sent_by_user_id"::uuid;
 				ALTER TABLE "favorite_libraries" ALTER COLUMN "library_id" TYPE UUID USING "library_id"::uuid;
@@ -93,7 +92,6 @@ impl MigrationTrait for Migration {
 				ALTER TABLE "sessions" ALTER COLUMN "user_id" TYPE UUID USING "user_id"::uuid;
 				ALTER TABLE "smart_list_access_rules" ALTER COLUMN "user_id" TYPE UUID USING "user_id"::uuid;
 				ALTER TABLE "smart_list_access_rules" ALTER COLUMN "smart_list_id" TYPE UUID USING "smart_list_id"::uuid;
-				ALTER TABLE "smart_list_views" ALTER COLUMN "id" TYPE UUID USING "id"::uuid;
 				ALTER TABLE "smart_list_views" ALTER COLUMN "list_id" TYPE UUID USING "list_id"::uuid;
 				ALTER TABLE "smart_lists" ALTER COLUMN "id" TYPE UUID USING "id"::uuid;
 				ALTER TABLE "smart_lists" ALTER COLUMN "creator_id" TYPE UUID USING "creator_id"::uuid;
@@ -146,7 +144,6 @@ impl MigrationTrait for Migration {
 				ALTER TABLE "bookmarks" ALTER COLUMN "id" TYPE TEXT;
 				ALTER TABLE "bookmarks" ALTER COLUMN "media_id" TYPE TEXT;
 				ALTER TABLE "bookmarks" ALTER COLUMN "user_id" TYPE TEXT;
-				ALTER TABLE "custom_emojis" ALTER COLUMN "id" TYPE TEXT;
 				ALTER TABLE "custom_emojis" ALTER COLUMN "created_by_id" TYPE TEXT;
 				ALTER TABLE "emailer_send_records" ALTER COLUMN "sent_by_user_id" TYPE TEXT;
 				ALTER TABLE "favorite_libraries" ALTER COLUMN "user_id" TYPE TEXT;
@@ -186,7 +183,6 @@ impl MigrationTrait for Migration {
 				ALTER TABLE "sessions" ALTER COLUMN "user_id" TYPE TEXT;
 				ALTER TABLE "smart_list_access_rules" ALTER COLUMN "user_id" TYPE TEXT;
 				ALTER TABLE "smart_list_access_rules" ALTER COLUMN "smart_list_id" TYPE TEXT;
-				ALTER TABLE "smart_list_views" ALTER COLUMN "id" TYPE TEXT;
 				ALTER TABLE "smart_list_views" ALTER COLUMN "list_id" TYPE TEXT;
 				ALTER TABLE "smart_lists" ALTER COLUMN "id" TYPE TEXT;
 				ALTER TABLE "smart_lists" ALTER COLUMN "creator_id" TYPE TEXT;

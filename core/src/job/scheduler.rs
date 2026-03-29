@@ -29,7 +29,7 @@ impl JobScheduler {
 				"Found schedule config. Initializing scheduler."
 			);
 
-			let included_library_ids = included_libraries
+			let included_library_ids: Vec<Uuid> = included_libraries
 				.into_iter()
 				.map(|library| library.id)
 				.collect::<Vec<_>>();

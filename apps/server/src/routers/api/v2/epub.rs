@@ -35,14 +35,14 @@ pub(crate) fn mount(app_state: AppState) -> Router<AppState> {
 /// resource. (e.g. `/EPUB/chapter1.xhtml`, where `EPUB` is the root and `chapter1.xhtml` is
 /// the resource path)
 async fn get_epub_chapter(
-	Path((id, chapter)): Path<(String, usize)>,
+	Path((id, chapter)): Path<(Uuid, usize)>,
 	State(ctx): State<AppState>,
 	Extension(req): Extension<AuthContext>,
 ) -> APIResult<BufferResponse> {
 	let AuthContext { user, .. } = req;
 
 	let ebook = media::Entity::find_for_user(&user)
-		.filter(media::Column::Id.eq(id.clone()))
+		.filter(media::Column::Id.eq(id))
 		.into_model::<media::MediaIdentSelect>()
 		.one(ctx.conn.as_ref())
 		.await?
@@ -57,14 +57,14 @@ async fn get_epub_chapter(
 /// resource. (e.g. `/EPUB/chapter1.xhtml`, where `EPUB` is the root and `chapter1.xhtml` is
 /// the resource path)
 async fn get_epub_meta(
-	Path((id, root, resource)): Path<(String, String, PathBuf)>,
+	Path((id, root, resource)): Path<(Uuid, String, PathBuf)>,
 	State(ctx): State<AppState>,
 	Extension(req): Extension<AuthContext>,
 ) -> APIResult<BufferResponse> {
 	let AuthContext { user, .. } = req;
 
 	let ebook = media::Entity::find_for_user(&user)
-		.filter(media::Column::Id.eq(id.clone()))
+		.filter(media::Column::Id.eq(id))
 		.into_model::<media::MediaIdentSelect>()
 		.one(ctx.conn.as_ref())
 		.await?

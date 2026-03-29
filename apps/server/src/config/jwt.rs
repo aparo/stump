@@ -154,7 +154,7 @@ fn generate_refresh_token(
 }
 
 /// A function that will take a JWT token and return the user ID
-pub(crate) fn extract_user_from_jwt(token: &str) -> APIResult<String> {
+pub(crate) fn extract_user_from_jwt(token: &str) -> APIResult<Uuid> {
 	let token_data = decode::<AccessTokenClaims>(
 		token,
 		&DecodingKey::from_secret(ACCESS_TOKEN_SECRET.as_bytes()),
@@ -165,7 +165,15 @@ pub(crate) fn extract_user_from_jwt(token: &str) -> APIResult<String> {
 		APIError::Unauthorized
 	})?;
 
-	Ok(token_data.claims.sub)
+	let user_id = Uuid::parse_str(&token_data.claims.sub).map_err(|_| {
+		tracing::error!(
+			"Failed to parse user ID from JWT claims: {}",
+			token_data.claims.sub
+		);
+		APIError::Unauthorized
+	})?;
+
+	Ok(user_id)
 }
 
 /// Exchange a refresh token for a new access token, if the refresh token is valid

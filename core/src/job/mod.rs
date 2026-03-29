@@ -392,7 +392,7 @@ pub trait Executor: Send + Sync {
 			.map_err(|error| JobError::StateSaveFailed(error.to_string()))?;
 
 		let affected_rows = job::Entity::update_many()
-			.filter(job::Column::Id.eq(job_id.to_string()))
+			.filter(job::Column::Id.eq(job_id))
 			.col_expr(job::Column::SaveState, Expr::value(None::<Vec<u8>>))
 			.col_expr(job::Column::OutputData, Expr::value(Some(output_data)))
 			.col_expr(
@@ -437,7 +437,7 @@ pub trait Executor: Send + Sync {
 		}
 
 		let affected_rows = job::Entity::update_many()
-			.filter(job::Column::Id.eq(job_id.to_string()))
+			.filter(job::Column::Id.eq(job_id))
 			.col_expr(job::Column::Status, Expr::value(status.to_string()))
 			.col_expr(
 				job::Column::MsElapsed,

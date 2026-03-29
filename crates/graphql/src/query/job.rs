@@ -30,11 +30,12 @@ impl JobQuery {
 			Pagination::Cursor(info) => {
 				let mut cursor = query.cursor_by(job::Column::CreatedAt);
 				if let Some(ref id) = info.after {
+					let id = Uuid::parse_str(id.as_str())?;
 					let job = job::Entity::find()
 						.select_only()
 						.column(job::Column::Id)
 						.column(job::Column::CreatedAt)
-						.filter(job::Column::Id.eq(id.clone()))
+						.filter(job::Column::Id.eq(id))
 						.into_model::<job::JobCreatedAtSelect>()
 						.one(conn)
 						.await?

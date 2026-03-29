@@ -55,10 +55,12 @@ impl MediaMutation {
 		let core = ctx.data::<CoreContext>()?;
 		let conn = core.conn.as_ref();
 
+		let id = Uuid::parse_str(id.to_string().as_str())
+			.map_err(|_| "Invalid media ID format")?;
 		let model = media::Entity::find_for_user(user)
 			.select_only()
 			.columns(vec![media::Column::Id, media::Column::Path])
-			.filter(media::Column::Id.eq(id.to_string()))
+			.filter(media::Column::Id.eq(id))
 			.into_model::<media::MediaIdentSelect>()
 			.one(conn)
 			.await?
@@ -81,11 +83,12 @@ impl MediaMutation {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let core = ctx.data::<CoreContext>()?;
 		let conn = core.conn.as_ref();
-
+		let id = Uuid::parse_str(id.to_string().as_str())
+			.map_err(|_| "Invalid media ID format")?;
 		let _model = media::Entity::find_for_user(user)
 			.select_only()
 			.columns(vec![media::Column::Id, media::Column::Path])
-			.filter(media::Column::Id.eq(id.to_string()))
+			.filter(media::Column::Id.eq(id))
 			.into_model::<media::MediaIdentSelect>()
 			.one(conn)
 			.await?
@@ -105,9 +108,11 @@ impl MediaMutation {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let core = ctx.data::<CoreContext>()?;
 		let conn = core.conn.as_ref();
+		let id = Uuid::parse_str(id.to_string().as_str())
+			.map_err(|_| "Invalid media ID format")?;
 
 		let model = media::ModelWithMetadata::find_for_user(user)
-			.filter(media::Column::Id.eq(id.to_string()))
+			.filter(media::Column::Id.eq(id))
 			.into_model::<media::ModelWithMetadata>()
 			.one(conn)
 			.await?
@@ -131,11 +136,13 @@ impl MediaMutation {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let core = ctx.data::<CoreContext>()?;
 		let conn = core.conn.as_ref();
+		let id = Uuid::parse_str(id.to_string().as_str())
+			.map_err(|_| "Invalid media ID format")?;
 
 		let model = media::ModelWithMetadata::find_for_user(user)
 			.filter(
 				media::Column::Id
-					.eq(id.to_string())
+					.eq(id)
 					.and(media::Column::DeletedAt.is_null()),
 			)
 			.into_model::<media::ModelWithMetadata>()
@@ -183,9 +190,11 @@ impl MediaMutation {
 	) -> Result<Media> {
 		let core = ctx.data::<CoreContext>()?;
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
+		let id = Uuid::parse_str(id.to_string().as_str())
+			.map_err(|_| "Invalid media ID format")?;
 
 		let book = media::ModelWithMetadata::find_for_user(user)
-			.filter(media::Column::Id.eq(id.to_string()))
+			.filter(media::Column::Id.eq(id))
 			.into_model::<media::ModelWithMetadata>()
 			.one(core.conn.as_ref())
 			.await?
@@ -245,9 +254,11 @@ impl MediaMutation {
 	) -> Result<Media> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
+		let id = Uuid::parse_str(id.to_string().as_str())
+			.map_err(|_| "Invalid media ID format")?;
 
 		let model = media::ModelWithMetadata::find_for_user(user)
-			.filter(media::Column::Id.eq(id.to_string()))
+			.filter(media::Column::Id.eq(id))
 			.into_model::<media::ModelWithMetadata>()
 			.one(conn)
 			.await?
@@ -275,9 +286,11 @@ impl MediaMutation {
 	async fn delete_media_progress(&self, ctx: &Context<'_>, id: ID) -> Result<Media> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
+		let id = Uuid::parse_str(id.to_string().as_str())
+			.map_err(|_| "Invalid media ID format")?;
 
 		let model = media::ModelWithMetadata::find_for_user(user)
-			.filter(media::Column::Id.eq(id.to_string()))
+			.filter(media::Column::Id.eq(id))
 			.into_model::<media::ModelWithMetadata>()
 			.one(conn)
 			.await?
@@ -307,9 +320,11 @@ impl MediaMutation {
 	) -> Result<Media> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
+		let id = Uuid::parse_str(id.to_string().as_str())
+			.map_err(|_| "Invalid media ID format")?;
 
 		let model = media::ModelWithMetadata::find_for_user(user)
-			.filter(media::Column::Id.eq(id.to_string()))
+			.filter(media::Column::Id.eq(id))
 			.into_model::<media::ModelWithMetadata>()
 			.one(conn)
 			.await?
@@ -468,9 +483,11 @@ impl MediaMutation {
 	) -> Result<Option<finished_reading_session::Model>> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
+		let id = Uuid::parse_str(id.to_string().as_str())
+			.map_err(|_| "Invalid media ID format")?;
 
 		let model = media::ModelWithMetadata::find_for_user(user)
-			.filter(media::Column::Id.eq(id.to_string()))
+			.filter(media::Column::Id.eq(id))
 			.into_model::<media::ModelWithMetadata>()
 			.one(conn)
 			.await?

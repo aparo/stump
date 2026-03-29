@@ -70,11 +70,13 @@ impl SeriesMutation {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let core = ctx.data::<CoreContext>()?;
 		let conn = core.conn.as_ref();
+		let id =
+			Uuid::parse_str(id.to_string().as_str()).map_err(|_| "Invalid series ID")?;
 
 		let model = series::ModelWithMetadata::find_for_user(user)
 			.filter(
 				series::Column::Id
-					.eq(id.to_string())
+					.eq(id)
 					.and(series::Column::DeletedAt.is_null()),
 			)
 			.into_model::<series::ModelWithMetadata>()
@@ -122,9 +124,11 @@ impl SeriesMutation {
 	) -> Result<Series> {
 		let core = ctx.data::<CoreContext>()?;
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
+		let id =
+			Uuid::parse_str(id.to_string().as_str()).map_err(|_| "Invalid series ID")?;
 
 		let series = series::ModelWithMetadata::find_for_user(user)
-			.filter(series::Column::Id.eq(id.to_string()))
+			.filter(series::Column::Id.eq(id))
 			.into_model::<series::ModelWithMetadata>()
 			.one(core.conn.as_ref())
 			.await?
@@ -147,7 +151,7 @@ impl SeriesMutation {
 			.ok_or("Associated library for series not found")?;
 
 		let book = media::Entity::find_for_user(user)
-			.filter(media::Column::Id.eq(input.media_id.to_string()))
+			.filter(media::Column::Id.eq(input.media_id))
 			.one(core.conn.as_ref())
 			.await?
 			.ok_or("Media not found")?;
@@ -189,9 +193,11 @@ impl SeriesMutation {
 	) -> Result<Series> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
+		let id =
+			Uuid::parse_str(id.to_string().as_str()).map_err(|_| "Invalid series ID")?;
 
 		let model = series::ModelWithMetadata::find_for_user(user)
-			.filter(series::Column::Id.eq(id.to_string()))
+			.filter(series::Column::Id.eq(id))
 			.into_model::<series::ModelWithMetadata>()
 			.one(conn)
 			.await?
@@ -224,9 +230,11 @@ impl SeriesMutation {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let core = ctx.data::<CoreContext>()?;
 		let conn = core.conn.as_ref();
+		let id =
+			Uuid::parse_str(id.to_string().as_str()).map_err(|_| "Invalid series ID")?;
 
 		let mut model = series::ModelWithMetadata::find_for_user(user)
-			.filter(series::Column::Id.eq(id.to_string()))
+			.filter(series::Column::Id.eq(id))
 			.into_model::<series::ModelWithMetadata>()
 			.one(conn)
 			.await?
@@ -290,9 +298,11 @@ impl SeriesMutation {
 	) -> Result<Series> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let core = ctx.data::<CoreContext>()?;
+		let id =
+			Uuid::parse_str(id.to_string().as_str()).map_err(|_| "Invalid series ID")?;
 
 		let series = series::ModelWithMetadata::find_for_user(user)
-			.filter(series::Column::Id.eq(id.to_string()))
+			.filter(series::Column::Id.eq(id))
 			.into_model::<series::ModelWithMetadata>()
 			.one(core.conn.as_ref())
 			.await?
