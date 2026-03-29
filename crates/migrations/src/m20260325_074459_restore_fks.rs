@@ -25,23 +25,6 @@ impl MigrationTrait for Migration {
 						.to_owned(),
 				)
 				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(sea_query::Alias::new("page_analysis"))
-						.add_foreign_key(
-							TableForeignKey::new()
-								.name("fk-page_analysis-media")
-								.from_tbl(sea_query::Alias::new("page_analysis"))
-								.from_col(sea_query::Alias::new("media_id"))
-								.to_tbl(sea_query::Alias::new("media"))
-								.to_col(sea_query::Alias::new("id"))
-								.on_delete(ForeignKeyAction::Cascade)
-								.on_update(ForeignKeyAction::NoAction),
-						)
-						.to_owned(),
-				)
-				.await?;
 
 			manager
 				.alter_table(
@@ -89,11 +72,11 @@ impl MigrationTrait for Migration {
 						.table(sea_query::Alias::new("book_club_book_suggestions"))
 						.add_foreign_key(
 							TableForeignKey::new()
-								.name("fk-book_club_book_suggestions-member")
+								.name("fk-book_club_book_suggestions-suggested_by_id")
 								.from_tbl(sea_query::Alias::new(
 									"book_club_book_suggestions",
 								))
-								.from_col(sea_query::Alias::new("member_id"))
+								.from_col(sea_query::Alias::new("suggested_by_id"))
 								.to_tbl(sea_query::Alias::new("users"))
 								.to_col(sea_query::Alias::new("id"))
 								.on_delete(ForeignKeyAction::Cascade)
@@ -129,11 +112,11 @@ impl MigrationTrait for Migration {
 						.table(sea_query::Alias::new("book_club_book_suggestion_likes"))
 						.add_foreign_key(
 							TableForeignKey::new()
-								.name("fk-book_club_book_suggestion_likes-member")
+								.name("fk-book_club_book_suggestion_likes-liked_by_id")
 								.from_tbl(sea_query::Alias::new(
 									"book_club_book_suggestion_likes",
 								))
-								.from_col(sea_query::Alias::new("member_id"))
+								.from_col(sea_query::Alias::new("liked_by_id"))
 								.to_tbl(sea_query::Alias::new("users"))
 								.to_col(sea_query::Alias::new("id"))
 								.on_delete(ForeignKeyAction::Cascade)
@@ -167,16 +150,6 @@ impl MigrationTrait for Migration {
 								.from_tbl(sea_query::Alias::new("book_club_discussions"))
 								.from_col(sea_query::Alias::new("book_club_book_id"))
 								.to_tbl(sea_query::Alias::new("media"))
-								.to_col(sea_query::Alias::new("id"))
-								.on_delete(ForeignKeyAction::Cascade)
-								.on_update(ForeignKeyAction::NoAction),
-						)
-						.add_foreign_key(
-							TableForeignKey::new()
-								.name("fk-book_club_discussions-book_club")
-								.from_tbl(sea_query::Alias::new("book_club_discussions"))
-								.from_col(sea_query::Alias::new("book_club_id"))
-								.to_tbl(sea_query::Alias::new("book_clubs"))
 								.to_col(sea_query::Alias::new("id"))
 								.on_delete(ForeignKeyAction::Cascade)
 								.on_update(ForeignKeyAction::NoAction),
@@ -402,23 +375,6 @@ impl MigrationTrait for Migration {
 				)
 				.await?;
 
-			manager
-				.alter_table(
-					Table::alter()
-						.table(sea_query::Alias::new("book_club_schedules"))
-						.add_foreign_key(
-							TableForeignKey::new()
-								.name("idx_bcm_user_club")
-								.from_tbl(sea_query::Alias::new("book_club_schedules"))
-								.from_col(sea_query::Alias::new("book_club_id"))
-								.to_tbl(sea_query::Alias::new("book_clubs"))
-								.to_col(sea_query::Alias::new("id"))
-								.on_delete(ForeignKeyAction::Cascade)
-								.on_update(ForeignKeyAction::NoAction),
-						)
-						.to_owned(),
-				)
-				.await?;
 			manager
 				.alter_table(
 					Table::alter()
@@ -997,23 +953,7 @@ impl MigrationTrait for Migration {
 						.to_owned(),
 				)
 				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(sea_query::Alias::new("page_analysis"))
-						.add_foreign_key(
-							TableForeignKey::new()
-								.name("media_metadata_media_id_idx")
-								.from_tbl(sea_query::Alias::new("page_analysis"))
-								.from_col(sea_query::Alias::new("media_id"))
-								.to_tbl(sea_query::Alias::new("media"))
-								.to_col(sea_query::Alias::new("id"))
-								.on_delete(ForeignKeyAction::Cascade)
-								.on_update(ForeignKeyAction::NoAction),
-						)
-						.to_owned(),
-				)
-				.await?;
+
 			manager
 				.alter_table(
 					Table::alter()
@@ -1104,28 +1044,25 @@ impl MigrationTrait for Migration {
 			manager
 				.alter_table(
 					Table::alter()
-						.table(sea_query::Alias::new("smart_list_views"))
+						.table(sea_query::Alias::new("smart_list_access_rules"))
 						.add_foreign_key(
 							TableForeignKey::new()
 								.name("fk-smart_list_access_rules-smart_list")
-								.from_tbl(sea_query::Alias::new("smart_list_views"))
-								.from_col(sea_query::Alias::new("list_id"))
+								.from_tbl(sea_query::Alias::new(
+									"smart_list_access_rules",
+								))
+								.from_col(sea_query::Alias::new("smart_list_id"))
 								.to_tbl(sea_query::Alias::new("smart_lists"))
 								.to_col(sea_query::Alias::new("id"))
 								.on_delete(ForeignKeyAction::Cascade)
 								.on_update(ForeignKeyAction::NoAction),
 						)
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(sea_query::Alias::new("smart_list_views"))
 						.add_foreign_key(
 							TableForeignKey::new()
 								.name("fk-smart_list_access_rules-user")
-								.from_tbl(sea_query::Alias::new("smart_list_views"))
+								.from_tbl(sea_query::Alias::new(
+									"smart_list_access_rules",
+								))
 								.from_col(sea_query::Alias::new("user_id"))
 								.to_tbl(sea_query::Alias::new("users"))
 								.to_col(sea_query::Alias::new("id"))
@@ -1139,29 +1076,22 @@ impl MigrationTrait for Migration {
 			manager
 				.alter_table(
 					Table::alter()
-						.table(sea_query::Alias::new("book_club_schedules"))
+						.table(sea_query::Alias::new("book_club_discussions"))
 						.add_foreign_key(
 							TableForeignKey::new()
-								.name("fk-book_club_schedules-book_club")
-								.from_tbl(sea_query::Alias::new("book_club_schedules"))
+								.name("fk-book_club_discussions-book_club")
+								.from_tbl(sea_query::Alias::new("book_club_discussions"))
 								.from_col(sea_query::Alias::new("book_club_id"))
 								.to_tbl(sea_query::Alias::new("book_clubs"))
 								.to_col(sea_query::Alias::new("id"))
 								.on_delete(ForeignKeyAction::Cascade)
 								.on_update(ForeignKeyAction::NoAction),
 						)
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(sea_query::Alias::new("book_club_discussions"))
 						.add_foreign_key(
 							TableForeignKey::new()
-								.name("fk-book_club_book_suggestion_likes-suggestion")
+								.name("fk-book_club_discussions-book_club_book_id")
 								.from_tbl(sea_query::Alias::new("book_club_discussions"))
-								.from_col(sea_query::Alias::new("book_id"))
+								.from_col(sea_query::Alias::new("book_club_book_id"))
 								.to_tbl(sea_query::Alias::new("book_club_books"))
 								.to_col(sea_query::Alias::new("id"))
 								.on_delete(ForeignKeyAction::Cascade)
@@ -1177,12 +1107,14 @@ impl MigrationTrait for Migration {
 						.table(sea_query::Alias::new("book_club_discussion_message"))
 						.add_foreign_key(
 							TableForeignKey::new()
-								.name("fk-book_club_discussion_message-parent")
+								.name("fk-book_club_discussion_message-parent_message")
 								.from_tbl(sea_query::Alias::new(
 									"book_club_discussion_message",
 								))
-								.from_col(sea_query::Alias::new("parent_id"))
-								.to_tbl(sea_query::Alias::new("media"))
+								.from_col(sea_query::Alias::new("parent_message_id"))
+								.to_tbl(sea_query::Alias::new(
+									"book_club_discussion_message",
+								))
 								.to_col(sea_query::Alias::new("id"))
 								.on_delete(ForeignKeyAction::Cascade)
 								.on_update(ForeignKeyAction::NoAction),
@@ -1194,7 +1126,9 @@ impl MigrationTrait for Migration {
 									"book_club_discussion_message",
 								))
 								.from_col(sea_query::Alias::new("reply_to_message_id"))
-								.to_tbl(sea_query::Alias::new("media"))
+								.to_tbl(sea_query::Alias::new(
+									"book_club_discussion_message",
+								))
 								.to_col(sea_query::Alias::new("id"))
 								.on_delete(ForeignKeyAction::Cascade)
 								.on_update(ForeignKeyAction::NoAction),
@@ -1300,8 +1234,8 @@ impl MigrationTrait for Migration {
 								.from_tbl(sea_query::Alias::new(
 									"finished_reading_sessions",
 								))
-								.from_col(sea_query::Alias::new("library_id"))
-								.to_tbl(sea_query::Alias::new("libraries"))
+								.from_col(sea_query::Alias::new("media_id"))
+								.to_tbl(sea_query::Alias::new("media"))
 								.to_col(sea_query::Alias::new("id"))
 								.on_delete(ForeignKeyAction::Cascade)
 								.on_update(ForeignKeyAction::NoAction),
@@ -1445,11 +1379,11 @@ impl MigrationTrait for Migration {
 			manager
 				.alter_table(
 					Table::alter()
-						.table(sea_query::Alias::new("old_media_annotations"))
+						.table(sea_query::Alias::new("media_annotations"))
 						.add_foreign_key(
 							TableForeignKey::new()
 								.name("idx_media_annotations_user_media")
-								.from_tbl(sea_query::Alias::new("old_media_annotations"))
+								.from_tbl(sea_query::Alias::new("media_annotations"))
 								.from_col(sea_query::Alias::new("user_id"))
 								.to_tbl(sea_query::Alias::new("users"))
 								.to_col(sea_query::Alias::new("id"))
@@ -1475,14 +1409,7 @@ impl MigrationTrait for Migration {
 						.to_owned(),
 				)
 				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(sea_query::Alias::new("page_analysis"))
-						.drop_foreign_key(sea_query::Alias::new("fk-page_analysis-media"))
-						.to_owned(),
-				)
-				.await?;
+
 			manager
 				.alter_table(
 					Table::alter()
@@ -1543,14 +1470,6 @@ impl MigrationTrait for Migration {
 						.drop_foreign_key(sea_query::Alias::new(
 							"fk-book_club_book_suggestions-club",
 						))
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(sea_query::Alias::new("book_club_schedules"))
-						.drop_foreign_key(sea_query::Alias::new("idx_bcm_user_club"))
 						.to_owned(),
 				)
 				.await?;
@@ -1856,16 +1775,7 @@ impl MigrationTrait for Migration {
 						.to_owned(),
 				)
 				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(sea_query::Alias::new("page_analysis"))
-						.drop_foreign_key(sea_query::Alias::new(
-							"media_metadata_media_id_idx",
-						))
-						.to_owned(),
-				)
-				.await?;
+
 			manager
 				.alter_table(
 					Table::alter()
@@ -1912,16 +1822,6 @@ impl MigrationTrait for Migration {
 						.table(sea_query::Alias::new("smart_list_views"))
 						.drop_foreign_key(sea_query::Alias::new(
 							"fk-smart_list_access_rules-smart_list",
-						))
-						.to_owned(),
-				)
-				.await?;
-			manager
-				.alter_table(
-					Table::alter()
-						.table(sea_query::Alias::new("book_club_schedules"))
-						.drop_foreign_key(sea_query::Alias::new(
-							"fk-book_club_schedules-book_club",
 						))
 						.to_owned(),
 				)

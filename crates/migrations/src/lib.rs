@@ -45,7 +45,7 @@ impl MigratorTrait for Migrator {
 			Box::new(m20260322_151809_normalize_timestamp::Migration),
 			Box::new(m20260325_074457_drop_fks::Migration),
 			Box::new(m20260325_074458_migrate_text_uuid::Migration),
-			// Box::new(m20260325_074459_restore_fks::Migration),
+			Box::new(m20260325_074459_restore_fks::Migration),
 		]
 	}
 }

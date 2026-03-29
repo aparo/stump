@@ -30,8 +30,10 @@ impl MigrationTrait for Migration {
 				ALTER TABLE "book_club_book_suggestion_likes" ALTER COLUMN "liked_by_id" TYPE UUID USING "liked_by_id"::uuid;
 				ALTER TABLE "book_club_book_suggestion_likes" ALTER COLUMN "suggestion_id" TYPE UUID USING "suggestion_id"::uuid;
 				ALTER TABLE "book_club_book_suggestions" ALTER COLUMN "id" TYPE UUID USING "id"::uuid;
+				ALTER TABLE "book_club_book_suggestions" ALTER COLUMN "resolved_by_id" TYPE UUID USING "resolved_by_id"::uuid;
 				ALTER TABLE "book_club_book_suggestions" ALTER COLUMN "suggested_by_id" TYPE UUID USING "suggested_by_id"::uuid;
 				ALTER TABLE "book_club_book_suggestions" ALTER COLUMN "book_id" TYPE UUID USING "book_id"::uuid;
+				ALTER TABLE "book_club_book_suggestions" ALTER COLUMN "book_club_id" TYPE UUID USING "book_club_id"::uuid;
 				ALTER TABLE "book_club_books" ALTER COLUMN "id" TYPE UUID USING "id"::uuid;
 				ALTER TABLE "book_club_books" ALTER COLUMN "book_club_id" TYPE UUID USING "book_club_id"::uuid;
 				ALTER TABLE "book_club_books" ALTER COLUMN "book_entity_id" TYPE UUID USING "book_entity_id"::uuid;
@@ -63,6 +65,7 @@ impl MigrationTrait for Migration {
 				ALTER TABLE "emailer_send_records" ALTER COLUMN "sent_by_user_id" TYPE UUID USING "sent_by_user_id"::uuid;
 				ALTER TABLE "favorite_libraries" ALTER COLUMN "library_id" TYPE UUID USING "library_id"::uuid;
 				ALTER TABLE "favorite_libraries" ALTER COLUMN "user_id" TYPE UUID USING "user_id"::uuid;
+				ALTER TABLE "scheduled_job_libraries" ALTER COLUMN "library_id" TYPE UUID USING "library_id"::uuid;
 				ALTER TABLE "favorite_media" ALTER COLUMN "user_id" TYPE UUID USING "user_id"::uuid;
 				ALTER TABLE "favorite_media" ALTER COLUMN "media_id" TYPE UUID USING "media_id"::uuid;
 				ALTER TABLE "favorite_series" ALTER COLUMN "user_id" TYPE UUID USING "user_id"::uuid;
@@ -97,6 +100,10 @@ impl MigrationTrait for Migration {
 				ALTER TABLE "smart_lists" ALTER COLUMN "creator_id" TYPE UUID USING "creator_id"::uuid;
 				ALTER TABLE "user_login_activity" ALTER COLUMN "user_id" TYPE UUID USING "user_id"::uuid;
 				ALTER TABLE "user_preferences" ALTER COLUMN "user_id" TYPE UUID USING "user_id"::uuid;
+				ALTER TABLE "reviews" ALTER COLUMN "user_id" TYPE UUID USING "user_id"::uuid;
+				ALTER TABLE "reviews" ALTER COLUMN "media_id" TYPE UUID USING "media_id"::uuid;
+				ALTER TABLE "book_club_discussion_message" ALTER COLUMN "member_id" TYPE UUID USING "member_id"::uuid;
+				ALTER TABLE "library_scan_records" ALTER COLUMN "job_id" TYPE UUID USING "job_id"::uuid;
 			"#;
 			manager.get_connection().execute_unprepared(sql).await?;
 		}
@@ -117,6 +124,7 @@ impl MigrationTrait for Migration {
 				ALTER TABLE "book_club_book_suggestions" ALTER COLUMN "id" TYPE TEXT;
 				ALTER TABLE "book_club_book_suggestions" ALTER COLUMN "suggested_by_id" TYPE TEXT;
 				ALTER TABLE "book_club_book_suggestions" ALTER COLUMN "book_id" TYPE TEXT;
+				ALTER TABLE "book_club_book_suggestions" ALTER COLUMN "book_club_id" TYPE TEXT;
 				ALTER TABLE "book_club_books" ALTER COLUMN "id" TYPE TEXT;
 				ALTER TABLE "book_club_books" ALTER COLUMN "book_club_id" TYPE TEXT;
 				ALTER TABLE "book_club_books" ALTER COLUMN "book_entity_id" TYPE TEXT;
@@ -189,6 +197,10 @@ impl MigrationTrait for Migration {
 				ALTER TABLE "user_login_activity" ALTER COLUMN "user_id" TYPE TEXT;
 				ALTER TABLE "user_preferences" ALTER COLUMN "user_id" TYPE TEXT;
 				ALTER TABLE "users" ALTER COLUMN "id" TYPE TEXT;
+				ALTER TABLE "reviews" ALTER COLUMN "user_id" TYPE TEXT;
+				ALTER TABLE "reviews" ALTER COLUMN "media_id" TYPE TEXT;
+				ALTER TABLE "book_club_discussion_message" ALTER COLUMN "member_id" TYPE TEXT;
+				ALTER TABLE "library_scan_records" ALTER COLUMN "job_id" TYPE TEXT;
 			"#;
 			manager.get_connection().execute_unprepared(sql).await?;
 		}
