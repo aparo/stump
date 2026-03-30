@@ -11,11 +11,103 @@ use sea_orm_migration::prelude::*;
 #[derive(DeriveMigrationName)]
 pub struct Migration;
 
+const SQLITE_DATETIME_COLUMNS: [(&str, &str); 51] = [
+	("users", "created_at"),
+	("users", "deleted_at"),
+	("api_keys", "created_at"),
+	("api_keys", "expires_at"),
+	("api_keys", "last_used_at"),
+	("book_clubs", "created_at"),
+	("emailers", "last_used_at"),
+	("jobs", "created_at"),
+	("jobs", "completed_at"),
+	("server_invitations", "created_at"),
+	("server_invitations", "expires_at"),
+	("libraries", "created_at"),
+	("libraries", "updated_at"),
+	("libraries", "last_scanned_at"),
+	("series", "created_at"),
+	("series", "updated_at"),
+	("series", "deleted_at"),
+	("media", "created_at"),
+	("media", "updated_at"),
+	("media", "modified_at"),
+	("media", "deleted_at"),
+	("refresh_tokens", "created_at"),
+	("refresh_tokens", "expires_at"),
+	("sessions", "created_at"),
+	("sessions", "expiry_time"),
+	("user_login_activity", "timestamp"),
+	("favorite_libraries", "favorited_at"),
+	("favorite_media", "favorited_at"),
+	("favorite_series", "favorited_at"),
+	("last_library_visits", "timestamp"),
+	("logs", "timestamp"),
+	("emailer_send_records", "sent_at"),
+	("library_scan_records", "timestamp"),
+	("reading_sessions", "started_at"),
+	("reading_sessions", "updated_at"),
+	("finished_reading_sessions", "started_at"),
+	("finished_reading_sessions", "completed_at"),
+	("book_club_members", "joined_at"),
+	("book_club_books", "completed_at"),
+	("book_club_books", "added_at"),
+	("book_club_book_suggestions", "resolved_at"),
+	("book_club_book_suggestions", "created_at"),
+	("book_club_book_suggestion_likes", "timestamp"),
+	("book_club_discussions", "created_at"),
+	("book_club_discussion_message", "timestamp"),
+	("book_club_discussion_message", "edited_at"),
+	("book_club_discussion_message_reactions", "created_at"),
+	("custom_emojis", "created_at"),
+	("media_annotations", "created_at"),
+	("media_annotations", "updated_at"),
+	("bookmarks", "created_at"),
+];
+
+fn sqlite_quote_ident(ident: &str) -> String {
+	format!("\"{}\"", ident.replace('"', "\"\""))
+}
+
+async fn sqlite_alter_column_type(
+	manager: &SchemaManager<'_>,
+	table_name: &str,
+	column_name: &str,
+) -> Result<(), DbErr> {
+	let quoted_table = sqlite_quote_ident(table_name);
+	let quoted_column = sqlite_quote_ident(column_name);
+	let temp_column_name = format!("{column_name}__tmp_tz");
+	let quoted_temp_column = sqlite_quote_ident(&temp_column_name);
+
+	let sql = format!(
+		r#"
+			ALTER TABLE {table} ADD COLUMN {temp_column} TIMESTAMP WITH TIME ZONE;
+			UPDATE {table}
+			SET {temp_column} = CASE
+				WHEN {column} IS NULL THEN NULL
+				ELSE strftime('%Y-%m-%dT%H:%M:%fZ', {column})
+			END;
+			ALTER TABLE {table} DROP COLUMN {column};
+			ALTER TABLE {table} RENAME COLUMN {temp_column} TO {column};
+		"#,
+		table = quoted_table,
+		column = quoted_column,
+		temp_column = quoted_temp_column,
+	);
+
+	manager.get_connection().execute_unprepared(&sql).await?;
+
+	Ok(())
+}
+
 #[async_trait::async_trait]
 impl MigrationTrait for Migration {
 	async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
 		if manager.get_database_backend() == DatabaseBackend::Sqlite {
-			// only run this migration for sqlite, as other databases already use timestamp with timezone
+			for (table_name, column_name) in SQLITE_DATETIME_COLUMNS {
+				sqlite_alter_column_type(manager, table_name, column_name).await?;
+			}
+
 			return Ok(());
 		}
 		if manager.get_database_backend() == DatabaseBackend::Postgres {
