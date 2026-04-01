@@ -21,6 +21,7 @@ mod m20260322_151809_normalize_timestamp;
 mod m20260325_074457_drop_fks;
 mod m20260325_074458_migrate_text_uuid;
 mod m20260325_074459_restore_fks;
+mod sqlite_extra;
 pub struct Migrator;
 
 #[async_trait]

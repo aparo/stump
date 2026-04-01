@@ -3,6 +3,7 @@ use crate::m20251116_000000_book_club_enhancements;
 use crate::m20251116_000000_book_club_enhancements::*;
 use crate::m20260116_000000_rewrite_media_annotations::*;
 use crate::m20260118_204601_add_bookmark_created_at;
+use crate::sqlite_extra::{sqlite_drop_indexes, sqlite_quote_ident};
 use sea_orm::DatabaseBackend;
 use sea_orm_migration::prelude::*;
 // this migration will convert all the da_ime to timestamp_with_offset to be consistent with the rest of the codebase and to be able to store timezone information.
@@ -65,10 +66,6 @@ const SQLITE_DATETIME_COLUMNS: [(&str, &str); 51] = [
 	("bookmarks", "created_at"),
 ];
 
-fn sqlite_quote_ident(ident: &str) -> String {
-	format!("\"{}\"", ident.replace('"', "\"\""))
-}
-
 async fn sqlite_alter_column_type(
 	manager: &SchemaManager<'_>,
 	table_name: &str,
@@ -81,7 +78,7 @@ async fn sqlite_alter_column_type(
 
 	let sql = format!(
 		r#"
-			ALTER TABLE {table} ADD COLUMN {temp_column} TIMESTAMP WITH TIME ZONE;
+			ALTER TABLE {table} ADD COLUMN {temp_column} timestamp_with_timezone_text;
 			UPDATE {table}
 			SET {temp_column} = CASE
 				WHEN {column} IS NULL THEN NULL
@@ -104,6 +101,13 @@ async fn sqlite_alter_column_type(
 impl MigrationTrait for Migration {
 	async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
 		if manager.get_database_backend() == DatabaseBackend::Sqlite {
+			sqlite_drop_indexes(
+				manager,
+				"book_club_discussion_message",
+				"idx_bcdm_discussion_ts",
+			)
+			.await?;
+
 			for (table_name, column_name) in SQLITE_DATETIME_COLUMNS {
 				sqlite_alter_column_type(manager, table_name, column_name).await?;
 			}
