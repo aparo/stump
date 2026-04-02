@@ -6,7 +6,7 @@ use crate::{
 use async_trait::async_trait;
 use models::entity::{library, library_config};
 use notify::{Event, RecommendedWatcher, Watcher};
-use sea_orm::prelude::*;
+use sea_orm::{prelude::*, ConnectionTrait, DatabaseBackend, Statement};
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -122,17 +122,53 @@ struct LibraryProvider {
 impl LibrariesProvider for LibraryProvider {
 	#[tracing::instrument(skip(self), err)]
 	async fn get_libraries(&self) -> CoreResult<Vec<library::LibraryIdentSelect>> {
-		// get list of all libraries
-		// for each library, if watching is enabled, watch their directory
 		let conn = self.conn.as_ref();
 
-		let libraries: Vec<library::LibraryIdentSelect> = library::Entity::find()
-			.inner_join(library_config::Entity)
-			.filter(library::Column::Status.eq("READY"))
-			.filter(library_config::Column::Watch.eq(true))
-			.into_partial_model::<library::LibraryIdentSelect>()
-			.all(conn)
-			.await?;
+		let libraries: Vec<library::LibraryIdentSelect> =
+			match self.conn.get_database_backend() {
+				DatabaseBackend::Sqlite => {
+					// we switched to sql query becasue the orm has bug in query generation
+					let sql = r#"
+						SELECT
+							CAST("libraries"."id" AS TEXT) AS "id",
+							"libraries"."name" AS "name",
+							"libraries"."path" AS "path"
+						FROM "libraries"
+						INNER JOIN "library_configs"
+							ON "libraries"."config_id" = "library_configs"."id"
+						WHERE "libraries"."status" = 'READY'
+							AND "library_configs"."watch" = 1
+					"#;
+
+					let stmt = Statement::from_string(DatabaseBackend::Sqlite, sql);
+					let rows = conn.query_all(stmt).await?;
+
+					rows.into_iter()
+						.map(|row| {
+							let id_str: String = row.try_get("", "id")?;
+							let id = Uuid::parse_str(&id_str).map_err(|e| {
+								CoreError::InitializationError(format!(
+									"Invalid library id '{}': {}",
+									id_str, e
+								))
+							})?;
+							let name: String = row.try_get("", "name")?;
+							let path: String = row.try_get("", "path")?;
+
+							Ok(library::LibraryIdentSelect { id, name, path })
+						})
+						.collect::<CoreResult<Vec<_>>>()?
+				},
+				DatabaseBackend::Postgres | DatabaseBackend::MySql => {
+					library::Entity::find()
+						.inner_join(library_config::Entity)
+						.filter(library::Column::Status.eq("READY"))
+						.filter(library_config::Column::Watch.eq(true))
+						.into_partial_model::<library::LibraryIdentSelect>()
+						.all(conn)
+						.await?
+				},
+			};
 
 		Ok(libraries)
 	}
