@@ -176,7 +176,8 @@ impl MigrationTrait for Migration {
 		}
 		if manager.get_database_backend() == DatabaseBackend::Postgres {
 			let sql = r#"
-				ALTER TABLE "book_club_book_suggestion_likes" DROP CONSTRAINT "FK_book_club_book_suggestion_likes_book_club_book_suggestions";
+				ALTER TABLE "book_club_book_suggestion_likes" DROP CONSTRAINT IF EXISTS "FK_book_club_book_suggestion_likes_book_club_book_suggestions";
+				ALTER TABLE "finished_reading_sessions" DROP CONSTRAINT IF EXISTS "fk-finished_reading_sessions-device";
 				ALTER TABLE "users" ALTER COLUMN "id" TYPE UUID USING "id"::uuid;
 				ALTER TABLE "libraries" ALTER COLUMN "id" TYPE UUID USING "id"::uuid;
 				ALTER TABLE "series" ALTER COLUMN "id" TYPE UUID USING "id"::uuid;
@@ -249,6 +250,7 @@ impl MigrationTrait for Migration {
 				ALTER TABLE "reading_sessions" ALTER COLUMN "user_id" TYPE UUID USING "user_id"::uuid;
 				ALTER TABLE "reading_sessions" ALTER COLUMN "device_id" TYPE UUID USING "device_id"::uuid;
 				ALTER TABLE "refresh_tokens" ALTER COLUMN "user_id" TYPE UUID USING "user_id"::uuid;
+				ALTER TABLE "registered_reading_devices" ALTER COLUMN "id" TYPE UUID USING "id"::uuid;
 				ALTER TABLE "series_metadata" ALTER COLUMN "series_id" TYPE UUID USING "series_id"::uuid;
 				ALTER TABLE "series_tags" ALTER COLUMN "series_id" TYPE UUID USING "series_id"::uuid;
 				ALTER TABLE "sessions" ALTER COLUMN "user_id" TYPE UUID USING "user_id"::uuid;
