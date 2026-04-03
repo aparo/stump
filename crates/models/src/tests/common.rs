@@ -21,9 +21,13 @@ pub fn select_no_cols_to_string<EntityType: EntityTrait>(
 		.to_string(SqliteQueryBuilder)
 }
 
+pub fn default_user_id() -> Uuid {
+	Uuid::parse_str("0ad39398-ce6a-4bcc-b044-719163a07c53").unwrap()
+}
+
 pub fn get_default_user() -> AuthUser {
 	AuthUser {
-		id: Uuid::parse_str("0ad39398-ce6a-4bcc-b044-719163a07c53").unwrap(),
+		id: default_user_id(),
 		username: "test".to_string(),
 		avatar_path: None,
 		avatar_url: None,

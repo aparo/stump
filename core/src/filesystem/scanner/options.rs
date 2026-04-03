@@ -173,14 +173,14 @@ mod tests {
 			meta: None,
 			hashes: None,
 		});
-		assert_eq!(result.error_ctx(), "book".to_string());
+		assert_eq!(result.error_ctx(), book_id.to_string());
 
 		let result = BookVisitResult::Custom(CustomVisitResult {
 			id: book_id,
 			meta: None,
 			hashes: None,
 		});
-		assert_eq!(result.error_ctx(), "book".to_string());
+		assert_eq!(result.error_ctx(), book_id.to_string());
 	}
 
 	#[test]

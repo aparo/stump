@@ -72,7 +72,7 @@ mod tests {
 			.to_string(sea_orm::sea_query::SqliteQueryBuilder);
 		assert_eq!(
 			stmt_str,
-			r#"SELECT "library_id" FROM "library_exclusions" WHERE "library_exclusions"."user_id" = '2b5e18ad-440b-4d04-83e5-db45d817355f'"#
+			r#"SELECT "library_id" FROM "library_exclusions" WHERE "library_exclusions"."user_id" = '0ad39398-ce6a-4bcc-b044-719163a07c53'"#
 		);
 	}
 }

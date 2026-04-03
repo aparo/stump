@@ -91,7 +91,7 @@ mod tests {
 		);
 		assert_eq!(
 			select_no_cols_to_string(select),
-			r#"SELECT  FROM "book_club_invitations" WHERE "book_club_invitations"."id" = 'f35f3fb0-bb14-43e2-91b9-234b4503cff2' AND "book_club_invitations"."user_id" = '42'"#.to_string()
+			r#"SELECT  FROM "book_club_invitations" WHERE "book_club_invitations"."id" = 'f35f3fb0-bb14-43e2-91b9-234b4503cff2' AND "book_club_invitations"."user_id" = '0ad39398-ce6a-4bcc-b044-719163a07c53'"#.to_string()
 		);
 	}
 

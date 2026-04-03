@@ -321,7 +321,7 @@ impl OPDSPublication {
 
 #[cfg(test)]
 mod tests {
-	use std::collections::BTreeMap;
+	use std::{collections::BTreeMap, str::FromStr};
 
 	use chrono::Utc;
 	use models::{
@@ -339,9 +339,16 @@ mod tests {
 	};
 
 	use super::*;
+	fn mock_book_id() -> Uuid {
+		Uuid::from_str("c8dc63ee-2192-473f-bba5-c1b91e1abb95").unwrap()
+	}
+
+	fn mock_book_id2() -> Uuid {
+		Uuid::from_str("6de3f2f5-6353-436d-9f28-299268239e0b").unwrap()
+	}
 
 	fn mock_book() -> OPDSPublicationEntity {
-		let id = Uuid::new_v4();
+		let id = mock_book_id();
 		OPDSPublicationEntity {
 			media: media::Model {
 				id,
@@ -413,7 +420,7 @@ mod tests {
 			mock_book(),
 			OPDSPublicationEntity {
 				media: media::Model {
-					id: Uuid::new_v4(),
+					id: mock_book_id2(),
 					name: "Book 2".to_string(),
 					..mock_book().media
 				},
@@ -423,12 +430,12 @@ mod tests {
 
 		let position_results = vec![
 			BTreeMap::from([
-				("id".to_string(), Value::from("1")),
+				("id".to_string(), Value::from(mock_book_id().to_string())),
 				("position".to_string(), Value::from(1i64)),
 			])
 			.into_mock_row(),
 			BTreeMap::from([
-				("id".to_string(), Value::from("2")),
+				("id".to_string(), Value::from(mock_book_id2().to_string())),
 				("position".to_string(), Value::from(2i64)),
 			])
 			.into_mock_row(),
@@ -465,7 +472,7 @@ mod tests {
 		let book = mock_book();
 
 		let position_results = vec![BTreeMap::from([
-			("id".to_string(), Value::from("1")),
+			("id".to_string(), Value::from(mock_book_id().to_string())),
 			("position".to_string(), Value::from(1i64)),
 		])
 		.into_mock_row()];
@@ -473,7 +480,7 @@ mod tests {
 		// Mock the page analysis query result
 		let page_analysis_results = vec![media_analysis::Model {
 			id: 1,
-			media_id: Uuid::new_v4(),
+			media_id: mock_book_id(),
 			data: MediaAnalysisData {
 				dimensions: vec![
 					PageDimension {
@@ -589,7 +596,7 @@ mod tests {
 		assert!(json["href"]
 			.as_str()
 			.unwrap()
-			.contains("/opds/v2.0/books/1/thumbnail"));
+			.contains(&format!("/opds/v2.0/books/{}/thumbnail", mock_book_id())));
 	}
 
 	#[test]

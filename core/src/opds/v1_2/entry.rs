@@ -381,7 +381,7 @@ mod tests {
 				<link type="image/gif"
 							rel="http://opds-spec.org/image/thumbnail"
 							href="/covers/4561.thmb.gif" />
-				<link href="/opds/v1.2/books/123/pages/{pageNumber}?zero_based=true"
+				<link href="/opds/v1.2/books/123e4567-e89b-12d3-a456-426614174000/pages/{pageNumber}?zero_based=true"
 							type="image/jpeg"
 							rel="http://vaemendis.net/opds-pse/stream"
 							pse:count="35"
@@ -395,9 +395,12 @@ mod tests {
 		assert_eq!(result, expected_result);
 	}
 
+	fn library_id() -> Uuid {
+		Uuid::parse_str("123e4567-e89b-12d3-a456-426614174000").unwrap()
+	}
 	fn library() -> library::Model {
 		library::Model {
-			id: Uuid::new_v4(),
+			id: library_id(),
 			name: "A library".to_string(),
 			created_at: chrono::Utc::now().into(),
 			updated_at: Some(chrono::Utc::now().into()),
@@ -416,13 +419,19 @@ mod tests {
 	fn test_builder_url_format_with_api_key() {
 		let builder = OPDSEntryBuilder::new(library(), Some("api_key".to_string()));
 		let entry = builder.into_opds_entry();
-		assert_eq!(entry.links[0].href, "/opds/api_key/v1.2/libraries/123");
+		assert_eq!(
+			entry.links[0].href,
+			format!("/opds/api_key/v1.2/libraries/{}", library_id())
+		);
 	}
 
 	#[test]
 	fn test_builder_url_format_without_api_key() {
 		let builder = OPDSEntryBuilder::new(library(), None);
 		let entry = builder.into_opds_entry();
-		assert_eq!(entry.links[0].href, "/opds/v1.2/libraries/123");
+		assert_eq!(
+			entry.links[0].href,
+			format!("/opds/v1.2/libraries/{}", library_id())
+		);
 	}
 }

@@ -141,9 +141,9 @@ mod tests {
 		assert_eq!(
 			select_no_cols_to_string(stmt),
 			r#"SELECT  FROM "reading_lists" LEFT JOIN "reading_list_rules" ON "reading_lists"."id" = "reading_list_rules"."reading_list_id" WHERE "#.to_string()
-				+ r#""reading_lists"."creating_user_id" = '42' OR "#
-				+ r#"("reading_lists"."visibility" = 'PUBLIC' AND (("reading_list_rules"."user_id" = '42' AND "reading_list_rules"."role" >= 1) OR "reading_list_rules"."user_id" IS NULL)) OR "#
-				+ r#"("reading_lists"."visibility" = 'SHARED' AND ("reading_list_rules"."user_id" = '42' AND "reading_list_rules"."role" >= 1))"#
+				+ r#""reading_lists"."creating_user_id" = '0ad39398-ce6a-4bcc-b044-719163a07c53' OR "#
+				+ r#"("reading_lists"."visibility" = 'PUBLIC' AND (("reading_list_rules"."user_id" = '0ad39398-ce6a-4bcc-b044-719163a07c53' AND "reading_list_rules"."role" >= 1) OR "reading_list_rules"."user_id" IS NULL)) OR "#
+				+ r#"("reading_lists"."visibility" = 'SHARED' AND ("reading_list_rules"."user_id" = '0ad39398-ce6a-4bcc-b044-719163a07c53' AND "reading_list_rules"."role" >= 1))"#
                 + r#" ORDER BY "reading_lists"."id" ASC"#
 		);
 	}
@@ -156,9 +156,9 @@ mod tests {
 			select_no_cols_to_string(stmt),
 			r#"SELECT  FROM "reading_lists" LEFT JOIN "reading_list_rules" ON "reading_lists"."id" = "reading_list_rules"."reading_list_id" WHERE "#.to_string()
 				+ r#""reading_lists"."id" = '314' AND "#
-				+ r#"("reading_lists"."creating_user_id" = '42' OR "#
-				+ r#"("reading_lists"."visibility" = 'PUBLIC' AND (("reading_list_rules"."user_id" = '42' AND "reading_list_rules"."role" >= 1) OR "reading_list_rules"."user_id" IS NULL)) OR "#
-				+ r#"("reading_lists"."visibility" = 'SHARED' AND ("reading_list_rules"."user_id" = '42' AND "reading_list_rules"."role" >= 1)))"#
+				+ r#"("reading_lists"."creating_user_id" = '0ad39398-ce6a-4bcc-b044-719163a07c53' OR "#
+				+ r#"("reading_lists"."visibility" = 'PUBLIC' AND (("reading_list_rules"."user_id" = '0ad39398-ce6a-4bcc-b044-719163a07c53' AND "reading_list_rules"."role" >= 1) OR "reading_list_rules"."user_id" IS NULL)) OR "#
+				+ r#"("reading_lists"."visibility" = 'SHARED' AND ("reading_list_rules"."user_id" = '0ad39398-ce6a-4bcc-b044-719163a07c53' AND "reading_list_rules"."role" >= 1)))"#
 		);
 	}
 }

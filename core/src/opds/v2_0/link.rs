@@ -453,8 +453,9 @@ mod tests {
 
 	#[test]
 	fn test_navigation_link_from_library_data() {
+		let library_id = Uuid::parse_str("8f83507e-a05f-46ce-a4db-60aebdf90968").unwrap();
 		let library = library::Model {
-			id: Uuid::new_v4(),
+			id: library_id,
 			name: "A library".to_string(),
 			created_at: chrono::Utc::now().into(),
 			updated_at: Some(chrono::Utc::now().into()),
@@ -473,7 +474,10 @@ mod tests {
 		let json = serde_json::to_string(&link).unwrap();
 		assert_eq!(
 			json,
-			r#"{"title":"A library","rel":"subsection","href":"/opds/v2.0/libraries/123","type":"application/opds+json"}"#,
+			format!(
+				r#"{{"title":"A library","rel":"subsection","href":"/opds/v2.0/libraries/{}","type":"application/opds+json"}}"#,
+				library_id
+			)
 		);
 	}
 

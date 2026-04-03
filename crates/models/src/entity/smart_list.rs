@@ -263,7 +263,7 @@ mod tests {
 			r#"SELECT  WHERE "smart_lists"."id" IN (SELECT "smart_lists"."id" "#
 				.to_string() + r#"FROM "smart_list_access_rules" INNER JOIN "smart_lists" ON "#
 				+ r#""smart_list_access_rules"."smart_list_id" = "smart_lists"."id" WHERE "#
-				+ r#""smart_list_access_rules"."user_id" = '42' AND "#
+				+ r#""smart_list_access_rules"."user_id" = '0ad39398-ce6a-4bcc-b044-719163a07c53' AND "#
 				+ r#""smart_list_access_rules"."role" >= 1"#
 				+ r#")"#
 		);
@@ -280,7 +280,7 @@ mod tests {
 			r#"SELECT  WHERE "smart_lists"."visibility" = 'PUBLIC' AND (TRUE OR "smart_lists"."id" NOT IN (SELECT "smart_lists"."id" "#
 				.to_string() + r#"FROM "smart_list_access_rules" INNER JOIN "smart_lists" ON "#
 				+ r#""smart_list_access_rules"."smart_list_id" = "smart_lists"."id" WHERE "#
-				+ r#""smart_list_access_rules"."user_id" = '42')"#
+				+ r#""smart_list_access_rules"."user_id" = '0ad39398-ce6a-4bcc-b044-719163a07c53')"#
 				+ r#")"#
 		);
 	}
@@ -294,14 +294,14 @@ mod tests {
 		assert_eq!(
 			sql,
 			r#"SELECT  WHERE "#.to_string()
-				+ r#""smart_lists"."creator_id" = '42' OR ("#
+				+ r#""smart_lists"."creator_id" = '0ad39398-ce6a-4bcc-b044-719163a07c53' OR ("#
 				+ r#""smart_lists"."visibility" = 'PUBLIC' AND (TRUE OR "smart_lists"."id" NOT IN (SELECT "smart_lists"."id" "#
 				+ r#"FROM "smart_list_access_rules" INNER JOIN "smart_lists" ON "#
 				+ r#""smart_list_access_rules"."smart_list_id" = "smart_lists"."id" WHERE "#
-				+ r#""smart_list_access_rules"."user_id" = '42')"#
+				+ r#""smart_list_access_rules"."user_id" = '0ad39398-ce6a-4bcc-b044-719163a07c53')"#
 				+ r#")) OR "#
 				+ r#"("smart_lists"."visibility" = 'SHARED' AND TRUE) OR "#
-				+ r#"("smart_lists"."visibility" = 'PRIVATE' AND "smart_lists"."creator_id" = '42')"#
+				+ r#"("smart_lists"."visibility" = 'PRIVATE' AND "smart_lists"."creator_id" = '0ad39398-ce6a-4bcc-b044-719163a07c53')"#
 		);
 	}
 }

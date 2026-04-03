@@ -26,7 +26,7 @@ pub enum ArrayOrItem<T> {
 /// The position is **1-indexed**.
 #[derive(Deserialize, Serialize, FromQueryResult)]
 pub(crate) struct EntityPosition {
-	pub id: String,
+	pub id: Uuid,
 	pub position: i64,
 }
 
@@ -80,9 +80,6 @@ impl OPDSV2QueryExt for DatabaseConnection {
 			.map(|row| EntityPosition::from_query_result(&row, ""))
 			.collect::<Result<Vec<_>, _>>()?;
 
-		Ok(ranked
-			.into_iter()
-			.map(|ep| (Uuid::parse_str(&ep.id).unwrap(), ep.position))
-			.collect())
+		Ok(ranked.into_iter().map(|ep| (ep.id, ep.position)).collect())
 	}
 }

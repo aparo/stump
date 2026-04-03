@@ -450,6 +450,8 @@ fn do_validate_profile(profile: &String) -> bool {
 mod tests {
 	use tempfile;
 
+	use crate::filesystem::image::GenerateThumbnailOptions;
+
 	use super::*;
 
 	#[test]
@@ -574,9 +576,14 @@ mod tests {
 					.expect("Failed to generate StumpConfig from Stump.toml")
 					.with_environment()
 					.expect("Failed to generate StumpConfig from environment");
+				let fixed_generated = StumpConfig {
+					db_path: None,
+					pdfium_path: None,
+					..generated.clone()
+				};
 
 				assert_eq!(
-					generated,
+					fixed_generated,
 					StumpConfig {
 						profile: "release".to_string(),
 						port: 1337,

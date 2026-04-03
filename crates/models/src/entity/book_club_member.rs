@@ -166,7 +166,7 @@ mod tests {
 		assert_eq!(
 			select_no_cols_to_string(select),
 			(r#"SELECT  FROM "book_club_members" WHERE "#.to_string()
-				+ r#""book_club_members"."book_club_id" IN (SELECT "book_club_id" FROM "book_club_members" WHERE "book_club_members"."user_id" = '42') "#
+				+ r#""book_club_members"."book_club_id" IN (SELECT "book_club_id" FROM "book_club_members" WHERE "book_club_members"."user_id" = '0ad39398-ce6a-4bcc-b044-719163a07c53') "#
 				+ r#"OR "book_club_members"."book_club_id" IN (SELECT "id" FROM "book_club_members" WHERE "book_clubs"."is_private" = FALSE)"#)
 		);
 	}
@@ -188,11 +188,11 @@ mod tests {
 
 		let select = Entity::find_members_accessible_to_user_for_book_club_id(
 			&user,
-			Uuid::parse_str("321").unwrap(),
+			Uuid::parse_str("ccb093e8-28f4-4dac-a983-1fb1dedcc3af").unwrap(),
 		);
 		assert_eq!(
 			select_no_cols_to_string(select),
-			(r#"SELECT  FROM "book_club_members" WHERE "book_club_members"."book_club_id" = '321'"#)
+			(r#"SELECT  FROM "book_club_members" WHERE "book_club_members"."book_club_id" = 'ccb093e8-28f4-4dac-a983-1fb1dedcc3af'"#)
 		);
 	}
 }
