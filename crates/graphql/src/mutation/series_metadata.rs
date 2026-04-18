@@ -150,7 +150,7 @@ impl SeriesMetadataMutation {
 
 		let candidates = stump_core::filesystem::metadata::fetch_series_metadata(
 			conn,
-			&model.series.id,
+			model.series.id,
 			&search_name,
 			&provider_cache,
 		)
@@ -197,10 +197,13 @@ impl SeriesMetadataMutation {
 		let candidate = candidates
 			.get(candidate_index as usize)
 			.ok_or("Candidate index out of bounds")?;
+		let series_id = series_id
+			.parse::<Uuid>()
+			.map_err(|_| async_graphql::Error::new("Invalid series ID"))?;
 
 		stump_core::filesystem::metadata::apply_series_match(
 			conn,
-			series_id.as_ref(),
+			series_id,
 			candidate,
 			strategy,
 			exclude_fields,
@@ -209,7 +212,7 @@ impl SeriesMetadataMutation {
 		.await?;
 
 		let updated = metadata_fetch_record::Entity::find()
-			.filter(metadata_fetch_record::Column::SeriesId.eq(series_id.to_string()))
+			.filter(metadata_fetch_record::Column::SeriesId.eq(series_id))
 			.one(conn)
 			.await?
 			.ok_or("Failed to re-fetch status")?;

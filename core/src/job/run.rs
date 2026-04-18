@@ -92,12 +92,12 @@ pub async fn dispatch_job(
 	job: StumpJob,
 	ctx: Data<Arc<ApalisWorkerState>>,
 ) -> Result<(), apalis::prelude::Error> {
-	let job_id = Uuid::new_v4().to_string();
+	let job_id = Uuid::new_v4();
 	let job_name = job.name();
 
 	tracing::info!(%job_id, job_name, "Starting job");
 
-	let job_ctx = match JobContext::new(Arc::clone(&ctx), job_id.clone(), &job).await {
+	let job_ctx = match JobContext::new(Arc::clone(&ctx), job_id, &job).await {
 		Ok(h) => h,
 		Err(e) => {
 			tracing::error!(?e, "Failed to start job");

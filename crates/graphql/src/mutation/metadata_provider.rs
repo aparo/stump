@@ -115,7 +115,7 @@ impl MetadataProviderMutation {
 			let result = if record.media_id.is_some() {
 				stump_core::filesystem::metadata::apply_media_match(
 					&tx,
-					record.media_id.as_deref().unwrap(),
+					record.media_id.unwrap(),
 					candidate,
 					strategy,
 					exclude_fields.clone(),
@@ -125,7 +125,7 @@ impl MetadataProviderMutation {
 			} else if record.series_id.is_some() {
 				stump_core::filesystem::metadata::apply_series_match(
 					&tx,
-					record.series_id.as_deref().unwrap(),
+					record.series_id.unwrap(),
 					candidate,
 					strategy,
 					exclude_fields.clone(),

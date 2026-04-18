@@ -156,13 +156,9 @@ async fn dispatch_library_scan(job: &scheduled_job::Model, ctx: &Ctx) -> CoreRes
 			library_name = %lib.name,
 			"Enqueuing library scan from scheduler"
 		);
-		ctx.enqueue(StumpJob::library_scan(
-			lib.id.clone(),
-			lib.path.clone(),
-			None,
-		))
-		.await
-		.map_err(|e| CoreError::InternalError(e.to_string()))?;
+		ctx.enqueue(StumpJob::library_scan(lib.id, lib.path.clone(), None))
+			.await
+			.map_err(|e| CoreError::InternalError(e.to_string()))?;
 	}
 
 	Ok(())
@@ -193,10 +189,8 @@ async fn dispatch_metadata_retry(
 		return Ok(());
 	}
 
-	let series_ids: Vec<String> =
-		records.iter().filter_map(|r| r.series_id.clone()).collect();
-	let media_ids: Vec<String> =
-		records.iter().filter_map(|r| r.media_id.clone()).collect();
+	let series_ids: Vec<Uuid> = records.iter().filter_map(|r| r.series_id).collect();
+	let media_ids: Vec<Uuid> = records.iter().filter_map(|r| r.media_id).collect();
 
 	if !series_ids.is_empty() {
 		tracing::info!(

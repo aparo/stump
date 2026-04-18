@@ -4,6 +4,7 @@ use async_graphql::{
 	dataloader::DataLoader, ComplexObject, Context, Result, SimpleObject,
 };
 use models::shared::enums::AuthorRole;
+use uuid::Uuid;
 
 use crate::{
 	data::AuthContext,
@@ -46,7 +47,7 @@ pub struct Author {
 	// when set. The idea is when querying through a library node, it will be set
 	// to that library's ID. When querying authors at query root, it won't.
 	#[graphql(skip)]
-	pub library_id: Option<String>,
+	pub library_id: Option<Uuid>,
 }
 
 #[derive(Debug, SimpleObject)]
@@ -57,7 +58,7 @@ pub struct AuthorSeries {
 	// when set. The idea is when querying through a library node, it will be set
 	// to that library's ID. When querying authors at query root, it won't.
 	#[graphql(skip)]
-	pub library_id: Option<String>,
+	pub library_id: Option<Uuid>,
 }
 
 /// A work that has multiple authors (co-authored). This wrapper allows querying
@@ -72,7 +73,7 @@ pub struct SharedWork {
 	#[graphql(skip)]
 	pub viewing_author: String,
 	#[graphql(skip)]
-	pub library_id: Option<String>,
+	pub library_id: Option<Uuid>,
 }
 
 #[ComplexObject]
@@ -132,7 +133,7 @@ impl AuthorSeries {
 
 		let key = MetadataSeriesMediaLoaderKey {
 			series_title: self.title.clone(),
-			library_id: self.library_id.clone(),
+			library_id: self.library_id,
 			user_id: user.id.clone(),
 		};
 
@@ -147,7 +148,7 @@ impl AuthorSeries {
 
 		let key = MetadataSeriesMediaLoaderKey {
 			series_title: self.title.clone(),
-			library_id: self.library_id.clone(),
+			library_id: self.library_id,
 			user_id: user.id.clone(),
 		};
 
@@ -183,7 +184,7 @@ impl AuthorSeries {
 			.map(|(name, (_, role))| Author {
 				name,
 				role: Some(role),
-				library_id: self.library_id.clone(),
+				library_id: self.library_id,
 			})
 			.collect())
 	}
@@ -197,7 +198,7 @@ impl Author {
 
 		let key = AuthorMediaLoaderKey {
 			author_name: self.name.clone(),
-			library_id: self.library_id.clone(),
+			library_id: self.library_id,
 			user_id: user.id.clone(),
 		};
 
@@ -211,7 +212,7 @@ impl Author {
 
 		let key = AuthorMediaLoaderKey {
 			author_name: self.name.clone(),
-			library_id: self.library_id.clone(),
+			library_id: self.library_id,
 			user_id: user.id.clone(),
 		};
 
@@ -231,7 +232,7 @@ impl Author {
 			.into_iter()
 			.map(|title| AuthorSeries {
 				title,
-				library_id: self.library_id.clone(),
+				library_id: self.library_id,
 			})
 			.collect();
 
@@ -245,7 +246,7 @@ impl Author {
 
 		let key = AuthorMediaLoaderKey {
 			author_name: self.name.clone(),
-			library_id: self.library_id.clone(),
+			library_id: self.library_id,
 			user_id: user.id.clone(),
 		};
 

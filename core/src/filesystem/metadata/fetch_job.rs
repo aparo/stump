@@ -24,7 +24,7 @@ use crate::job::{
 
 use super::{apply, ProviderClientCache};
 
-type Id = String;
+type Id = Uuid;
 
 /// The scope of entities to fetch metadata for
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -83,13 +83,13 @@ impl MetadataFetchJobParams {
 pub enum MetadataFetchTask {
 	/// Fetch metadata for a series
 	FetchSeries {
-		series_id: String,
+		series_id: Uuid,
 		series_name: String,
 		library_type: LibraryType,
 	},
 	/// Fetch metadata for a media item
 	FetchMedia {
-		media_id: String,
+		media_id: Uuid,
 		media_name: String,
 		series_name: Option<String>,
 		library_type: LibraryType,
@@ -225,18 +225,18 @@ impl JobLifecycle for MetadataFetchJob {
 					.all(conn)
 					.await?;
 
-				let unique_library_ids: Vec<String> = series_list
+				let unique_library_ids: Vec<Uuid> = series_list
 					.iter()
-					.filter_map(|s| s.library_id.clone())
+					.filter_map(|s| s.library_id)
 					.collect::<std::collections::HashSet<_>>()
 					.into_iter()
 					.collect();
 
-				let mut library_type_map: HashMap<String, LibraryType> = HashMap::new();
+				let mut library_type_map: HashMap<Uuid, LibraryType> = HashMap::new();
 
 				for library_id in &unique_library_ids {
-					let lt = resolve_library_type(conn, library_id).await?;
-					library_type_map.insert(library_id.clone(), lt);
+					let lt = resolve_library_type(conn, *library_id).await?;
+					library_type_map.insert(*library_id, lt);
 				}
 
 				series_list
@@ -255,10 +255,10 @@ impl JobLifecycle for MetadataFetchJob {
 					.collect()
 			},
 			MetadataFetchScope::SeriesInLibrary(library_id) => {
-				let library_type = resolve_library_type(conn, library_id).await?;
+				let library_type = resolve_library_type(conn, *library_id).await?;
 
 				let series_list = series::Entity::find()
-					.filter(series::Column::LibraryId.eq(library_id))
+					.filter(series::Column::LibraryId.eq(*library_id))
 					.all(conn)
 					.await?;
 
@@ -278,18 +278,18 @@ impl JobLifecycle for MetadataFetchJob {
 					.all(conn)
 					.await?;
 
-				let unique_library_ids: Vec<String> = media_list
+				let unique_library_ids: Vec<Uuid> = media_list
 					.iter()
-					.filter_map(|(_, s)| s.as_ref().and_then(|s| s.library_id.clone()))
+					.filter_map(|(_, s)| s.as_ref().and_then(|s| s.library_id))
 					.collect::<std::collections::HashSet<_>>()
 					.into_iter()
 					.collect();
 
-				let mut library_type_map: HashMap<String, LibraryType> = HashMap::new();
+				let mut library_type_map: HashMap<Uuid, LibraryType> = HashMap::new();
 
 				for library_id in &unique_library_ids {
-					let lt = resolve_library_type(conn, library_id).await?;
-					library_type_map.insert(library_id.clone(), lt);
+					let lt = resolve_library_type(conn, *library_id).await?;
+					library_type_map.insert(*library_id, lt);
 				}
 
 				media_list
@@ -309,19 +309,19 @@ impl JobLifecycle for MetadataFetchJob {
 					.collect()
 			},
 			MetadataFetchScope::MediaInSeries(series_id) => {
-				let library_id = series::Entity::find_by_id(series_id)
+				let library_id = series::Entity::find_by_id(*series_id)
 					.select_only()
 					.column(series::Column::LibraryId)
-					.into_tuple::<String>()
+					.into_tuple::<Uuid>()
 					.one(conn)
 					.await?
 					.ok_or_else(|| {
 						JobError::TaskFailed("Series not found".to_string())
 					})?;
-				let library_type = resolve_library_type(conn, &library_id).await?;
+				let library_type = resolve_library_type(conn, library_id).await?;
 
 				let media_list = media::Entity::find()
-					.filter(media::Column::SeriesId.eq(series_id))
+					.filter(media::Column::SeriesId.eq(*series_id))
 					.find_also_related(series::Entity)
 					.all(conn)
 					.await?;
@@ -337,7 +337,7 @@ impl JobLifecycle for MetadataFetchJob {
 					.collect()
 			},
 			MetadataFetchScope::MediaInLibrary(library_id) => {
-				let library_type = resolve_library_type(conn, library_id).await?;
+				let library_type = resolve_library_type(conn, *library_id).await?;
 
 				let media_list = media::Entity::find()
 					.filter(
@@ -347,7 +347,7 @@ impl JobLifecycle for MetadataFetchJob {
 							Query::select()
 								.column(series::Column::Id)
 								.from(series::Entity)
-								.and_where(series::Column::LibraryId.eq(library_id))
+								.and_where(series::Column::LibraryId.eq(*library_id))
 								.to_owned(),
 						),
 					)
@@ -439,7 +439,7 @@ impl JobLifecycle for MetadataFetchJob {
 
 				if !self.params.force_refetch {
 					let existing = metadata_fetch_record::Entity::find()
-						.filter(metadata_fetch_record::Column::SeriesId.eq(&series_id))
+						.filter(metadata_fetch_record::Column::SeriesId.eq(series_id))
 						.filter(metadata_fetch_record::Column::Status.is_in([
 							MetadataFetchStatus::AwaitingReview,
 							MetadataFetchStatus::Fetched,
@@ -527,7 +527,7 @@ impl JobLifecycle for MetadataFetchJob {
 					.map_err(|e| JobError::TaskFailed(e.to_string()))?;
 
 				let active_model = metadata_fetch_record::ActiveModel {
-					series_id: Set(Some(series_id.clone())),
+					series_id: Set(Some(series_id)),
 					status: Set(status),
 					match_candidates: Set(Some(candidates_json)),
 					..Default::default()
@@ -551,14 +551,14 @@ impl JobLifecycle for MetadataFetchJob {
 					&all_provider_configs,
 				) {
 					tracing::info!(
-						series_id,
+						series_id=?series_id,
 						provider = candidate.provider,
 						confidence = candidate.confidence,
 						"Auto-applying series metadata match"
 					);
 					match apply::apply_series_match(
 						conn,
-						&series_id,
+						series_id,
 						&candidate,
 						config.strategy,
 						config.exclude_fields,
@@ -576,7 +576,7 @@ impl JobLifecycle for MetadataFetchJob {
 								.with_ctx(format!("For {series_name}")),
 							);
 							tracing::error!(
-								series_id,
+								series_id=?series_id,
 								error = ?e,
 								"Failed to auto-apply series metadata"
 							);
@@ -617,7 +617,7 @@ impl JobLifecycle for MetadataFetchJob {
 
 				if !self.params.force_refetch {
 					let existing = metadata_fetch_record::Entity::find()
-						.filter(metadata_fetch_record::Column::MediaId.eq(&media_id))
+						.filter(metadata_fetch_record::Column::MediaId.eq(media_id))
 						.filter(metadata_fetch_record::Column::Status.is_in([
 							MetadataFetchStatus::AwaitingReview,
 							MetadataFetchStatus::Fetched,
@@ -721,14 +721,14 @@ impl JobLifecycle for MetadataFetchJob {
 					&all_provider_configs,
 				) {
 					tracing::info!(
-						media_id,
+						media_id = ?media_id,
 						provider = candidate.provider,
 						confidence = candidate.confidence,
 						"Auto-applying media metadata match"
 					);
 					match apply::apply_media_match(
 						conn,
-						&media_id,
+						media_id,
 						&candidate,
 						config.strategy,
 						config.exclude_fields,
@@ -746,7 +746,7 @@ impl JobLifecycle for MetadataFetchJob {
 								.with_ctx(format!("For {media_name}")),
 							);
 							tracing::error!(
-								media_id,
+								media_id=?media_id,
 								error = ?e,
 								"Failed to auto-apply media metadata"
 							);
@@ -766,7 +766,7 @@ impl JobLifecycle for MetadataFetchJob {
 
 async fn resolve_library_type(
 	conn: &DatabaseConnection,
-	library_id: &str,
+	library_id: Uuid,
 ) -> Result<LibraryType, JobError> {
 	let config = library_config::Entity::find()
 		.filter(library_config::Column::LibraryId.eq(library_id))

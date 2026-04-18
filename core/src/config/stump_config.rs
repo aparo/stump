@@ -443,8 +443,6 @@ fn do_validate_profile(profile: &String) -> bool {
 mod tests {
 	use tempfile;
 
-	use crate::filesystem::image::GenerateThumbnailOptions;
-
 	use super::*;
 
 	#[test]

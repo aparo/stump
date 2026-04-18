@@ -97,7 +97,7 @@ impl MediaMetadataMutation {
 
 		let candidates = stump_core::filesystem::metadata::fetch_media_metadata(
 			conn,
-			&model.media.id,
+			model.media.id,
 			SearchQuery {
 				title,
 				author,
@@ -122,6 +122,10 @@ impl MediaMetadataMutation {
 		exclude_fields: Option<Vec<MetadataField>>,
 		overrides: Option<Vec<MetadataFieldOverride>>,
 	) -> Result<MetadataFetchRecord> {
+		let media_id: Uuid = media_id
+			.parse()
+			.map_err(|_| async_graphql::Error::new("Invalid media ID"))?;
+
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 		let strategy = strategy.unwrap_or(MergeStrategy::FillGaps);
 		let exclude_fields = exclude_fields.unwrap_or_default();
@@ -152,7 +156,7 @@ impl MediaMetadataMutation {
 
 		stump_core::filesystem::metadata::apply_media_match(
 			conn,
-			media_id.as_ref(),
+			media_id,
 			candidate,
 			strategy,
 			exclude_fields,
@@ -161,7 +165,7 @@ impl MediaMetadataMutation {
 		.await?;
 
 		let updated = metadata_fetch_record::Entity::find()
-			.filter(metadata_fetch_record::Column::MediaId.eq(media_id.to_string()))
+			.filter(metadata_fetch_record::Column::MediaId.eq(media_id))
 			.one(conn)
 			.await?
 			.ok_or("Failed to re-fetch status")?;

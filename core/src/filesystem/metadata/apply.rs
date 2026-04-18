@@ -16,7 +16,7 @@ use crate::CoreError;
 /// according to the provided strategy and locked fields
 pub async fn apply_series_match<C>(
 	conn: &C,
-	series_id: &str,
+	series_id: Uuid,
 	candidate: &MatchCandidate,
 	strategy: MergeStrategy,
 	exclude_fields: Vec<MetadataField>,
@@ -76,7 +76,7 @@ where
 /// according to the provided strategy and locked fields
 pub async fn apply_media_match<C>(
 	conn: &C,
-	media_id: &str,
+	media_id: Uuid,
 	candidate: &MatchCandidate,
 	strategy: MergeStrategy,
 	exclude_fields: Vec<MetadataField>,
@@ -174,8 +174,8 @@ fn parse_locked_fields(json: &Option<JsonValue>) -> Vec<MetadataField> {
 
 async fn mark_fetch_status_accepted<C>(
 	conn: &C,
-	series_id: Option<&str>,
-	media_id: Option<&str>,
+	series_id: Option<Uuid>,
+	media_id: Option<Uuid>,
 	candidate: &MatchCandidate,
 ) -> Result<(), CoreError>
 where
@@ -428,7 +428,7 @@ fn apply_media_fields(
 }
 
 fn build_series_metadata_insert(
-	series_id: &str,
+	series_id: Uuid,
 	ext: &ExternalSeriesMetadata,
 	provider: &str,
 	external_id: &str,
@@ -437,7 +437,7 @@ fn build_series_metadata_insert(
 	let ext_status = ext.status.as_ref().map(|s| format!("{:?}", s));
 
 	series_metadata::ActiveModel {
-		series_id: Set(series_id.to_string()),
+		series_id: Set(series_id),
 		title: Set(Some(ext.title.clone())),
 		summary: Set(ext.summary.clone()),
 		publisher: Set(ext.publisher.clone()),
@@ -454,7 +454,7 @@ fn build_series_metadata_insert(
 }
 
 fn build_media_metadata_insert(
-	media_id: &str,
+	media_id: Uuid,
 	ext: &ExternalMediaMetadata,
 	provider: &str,
 	external_id: &str,
@@ -462,7 +462,7 @@ fn build_media_metadata_insert(
 	let ext_isbn = ext.isbn.as_ref().or(ext.isbn_13.as_ref()).cloned();
 
 	media_metadata::ActiveModel {
-		media_id: Set(Some(media_id.to_string())),
+		media_id: Set(Some(media_id)),
 		title: Set(ext.title.clone()),
 		summary: Set(ext.summary.clone()),
 		year: Set(ext.year),

@@ -393,8 +393,8 @@ impl MediaMutation {
 			let recent_completion =
 				finished_reading_session::Entity::recent_completed_record(
 					&txn,
-					&user.id,
-					id.as_ref(),
+					user.id,
+					id,
 					core.config.book_completion_dedup_timeout_secs,
 				)
 				.await?;
@@ -411,7 +411,7 @@ impl MediaMutation {
 
 			let finished_reading_session = finished_reading_session::ActiveModel {
 				user_id: Set(user.id.clone()),
-				media_id: Set(id.to_string()),
+				media_id: Set(id),
 				started_at: Set(active_session.started_at),
 				completed_at: Set(chrono::Utc::now().into()),
 				elapsed_seconds: Set(active_session.elapsed_seconds),

@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use crate::filesystem::{
 	image::{PlaceholderGenerationJobConfig, ThumbnailGenerationJobParams},
@@ -18,12 +19,12 @@ use models::shared::image_processor_options::ImageProcessorOptions;
 #[serde(tag = "type")]
 pub enum StumpJob {
 	LibraryScan {
-		id: String,
+		id: Uuid,
 		path: String,
 		options: Option<ScanOptions>,
 	},
 	SeriesScan {
-		id: String,
+		id: Uuid,
 		path: String,
 		options: Option<ScanOptions>,
 	},
@@ -76,11 +77,11 @@ impl StumpJob {
 		}
 	}
 
-	pub fn library_scan(id: String, path: String, options: Option<ScanOptions>) -> Self {
+	pub fn library_scan(id: Uuid, path: String, options: Option<ScanOptions>) -> Self {
 		StumpJob::LibraryScan { id, path, options }
 	}
 
-	pub fn series_scan(id: String, path: String, options: Option<ScanOptions>) -> Self {
+	pub fn series_scan(id: Uuid, path: String, options: Option<ScanOptions>) -> Self {
 		StumpJob::SeriesScan { id, path, options }
 	}
 

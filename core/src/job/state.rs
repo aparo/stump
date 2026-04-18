@@ -28,7 +28,7 @@ pub struct ApalisWorkerState {
 	pub conn: Arc<DatabaseConnection>,
 	pub config: Arc<StumpConfig>,
 	pub core_event_tx: broadcast::Sender<CoreEvent>,
-	pub cancellation_tokens: Arc<DashMap<String, CancellationToken>>,
+	pub cancellation_tokens: Arc<DashMap<Uuid, CancellationToken>>,
 	pub job_storage: MemoryStorage<StumpJob>,
 }
 
@@ -49,8 +49,8 @@ impl ApalisWorkerState {
 	}
 
 	/// Cancel a running job by ID, returning true if a cancellation token was found and cancelled
-	pub fn cancel_job(&self, job_id: &str) -> bool {
-		if let Some(entry) = self.cancellation_tokens.get(job_id) {
+	pub fn cancel_job(&self, job_id: Uuid) -> bool {
+		if let Some(entry) = self.cancellation_tokens.get(&job_id) {
 			entry.value().cancel();
 			true
 		} else {
@@ -81,7 +81,7 @@ impl ApalisWorkerState {
 
 /// Per-execution context for a specific running job
 pub struct JobContext {
-	pub job_id: String,
+	pub job_id: Uuid,
 	pub apalis_state: Arc<ApalisWorkerState>,
 	pub cancel_token: CancellationToken,
 	start: Instant,
@@ -90,11 +90,11 @@ pub struct JobContext {
 impl JobContext {
 	pub async fn new(
 		apalis_state: Arc<ApalisWorkerState>,
-		job_id: String,
+		job_id: Uuid,
 		job: &StumpJob,
 	) -> Result<JobContext, JobError> {
 		let active_model = job::ActiveModel {
-			id: Set(job_id.clone()),
+			id: Set(job_id),
 			name: Set(job.name().to_string()),
 			description: Set(job.description()),
 			status: Set(JobStatus::Running),
@@ -116,7 +116,7 @@ impl JobContext {
 
 		apalis_state
 			.cancellation_tokens
-			.insert(job_id.clone(), cancel_token.clone());
+			.insert(job_id, cancel_token.clone());
 
 		Ok(JobContext {
 			job_id,
@@ -203,7 +203,7 @@ impl JobContext {
 		let output_data = serde_json::to_vec(output).ok();
 
 		job::Entity::update_many()
-			.filter(job::Column::Id.eq(&self.job_id))
+			.filter(job::Column::Id.eq(self.job_id))
 			.col_expr(job::Column::OutputData, Expr::value(output_data))
 			.col_expr(
 				job::Column::Status,
@@ -231,7 +231,7 @@ impl JobContext {
 		self.report_progress(JobProgress::status_msg(status, message));
 
 		job::Entity::update_many()
-			.filter(job::Column::Id.eq(&self.job_id))
+			.filter(job::Column::Id.eq(self.job_id))
 			.col_expr(job::Column::Status, Expr::value(status.to_string()))
 			.col_expr(
 				job::Column::MsElapsed,

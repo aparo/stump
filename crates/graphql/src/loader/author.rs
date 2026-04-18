@@ -16,7 +16,7 @@ fn parse_writers(writers: &str) -> Vec<String> {
 		.collect()
 }
 
-fn series_in_library_subquery(library_id: String) -> sea_orm::sea_query::SelectStatement {
+fn series_in_library_subquery(library_id: Uuid) -> sea_orm::sea_query::SelectStatement {
 	Query::select()
 		.column(series::Column::Id)
 		.from(series::Entity)
@@ -38,8 +38,8 @@ impl AuthorMediaLoader {
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub struct AuthorMediaLoaderKey {
 	pub author_name: String,
-	pub library_id: Option<String>,
-	pub user_id: String,
+	pub library_id: Option<Uuid>,
+	pub user_id: Uuid,
 }
 
 impl Loader<AuthorMediaLoaderKey> for AuthorMediaLoader {
@@ -54,10 +54,10 @@ impl Loader<AuthorMediaLoaderKey> for AuthorMediaLoader {
 			return Ok(HashMap::new());
 		}
 
-		let mut grouped: HashMap<(Option<String>, String), Vec<String>> = HashMap::new();
+		let mut grouped: HashMap<(Option<Uuid>, Uuid), Vec<String>> = HashMap::new();
 		for key in keys {
 			grouped
-				.entry((key.library_id.clone(), key.user_id.clone()))
+				.entry((key.library_id, key.user_id))
 				.or_default()
 				.push(key.author_name.clone());
 		}
@@ -68,11 +68,10 @@ impl Loader<AuthorMediaLoaderKey> for AuthorMediaLoader {
 			result.insert(key.clone(), Vec::new());
 		}
 
-		let mut user_map = HashMap::<String, user::AuthUser>::new();
+		let mut user_map = HashMap::<Uuid, user::AuthUser>::new();
 
 		// Most likely there will only be one user per batch, so fetching in a loop would be pointlessly expensive
-		let user_ids: Vec<String> =
-			grouped.keys().map(|(_, user_id)| user_id.clone()).collect();
+		let user_ids: Vec<Uuid> = grouped.keys().map(|(_, user_id)| *user_id).collect();
 
 		let login_users = user::LoginUser::find()
 			.filter(user::Column::Id.is_in(user_ids))
@@ -81,9 +80,7 @@ impl Loader<AuthorMediaLoaderKey> for AuthorMediaLoader {
 			.await?;
 
 		for login_user in login_users {
-			user_map
-				.entry(login_user.id.clone())
-				.or_insert(login_user.into());
+			user_map.entry(login_user.id).or_insert(login_user.into());
 		}
 
 		for ((library_id, user_id), author_names) in grouped {
@@ -97,7 +94,7 @@ impl Loader<AuthorMediaLoaderKey> for AuthorMediaLoader {
 			if let Some(ref lib_id) = library_id {
 				query = query.filter(
 					media::Column::SeriesId
-						.in_subquery(series_in_library_subquery(lib_id.clone())),
+						.in_subquery(series_in_library_subquery(*lib_id)),
 				);
 			}
 
@@ -154,8 +151,8 @@ impl MetadataSeriesMediaLoader {
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub struct MetadataSeriesMediaLoaderKey {
 	pub series_title: String,
-	pub library_id: Option<String>,
-	pub user_id: String,
+	pub library_id: Option<Uuid>,
+	pub user_id: Uuid,
 }
 
 impl Loader<MetadataSeriesMediaLoaderKey> for MetadataSeriesMediaLoader {
@@ -170,10 +167,10 @@ impl Loader<MetadataSeriesMediaLoaderKey> for MetadataSeriesMediaLoader {
 			return Ok(HashMap::new());
 		}
 
-		let mut grouped: HashMap<(Option<String>, String), Vec<String>> = HashMap::new(); // (library_id, user_id) -> series titles
+		let mut grouped: HashMap<(Option<Uuid>, Uuid), Vec<String>> = HashMap::new(); // (library_id, user_id) -> series titles
 		for key in keys {
 			grouped
-				.entry((key.library_id.clone(), key.user_id.clone()))
+				.entry((key.library_id, key.user_id))
 				.or_default()
 				.push(key.series_title.clone());
 		}
@@ -185,8 +182,7 @@ impl Loader<MetadataSeriesMediaLoaderKey> for MetadataSeriesMediaLoader {
 			result.insert(key.clone(), Vec::new());
 		}
 
-		let user_ids: Vec<String> =
-			grouped.keys().map(|(_, user_id)| user_id.clone()).collect();
+		let user_ids: Vec<Uuid> = grouped.keys().map(|(_, user_id)| *user_id).collect();
 
 		let login_users = user::LoginUser::find()
 			.filter(user::Column::Id.is_in(user_ids))
@@ -194,12 +190,10 @@ impl Loader<MetadataSeriesMediaLoaderKey> for MetadataSeriesMediaLoader {
 			.all(self.conn.as_ref())
 			.await?;
 
-		let mut user_map = HashMap::<String, user::AuthUser>::new();
+		let mut user_map = HashMap::<Uuid, user::AuthUser>::new();
 
 		for login_user in login_users {
-			user_map
-				.entry(login_user.id.clone())
-				.or_insert(login_user.into());
+			user_map.entry(login_user.id).or_insert(login_user.into());
 		}
 
 		for ((library_id, user_id), series_titles) in grouped {

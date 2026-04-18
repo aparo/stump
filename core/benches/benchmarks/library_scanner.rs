@@ -106,7 +106,7 @@ type LibraryWithConfig = (library::Model, library_config::Model);
 struct TestCtx {
 	job: LibraryScanJob,
 	job_ctx: Arc<ApalisWorkerState>,
-	job_id: String,
+	job_id: Uuid,
 }
 
 struct Setup {

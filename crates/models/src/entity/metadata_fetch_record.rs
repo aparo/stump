@@ -15,19 +15,17 @@ pub struct Model {
 	#[sea_orm(primary_key, auto_increment = true)]
 	pub id: i32,
 	pub status: MetadataFetchStatus,
-	#[sea_orm(column_type = "Text", nullable)]
-	pub media_id: Option<String>, // null if this is for a series
-	#[sea_orm(column_type = "Text", nullable)]
-	pub series_id: Option<String>, // null if this is for a media
+	#[sea_orm(nullable)]
+	pub media_id: Option<Uuid>, // null if this is for a series
+	#[sea_orm(nullable)]
+	pub series_id: Option<Uuid>, // null if this is for a media
 	#[sea_orm(column_type = "Json", nullable)]
 	#[graphql(skip)]
 	pub match_candidates: Option<JsonValue>,
 	#[sea_orm(column_type = "Json", nullable)]
 	#[graphql(skip)]
 	pub accepted_match_candidate: Option<JsonValue>, // auto or manual
-	#[sea_orm(column_type = "custom(\"DATETIME\")")]
 	pub added_at: DateTimeWithTimeZone,
-	#[sea_orm(column_type = "custom(\"DATETIME\")", nullable)]
 	pub updated_at: Option<DateTimeWithTimeZone>,
 }
 

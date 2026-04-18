@@ -12,7 +12,7 @@ use crate::CoreError;
 
 async fn library_type_for_series(
 	conn: &DatabaseConnection,
-	series_id: &str,
+	series_id: Uuid,
 ) -> Result<LibraryType, CoreError> {
 	let library_id = series::Entity::find_by_id(series_id)
 		.select_only()
@@ -35,7 +35,7 @@ async fn library_type_for_series(
 // TODO: This is terrible, I should just bite the bullet and put a direct fk on media
 async fn library_type_for_media(
 	conn: &DatabaseConnection,
-	media_id: &str,
+	media_id: Uuid,
 ) -> Result<LibraryType, CoreError> {
 	let tuple = media::Entity::find()
 		.filter(media::Column::Id.eq(media_id))
@@ -48,7 +48,7 @@ async fn library_type_for_media(
 		return Err(CoreError::NotFound(format!("Series for media {media_id}")));
 	};
 
-	library_type_for_series(conn, &series.id).await
+	library_type_for_series(conn, series.id).await
 }
 
 fn filter_providers_for_library_type(
@@ -64,7 +64,7 @@ fn filter_providers_for_library_type(
 /// Fetch metadata candidates for a series from all enabled providers
 pub async fn fetch_series_metadata(
 	conn: &DatabaseConnection,
-	series_id: &str,
+	series_id: Uuid,
 	series_name: &str,
 	provider_cache: &ProviderClientCache,
 ) -> Result<Vec<MatchCandidate>, CoreError> {
@@ -138,7 +138,7 @@ pub async fn fetch_series_metadata(
 		.map_err(|e| CoreError::InternalError(e.to_string()))?;
 
 	let active_model = metadata_fetch_record::ActiveModel {
-		series_id: Set(Some(series_id.to_string())),
+		series_id: Set(Some(series_id)),
 		status: Set(status),
 		match_candidates: Set(Some(candidates_json)),
 		..Default::default()
@@ -161,7 +161,7 @@ pub async fn fetch_series_metadata(
 		apply::find_auto_apply_candidate(&all_candidates, &provider_configs)
 	{
 		tracing::info!(
-			series_id,
+			series_id = ?series_id,
 			provider = candidate.provider,
 			confidence = candidate.confidence,
 			"Auto-applying series metadata match"
@@ -177,7 +177,7 @@ pub async fn fetch_series_metadata(
 		.await
 		{
 			tracing::error!(
-				series_id,
+				series_id=?series_id,
 				error = ?e,
 				"Failed to auto-apply series metadata"
 			);
@@ -190,7 +190,7 @@ pub async fn fetch_series_metadata(
 /// Fetch metadata candidates for a media item from all enabled providers
 pub async fn fetch_media_metadata(
 	conn: &DatabaseConnection,
-	media_id: &str,
+	media_id: Uuid,
 	search: SearchQuery,
 	provider_cache: &ProviderClientCache,
 ) -> Result<Vec<MatchCandidate>, CoreError> {
@@ -256,7 +256,7 @@ pub async fn fetch_media_metadata(
 		.map_err(|e| CoreError::InternalError(e.to_string()))?;
 
 	let active_model = metadata_fetch_record::ActiveModel {
-		media_id: Set(Some(media_id.to_string())),
+		media_id: Set(Some(media_id)),
 		status: Set(status),
 		match_candidates: Set(Some(candidates_json)),
 		..Default::default()
@@ -279,7 +279,7 @@ pub async fn fetch_media_metadata(
 		apply::find_auto_apply_candidate(&all_candidates, &provider_configs)
 	{
 		tracing::info!(
-			media_id,
+			media_id=?media_id,
 			provider = candidate.provider,
 			confidence = candidate.confidence,
 			"Auto-applying media metadata match"
@@ -295,7 +295,7 @@ pub async fn fetch_media_metadata(
 		.await
 		{
 			tracing::error!(
-				media_id,
+				media_id=?media_id,
 				error = ?e,
 				"Failed to auto-apply media metadata"
 			);

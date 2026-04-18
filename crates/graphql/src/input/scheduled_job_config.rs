@@ -1,6 +1,7 @@
 use async_graphql::{InputObject, OneofObject};
 use models::shared::enums::MetadataFetchStatus;
 use serde::Serialize;
+use uuid::Uuid;
 
 /// A oneOf input for the schedule config
 #[derive(OneofObject, Serialize)]

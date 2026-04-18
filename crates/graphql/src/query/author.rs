@@ -22,7 +22,7 @@ fn parse_writers(writers: &str) -> Vec<String> {
 }
 
 /// Helper to build a subquery for series IDs in a specific library
-fn series_in_library_subquery(library_id: String) -> sea_orm::sea_query::SelectStatement {
+fn series_in_library_subquery(library_id: Uuid) -> sea_orm::sea_query::SelectStatement {
 	Query::select()
 		.column(series::Column::Id)
 		.from(series::Entity)
@@ -34,7 +34,7 @@ fn series_in_library_subquery(library_id: String) -> sea_orm::sea_query::SelectS
 /// Returns a HashMap with lowercase name as key and original casing as value.
 async fn fetch_all_authors(
 	conn: &DatabaseConnection,
-	library_id: Option<String>,
+	library_id: Option<Uuid>,
 ) -> Result<HashMap<String, String>> {
 	let mut query = media_metadata::Entity::find()
 		.select_only()
@@ -80,7 +80,7 @@ impl AuthorQuery {
 		ctx: &Context<'_>,
 		name: String,
 		#[graphql(desc = "Optional library ID to scope the author search")]
-		library_id: Option<String>,
+		library_id: Option<Uuid>,
 	) -> Result<Option<Author>> {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 
@@ -102,7 +102,7 @@ impl AuthorQuery {
 			String,
 		>,
 		#[graphql(desc = "Optional library ID to scope the author search")]
-		library_id: Option<String>,
+		library_id: Option<Uuid>,
 		#[graphql(default, validator(custom = "PaginationValidator"))]
 		pagination: Pagination,
 	) -> Result<PaginatedResponse<Author>> {
@@ -176,7 +176,7 @@ impl AuthorQuery {
 		ctx: &Context<'_>,
 		name: String,
 		#[graphql(desc = "Optional library ID to scope the series search")]
-		library_id: Option<String>,
+		library_id: Option<Uuid>,
 	) -> Result<Option<AuthorSeries>> {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 
