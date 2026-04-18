@@ -63,7 +63,7 @@ export default function AndroidBookMenu({
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
-				<Button className="squircle h-8 w-8 rounded-full p-0" variant="ghost" size="icon">
+				<Button className="squircle h-8 w-8 p-0 rounded-full" variant="ghost" size="icon">
 					<View>
 						<Icon as={Ellipsis} size={20} className="text-foreground" />
 					</View>
@@ -73,7 +73,7 @@ export default function AndroidBookMenu({
 			<DropdownMenuContent
 				insets={contentInsets}
 				sideOffset={2}
-				className="w-3/5 tablet:w-64"
+				className="tablet:w-64 w-3/5"
 				align="end"
 			>
 				<DropdownMenuItem onPress={favoriteBook}>

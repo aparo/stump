@@ -32,7 +32,7 @@ export function Picker<T extends string = string>({
 			<DropdownMenuTrigger asChild disabled={disabled}>
 				<Button
 					variant="outline"
-					className={cn('flex-row items-center justify-between gap-2', className)}
+					className={cn('gap-2 flex-row items-center justify-between', className)}
 				>
 					<Text className={cn(!selectedOption && 'text-foreground-subtle')}>
 						{selectedOption?.label ?? placeholder}

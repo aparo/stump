@@ -69,7 +69,7 @@ export function PagedActionMenu({
 		<DropdownMenu onOpenChange={setIsOpen}>
 			<DropdownMenuTrigger asChild>
 				<Button
-					className="squircle h-[unset] w-[unset] rounded-full border p-1 tablet:p-2"
+					className="squircle p-1 tablet:p-2 h-[unset] w-[unset] rounded-full border"
 					variant="ghost"
 					size="icon"
 					style={{
@@ -104,7 +104,7 @@ export function PagedActionMenu({
 			<DropdownMenuContent
 				insets={contentInsets}
 				sideOffset={2}
-				className="w-2/3 tablet:w-64"
+				className="tablet:w-64 w-2/3"
 				align="end"
 			>
 				<DropdownMenuGroup>

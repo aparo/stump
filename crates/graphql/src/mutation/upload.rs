@@ -14,12 +14,12 @@ use models::{
 use sea_orm::{prelude::*, sea_query::Query};
 use stump_core::filesystem::{
 	image::{
-		place_thumbnail, remove_thumbnails, PlaceholderGenerationJob,
-		PlaceholderGenerationJobConfig, PlaceholderGenerationJobScope,
+		place_thumbnail, remove_thumbnails, PlaceholderGenerationJobConfig,
+		PlaceholderGenerationJobScope,
 	},
-	scanner::LibraryScanJob,
 	ContentType,
 };
+use stump_core::job::stump_job::StumpJob;
 use tokio::fs;
 use zip::{read::ZipFile, ZipArchive};
 
@@ -90,8 +90,8 @@ impl UploadMutation {
 			copy_tempfile_to_location(value, &file_path).await?;
 		}
 
-		// Start a scan of the library
-		core.enqueue_job(LibraryScanJob::new(library.id, library.path, None))
+		core.enqueue(StumpJob::library_scan(library.id, library.path, None))
+			.await
 			.map_err(|e| {
 				tracing::error!(?e, "Failed to enqueue library scan job");
 				"Failed to enqueue library scan job".to_string()
@@ -155,8 +155,8 @@ impl UploadMutation {
 			Ok::<(), Error>(())
 		})?;
 
-		// Start a scan of the library
-		core.enqueue_job(LibraryScanJob::new(library.id, library.path, None))
+		core.enqueue(StumpJob::library_scan(library.id, library.path, None))
+			.await
 			.map_err(|e| {
 				tracing::error!(?e, "Failed to enqueue library scan job");
 				"Failed to enqueue library scan job".to_string()
@@ -250,13 +250,17 @@ impl UploadMutation {
 
 		// Note: We do NOT enqueue a thumbnail generation job since that just overwrites the uploaded one lol. Stump will assume your
 		// uploaded image is sized accordingly. We DO enqueue a placeholder generation job to ensure the colors etc are updated
-		if let Err(e) = core.enqueue_job(
-			PlaceholderGenerationJob::new(PlaceholderGenerationJobConfig {
-				force_regenerate: true,
-				scope: PlaceholderGenerationJobScope::Libraries(vec![library.id]),
+		if let Err(e) = core
+			.enqueue(StumpJob::PlaceholderGeneration {
+				config: PlaceholderGenerationJobConfig {
+					force_regenerate: true,
+					scope: PlaceholderGenerationJobScope::Libraries(vec![library
+						.id
+						.clone()]),
+				},
 			})
-			.wrapped(),
-		) {
+			.await
+		{
 			tracing::error!(?e, "Failed to enqueue placeholder generation job");
 		}
 
@@ -352,13 +356,18 @@ impl UploadMutation {
 
 		// Note: We do NOT enqueue a thumbnail generation job since that just overwrites the uploaded one lol. Stump will assume your
 		// uploaded image is sized accordingly. We DO enqueue a placeholder generation job to ensure the colors etc are updated
-		if let Err(e) = core.enqueue_job(
-			PlaceholderGenerationJob::new(PlaceholderGenerationJobConfig {
-				force_regenerate: true,
-				scope: PlaceholderGenerationJobScope::Series(vec![series.series.id]),
+		if let Err(e) = core
+			.enqueue(StumpJob::PlaceholderGeneration {
+				config: PlaceholderGenerationJobConfig {
+					force_regenerate: true,
+					scope: PlaceholderGenerationJobScope::Series(vec![series
+						.series
+						.id
+						.clone()]),
+				},
 			})
-			.wrapped(),
-		) {
+			.await
+		{
 			tracing::error!(?e, "Failed to enqueue placeholder generation job");
 		}
 
@@ -465,13 +474,18 @@ impl UploadMutation {
 
 		// Note: We do NOT enqueue a thumbnail generation job since that just overwrites the uploaded one lol. Stump will assume your
 		// uploaded image is sized accordingly. We DO enqueue a placeholder generation job to ensure the colors etc are updated
-		if let Err(e) = core.enqueue_job(
-			PlaceholderGenerationJob::new(PlaceholderGenerationJobConfig {
-				force_regenerate: true,
-				scope: PlaceholderGenerationJobScope::Books(vec![book.media.id]),
+		if let Err(e) = core
+			.enqueue(StumpJob::PlaceholderGeneration {
+				config: PlaceholderGenerationJobConfig {
+					force_regenerate: true,
+					scope: PlaceholderGenerationJobScope::Books(vec![book
+						.media
+						.id
+						.clone()]),
+				},
 			})
-			.wrapped(),
-		) {
+			.await
+		{
 			tracing::error!(?e, "Failed to enqueue placeholder generation job");
 		}
 
@@ -555,13 +569,18 @@ impl UploadMutation {
 
 		// Note: We do NOT enqueue a thumbnail generation job since that just overwrites the uploaded one lol. Stump will assume your
 		// uploaded image is sized accordingly. We DO enqueue a placeholder generation job to ensure the colors etc are updated
-		if let Err(e) = core.enqueue_job(
-			PlaceholderGenerationJob::new(PlaceholderGenerationJobConfig {
-				force_regenerate: true,
-				scope: PlaceholderGenerationJobScope::Series(vec![series.series.id]),
+		if let Err(e) = core
+			.enqueue(StumpJob::PlaceholderGeneration {
+				config: PlaceholderGenerationJobConfig {
+					force_regenerate: true,
+					scope: PlaceholderGenerationJobScope::Series(vec![series
+						.series
+						.id
+						.clone()]),
+				},
 			})
-			.wrapped(),
-		) {
+			.await
+		{
 			tracing::error!(?e, "Failed to enqueue placeholder generation job");
 		}
 
@@ -652,13 +671,18 @@ impl UploadMutation {
 
 		// Note: We do NOT enqueue a thumbnail generation job since that just overwrites the uploaded one lol. Stump will assume your
 		// uploaded image is sized accordingly. We DO enqueue a placeholder generation job to ensure the colors etc are updated
-		if let Err(e) = core.enqueue_job(
-			PlaceholderGenerationJob::new(PlaceholderGenerationJobConfig {
-				force_regenerate: true,
-				scope: PlaceholderGenerationJobScope::Books(vec![book.media.id]),
+		if let Err(e) = core
+			.enqueue(StumpJob::PlaceholderGeneration {
+				config: PlaceholderGenerationJobConfig {
+					force_regenerate: true,
+					scope: PlaceholderGenerationJobScope::Books(vec![book
+						.media
+						.id
+						.clone()]),
+				},
 			})
-			.wrapped(),
-		) {
+			.await
+		{
 			tracing::error!(?e, "Failed to enqueue placeholder generation job");
 		}
 

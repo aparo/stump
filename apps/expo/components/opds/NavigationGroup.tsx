@@ -52,7 +52,7 @@ export default function NavigationGroup({
 
 	return (
 		<View className="px-4">
-			<View className="flex flex-row items-center justify-between pb-2">
+			<View className="pb-2 flex flex-row items-center justify-between">
 				<Card
 					label={metadata.title || 'Browse'}
 					actions={selfURL ? <FeedSelfURL url={resolveUrl_(selfURL)} /> : undefined}

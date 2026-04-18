@@ -1,8 +1,5 @@
-use crate::{
-	filesystem::scanner::LibraryScanJob,
-	job::{JobController, JobControllerCommand},
-	CoreError, CoreResult,
-};
+use crate::{job::stump_job::StumpJob, CoreError, CoreResult};
+use apalis::prelude::MemoryStorage;
 use async_trait::async_trait;
 use models::entity::{library, library_config};
 use notify::{Event, RecommendedWatcher, Watcher};
@@ -180,19 +177,21 @@ trait SubmitScanJob {
 }
 
 #[derive(Clone)]
-struct JobControllerSubmitter {
-	job_controller: Arc<JobController>,
+struct ApalisJobSubmitter {
+	storage: MemoryStorage<StumpJob>,
 }
 
 #[async_trait]
-impl SubmitScanJob for JobControllerSubmitter {
+impl SubmitScanJob for ApalisJobSubmitter {
 	async fn submit(&self, id: Uuid, path: String) -> Result<(), ()> {
-		self.job_controller
-			.push_command(JobControllerCommand::EnqueueJob(LibraryScanJob::new(
-				id, path, None,
-			)))
+		let mut storage = self.storage.clone();
+		use apalis::prelude::MessageQueue;
+		storage
+			.enqueue(StumpJob::library_scan(id, path, None))
+			.await
+			.map(|_| ())
 			.map_err(|e| {
-				tracing::error!(error = ?e, "Error sending library scan job");
+				tracing::error!(error = ?e, "Error enqueuing library scan job");
 			})
 	}
 }
@@ -206,10 +205,10 @@ pub struct LibraryWatcher {
 impl LibraryWatcher {
 	pub fn new(
 		conn: Arc<DatabaseConnection>,
-		job_controller: Arc<JobController>,
+		storage: MemoryStorage<StumpJob>,
 	) -> LibraryWatcher {
 		let library_provider = LibraryProvider { conn };
-		let job_submitter = JobControllerSubmitter { job_controller };
+		let job_submitter = ApalisJobSubmitter { storage };
 		let (tx, rx) = unbounded_channel();
 		let watcher = create_watcher(tx.clone());
 		Self::new_internal(

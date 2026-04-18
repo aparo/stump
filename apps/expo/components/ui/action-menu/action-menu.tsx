@@ -52,7 +52,7 @@ export function ActionMenu({ icon, groups, androidProps, disabled }: ActionMenuP
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild disabled={disabled}>
-				<Button className="squircle h-8 w-8 rounded-full p-0" variant="ghost" size="icon">
+				<Button className="squircle h-8 w-8 p-0 rounded-full" variant="ghost" size="icon">
 					<View>
 						<Icon as={TriggerIcon} size={20} className="text-foreground" />
 					</View>
@@ -62,7 +62,7 @@ export function ActionMenu({ icon, groups, androidProps, disabled }: ActionMenuP
 			<DropdownMenuContent
 				insets={contentInsets}
 				sideOffset={androidProps?.sideOffset ?? 2}
-				className={cn('w-3/5 tablet:w-64', androidProps?.className)}
+				className={cn('tablet:w-64 w-3/5', androidProps?.className)}
 				align={androidProps?.align || 'end'}
 			>
 				{groups.map((group, index) => renderGroup(group, index))}

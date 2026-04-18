@@ -16,7 +16,7 @@ function RadioGroupItem({
 	return (
 		<RadioGroupPrimitive.Item
 			className={cn(
-				'squircle aspect-square h-6 w-6 shrink-0 items-center justify-center rounded-full border border-edge shadow-sm shadow-black/5 dark:bg-background-surface',
+				'squircle h-6 w-6 shadow-sm shadow-black/5 aspect-square shrink-0 items-center justify-center rounded-full border border-edge dark:bg-background-surface',
 				props.disabled && 'opacity-50',
 				className,
 			)}

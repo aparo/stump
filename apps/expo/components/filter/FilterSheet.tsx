@@ -65,7 +65,7 @@ const FilterSheet = forwardRef<FilterSheetRef, Props>(function FilterSheet(
 				{({ pressed }) => (
 					<View
 						className={cn(
-							'squircle flex flex-grow-0 flex-row items-center justify-center rounded-full bg-background-surface-secondary px-3 py-2',
+							'squircle px-3 py-2 flex flex-grow-0 flex-row items-center justify-center rounded-full bg-background-surface-secondary',
 							pressed && 'opacity-70',
 						)}
 						style={{
@@ -106,7 +106,7 @@ const FilterSheet = forwardRef<FilterSheetRef, Props>(function FilterSheet(
 						gap: 0,
 					}}
 				>
-					{header && <View className="w-full px-4">{header}</View>}
+					{header && <View className="px-4 w-full">{header}</View>}
 
 					{children}
 				</View>

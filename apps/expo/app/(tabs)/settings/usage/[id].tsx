@@ -3,25 +3,24 @@ import { eq } from 'drizzle-orm'
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite'
 import { Redirect, useLocalSearchParams } from 'expo-router'
 import { HardDriveDownload } from 'lucide-react-native'
-import { useCallback, useMemo, useState } from 'react'
-import { View } from 'react-native'
-import Dialog from 'react-native-dialog'
+import { useCallback, useMemo } from 'react'
+import { Alert, View } from 'react-native'
 import { ScrollView } from 'react-native-gesture-handler'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 import RefreshControl from '~/components/RefreshControl'
-import { Button, Heading, ListEmptyMessage, Text } from '~/components/ui'
+import { Button, Card, Text } from '~/components/ui'
 import { db, downloadedFiles } from '~/db'
 import { getServerStoredPreferencesUsage } from '~/lib/filesystem'
-import { formatBytesSeparate, humanizeByteUnit } from '~/lib/format'
-import { useDownload } from '~/lib/hooks'
+import { formatBytes } from '~/lib/format'
+import { useDownload, useTranslate } from '~/lib/hooks'
 import { useDynamicHeader } from '~/lib/hooks/useDynamicHeader'
 import { useReaderStore } from '~/stores'
 import { useSavedServerStore } from '~/stores/savedServer'
 
 export default function Screen() {
 	const { id: serverID } = useLocalSearchParams<{ id: string }>()
-
+	const { t } = useTranslate()
 	const {
 		data: preferencesBytes,
 		refetch,
@@ -39,16 +38,13 @@ export default function Screen() {
 	const { data: files } = useLiveQuery(
 		db.select().from(downloadedFiles).where(eq(downloadedFiles.serverId, serverID)),
 	)
-	const preferences = formatBytesSeparate(preferencesBytes, 1, 'B')
+	const preferencesSize = formatBytes(preferencesBytes)
 
 	const downloadedFilesSum = useMemo(
 		() => files.reduce((acc, file) => acc + (file.size || 0), 0),
 		[files],
 	)
-	const humanizedUsage = useMemo(
-		() => formatBytesSeparate(downloadedFilesSum),
-		[downloadedFilesSum],
-	)
+	const humanizedUsage = useMemo(() => formatBytes(downloadedFilesSum), [downloadedFilesSum])
 	const downloadedFilesCount = useMemo(() => files.length, [files])
 
 	const clearLibrarySettings = useReaderStore((state) => state.clearLibrarySettings)
@@ -57,21 +53,39 @@ export default function Screen() {
 		refetch()
 	}, [serverID, clearLibrarySettings, refetch])
 
-	const [isShowingDeleteConfirm, setIsShowingDeleteConfirm] = useState(false)
-
 	const { deleteServerDownloads } = useDownload()
-	const onDeleteDownloads = useCallback(async () => {
+	const onDeleteDownloads = async () => {
 		try {
 			await deleteServerDownloads(serverID)
 			refetch()
-		} finally {
-			setIsShowingDeleteConfirm(false)
+		} catch {
+			Alert.alert(
+				t(getKey('deleteDownloads.deleteFailed.title')),
+				t(getKey('deleteDownloads.deleteFailed.description')).replace(
+					'{{serverName}}',
+					server?.name ? `'${server.name}'` : t('common.thisServer'),
+				),
+			)
 		}
-	}, [deleteServerDownloads, serverID, refetch])
+	}
 
 	useDynamicHeader({
 		title: server?.name || '',
 	})
+
+	const handleDelete = () => {
+		Alert.alert(
+			t(getKey('deleteDownloads.label')),
+			t(getKey('deleteDownloads.confirmation')).replace(
+				'{{serverName}}',
+				server?.name ? `'${server.name}'` : t('common.thisServer'),
+			),
+			[
+				{ text: t('common.cancel'), style: 'cancel' },
+				{ text: t('common.delete'), style: 'destructive', onPress: onDeleteDownloads },
+			],
+		)
+	}
 
 	if (!server) {
 		return <Redirect href="/settings/usage" />
@@ -86,86 +100,60 @@ export default function Screen() {
 				refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
 				contentInsetAdjustmentBehavior="automatic"
 			>
-				<View className="flex-1 gap-8 bg-background px-4 pt-8">
-					<View className="flex-1 gap-4">
-						<Heading>Downloads</Heading>
+				<View className="gap-8 px-4 pt-8 flex-1 bg-background">
+					<View className="gap-4 flex-1">
+						<Card
+							label={t('common.downloads')}
+							listEmptyStyle={{
+								icon: HardDriveDownload,
+								message: t(getKey('noDownloads')),
+							}}
+						>
+							<Card.StatGroup>
+								<Card.Stat label={t(getKey('totalFiles'))} value={downloadedFilesCount} />
+								{humanizedUsage && (
+									<Card.Stat label={t(getKey('totalSize'))} value={humanizedUsage} />
+								)}
+							</Card.StatGroup>
 
-						{!files.length && (
-							<ListEmptyMessage
-								icon={HardDriveDownload}
-								message="No downloaded files for this server"
-							/>
-						)}
-
-						{(files.length > 0 || downloadedFilesSum > 0) && (
-							<View className="gap-4">
-								<View className="flex-row items-center justify-between">
-									<Text className="text-foreground-muted">Total files</Text>
-									<Text>{downloadedFilesCount}</Text>
-								</View>
-
-								<View className="flex-row items-center justify-between">
-									<Text className="text-foreground-muted">Total size</Text>
-									{humanizedUsage && (
-										<Text>
-											{humanizedUsage.value} {humanizedUsage.unit}
-										</Text>
-									)}
-									{/* TODO: Infer from usage */}
-									{downloadedFilesSum === 0 && <Text>Unknown</Text>}
-								</View>
-
-								<Button
-									variant="destructive"
-									onPress={() => setIsShowingDeleteConfirm(true)}
-									size="md"
-									disabled={downloadedFilesSum === 0}
-								>
-									<Text>Delete Downloads</Text>
-								</Button>
-							</View>
-						)}
+							{(files.length > 0 || downloadedFilesSum > 0) && (
+								<Card.Row label={t(getKey('deleteDownloads.label'))}>
+									<Button size="sm" roundness="full" variant="destructive" onPress={handleDelete}>
+										<Text>{t('common.delete')}</Text>
+									</Button>
+								</Card.Row>
+							)}
+						</Card>
 					</View>
 
-					<View className="flex-1 gap-4">
-						<View>
-							<Heading>Stored Preferences</Heading>
-							<Text className="text-foreground-muted">
-								Miscellaneous data like book preferences, offline reading progress, etc.
-							</Text>
-						</View>
-
-						<View className="flex-row">
-							<View className="flex items-center justify-center">
-								<Heading className="font-medium">{preferences?.value || 0}</Heading>
-								<Text size="sm" className="shrink-0 text-foreground-muted">
-									{humanizeByteUnit(preferences?.value || 0, preferences?.unit || 'B')}
-								</Text>
-							</View>
-						</View>
-
-						<Button
-							variant="destructive"
-							onPress={onClearPreferences}
-							size="md"
-							disabled={!preferencesBytes}
+					<View className="gap-4 flex-1">
+						<Card
+							label={t(getKey('storedPreferences.label'))}
+							description={t(getKey('storedPreferences.description'))}
 						>
-							<Text>Clear preferences</Text>
-						</Button>
+							<Card.StatGroup>
+								<Card.Stat label={t(getKey('totalSize'))} value={preferencesSize} />
+							</Card.StatGroup>
+
+							{!!preferencesBytes && (
+								<Card.Row label={t(getKey('clearPreferences'))}>
+									<Button
+										size="sm"
+										roundness="full"
+										variant="destructive"
+										onPress={onClearPreferences}
+									>
+										<Text>{t('common.clear')}</Text>
+									</Button>
+								</Card.Row>
+							)}
+						</Card>
 					</View>
 				</View>
 			</ScrollView>
-
-			<Dialog.Container visible={isShowingDeleteConfirm}>
-				<Dialog.Title>
-					Are you sure you want to delete all downloads from {server?.name || 'this server'}?
-				</Dialog.Title>
-
-				<Dialog.Description>This action cannot be undone.</Dialog.Description>
-
-				<Dialog.Button label="Cancel" onPress={() => setIsShowingDeleteConfirm(false)} />
-				<Dialog.Button label="Delete" onPress={onDeleteDownloads} color="red" />
-			</Dialog.Container>
 		</SafeAreaView>
 	)
 }
+
+const LOCALE_BASE = 'settings.management.dataUsage'
+const getKey = (key: string) => `${LOCALE_BASE}.${key}`

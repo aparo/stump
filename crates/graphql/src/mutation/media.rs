@@ -15,18 +15,16 @@ use sea_orm::{
 use stump_core::{
 	filesystem::{
 		image::{generate_book_thumbnail, GenerateThumbnailOptions},
-		media::analysis::{AnalysisJobConfig, AnalyzeMediaJob, MediaAnalysisJobScope},
+		media::analysis::{AnalysisJobConfig, MediaAnalysisJobScope},
 	},
+	job::stump_job::StumpJob,
 	utils::chain_optional_iter,
 };
 
 use crate::{
 	data::{AuthContext, CoreContext},
 	guard::PermissionGuard,
-	input::{
-		media::{MediaMetadataInput, MediaProgressInput},
-		thumbnail::PageBasedThumbnailInput,
-	},
+	input::{media::MediaProgressInput, thumbnail::PageBasedThumbnailInput},
 	object::{
 		media::Media,
 		reading_session::{ActiveReadingSession, FinishedReadingSession},
@@ -66,13 +64,11 @@ impl MediaMutation {
 			.await?
 			.ok_or("Media not found")?;
 
-		core.enqueue_job(
-			AnalyzeMediaJob::new(AnalysisJobConfig {
-				force_reanalysis,
-				scope: MediaAnalysisJobScope::Book(model.id),
-			})
-			.wrapped(),
-		)?;
+		core.enqueue(StumpJob::analyze_media(AnalysisJobConfig {
+			force_reanalysis,
+			scope: MediaAnalysisJobScope::Book(model.id),
+		}))
+		.await?;
 
 		Ok(true)
 	}
@@ -245,44 +241,6 @@ impl MediaMutation {
 		Ok(book.into())
 	}
 
-	#[graphql(guard = "PermissionGuard::one(UserPermission::EditMetadata)")]
-	async fn update_media_metadata(
-		&self,
-		ctx: &Context<'_>,
-		id: ID,
-		input: MediaMetadataInput,
-	) -> Result<Media> {
-		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
-		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
-		let id = Uuid::parse_str(id.to_string().as_str())
-			.map_err(|_| "Invalid media ID format")?;
-
-		let model = media::ModelWithMetadata::find_for_user(user)
-			.filter(media::Column::Id.eq(id))
-			.into_model::<media::ModelWithMetadata>()
-			.one(conn)
-			.await?
-			.ok_or("Media not found")?;
-
-		let updated_metadata = if let Some(existing) = model.metadata {
-			let mut active_model = input.into_active_model();
-			active_model.id = Set(existing.id);
-			active_model.media_id = Set(Some(model.media.id));
-			active_model.update(conn).await?
-		} else {
-			let mut active_model = input.into_active_model();
-			active_model.media_id = Set(Some(model.media.id));
-			active_model.insert(conn).await?
-		};
-
-		let model = media::ModelWithMetadata {
-			media: model.media,
-			metadata: Some(updated_metadata),
-		};
-
-		Ok(model.into())
-	}
-
 	async fn delete_media_progress(&self, ctx: &Context<'_>, id: ID) -> Result<Media> {
 		let AuthContext { user, .. } = ctx.data::<AuthContext>()?;
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
@@ -430,11 +388,13 @@ impl MediaMutation {
 				active_session.into(),
 			)))
 		} else {
+			let txn = conn.begin().await?;
+
 			let recent_completion =
 				finished_reading_session::Entity::recent_completed_record(
-					conn,
-					user.id,
-					id,
+					&txn,
+					&user.id,
+					id.as_ref(),
 					core.config.book_completion_dedup_timeout_secs,
 				)
 				.await?;
@@ -442,24 +402,22 @@ impl MediaMutation {
 			// TODO: See if this creates too much churn in practice
 			if let Some(existing_session) = recent_completion {
 				// Already completed recently - delete active session but return existing finished session
-				let _ = active_session.delete(conn).await?;
+				let _ = active_session.delete(&txn).await?;
+				txn.commit().await?;
 				return Ok(ReadingProgressOutput::Finished(Box::new(
 					existing_session.into(),
 				)));
 			}
 
 			let finished_reading_session = finished_reading_session::ActiveModel {
-				user_id: Set(user.id),
-				media_id: Set(id),
-				started_at: Set(active_session
-					.updated_at
-					.unwrap_or_else(|| chrono::Utc::now().into())),
+				user_id: Set(user.id.clone()),
+				media_id: Set(id.to_string()),
+				started_at: Set(active_session.started_at),
 				completed_at: Set(chrono::Utc::now().into()),
 				elapsed_seconds: Set(active_session.elapsed_seconds),
 				..Default::default()
 			};
 
-			let txn = conn.begin().await?;
 			let finished_reading_session = insert_finished_reading_session(
 				Some(active_session),
 				finished_reading_session,
@@ -571,12 +529,14 @@ async fn set_completed_media(
 		.as_ref()
 		.map(|s| s.started_at)
 		.unwrap_or_else(|| Utc::now().into());
+	let elapsed_seconds = active_session.as_ref().and_then(|s| s.elapsed_seconds);
 
 	let finished_reading_session = finished_reading_session::ActiveModel {
 		user_id: Set(user.id),
 		media_id: Set(model.media.id),
 		started_at: Set(started_at),
 		completed_at: Set(chrono::Utc::now().into()),
+		elapsed_seconds: Set(elapsed_seconds),
 		..Default::default()
 	};
 

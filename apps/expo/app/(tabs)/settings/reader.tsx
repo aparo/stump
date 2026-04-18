@@ -16,7 +16,7 @@ export default function Screen() {
 			edges={Platform.OS === 'ios' ? ['top', 'left', 'right'] : ['left', 'right']}
 		>
 			<ScrollView
-				className="flex-1 bg-background p-4"
+				className="p-4 flex-1 bg-background"
 				contentInsetAdjustmentBehavior="automatic"
 				contentContainerStyle={{ paddingBottom: insets.bottom }}
 			>

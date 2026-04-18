@@ -35,7 +35,7 @@ export function ColorPickerRow({ label, value, onChange }: Props) {
 
 	return (
 		<>
-			<View className="flex-row items-center justify-between py-2">
+			<View className="py-2 flex-row items-center justify-between">
 				<Text className="text-lg">{label}</Text>
 				<Pressable onPress={openPicker}>
 					<View
@@ -60,7 +60,7 @@ export function ColorPickerRow({ label, value, onChange }: Props) {
 				}}
 			>
 				<View className="gap-4 p-4 pb-8">
-					<Text className="text-center text-lg font-medium">{label}</Text>
+					<Text className="text-lg font-medium text-center">{label}</Text>
 
 					<ColorPicker value={tempColor} onCompleteJS={(result) => setTempColor(result.hex)}>
 						<View className="pb-4">
@@ -73,7 +73,7 @@ export function ColorPickerRow({ label, value, onChange }: Props) {
 						</View>
 					</ColorPicker>
 
-					<View className="mt-4 flex-row gap-4">
+					<View className="mt-4 gap-4 flex-row">
 						<Button variant="outline" className="flex-1" onPress={handleCancel}>
 							<Text>Cancel</Text>
 						</Button>

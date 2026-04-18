@@ -2,19 +2,20 @@ import { useRouter } from 'expo-router'
 import partition from 'lodash/partition'
 import { ExternalLink, Rss, Server } from 'lucide-react-native'
 import { Fragment, useCallback, useEffect, useState } from 'react'
-import { Linking, useWindowDimensions, View } from 'react-native'
+import { Alert, Linking, useWindowDimensions, View } from 'react-native'
 import { ScrollView } from 'react-native-gesture-handler'
 
 import EmptyState from '~/components/EmptyState'
 import { useOwlHeaderOffset } from '~/components/Owl'
-import DeleteServerConfirmation from '~/components/savedServer/DeleteServerConfirmation'
 import EditServerDialog from '~/components/savedServer/EditServerDialog'
 import SavedServerListItem from '~/components/savedServer/SavedServerListItem'
 import { Button, Icon, ListEmptyMessage, ListLabel, Text } from '~/components/ui'
+import { useTranslate } from '~/lib/hooks'
 import { useSavedServers } from '~/stores'
 import { CreateServer, SavedServer, SavedServerWithConfig } from '~/stores/savedServer'
 
 export default function Screen() {
+	const { t } = useTranslate()
 	const { savedServers, stumpEnabled, updateServer, deleteServer, getServerConfig } =
 		useSavedServers()
 	const router = useRouter()
@@ -22,7 +23,6 @@ export default function Screen() {
 
 	const [stumpServers, opdsServers] = partition(savedServers, (server) => server.kind === 'stump')
 	const [editingServer, setEditingServer] = useState<SavedServerWithConfig | null>(null)
-	const [deletingServer, setDeletingServer] = useState<SavedServer | null>(null)
 
 	const allOPDSServers = [...stumpServers.filter((server) => server.stumpOPDS), ...opdsServers]
 
@@ -67,12 +67,26 @@ export default function Screen() {
 	// 	})),
 	// })
 
-	const onConfirmDelete = useCallback(() => {
-		if (deletingServer) {
-			deleteServer(deletingServer.id)
-			setDeletingServer(null)
-		}
-	}, [deletingServer, deleteServer])
+	const handleDeleteServer = useCallback(
+		(server: SavedServer) => {
+			Alert.alert(
+				t('savedServerActions.deleteServer.title'),
+				t('savedServerActions.deleteServer.confirmation').replace(
+					'{{serverName}}',
+					`'${server.name}'`,
+				),
+				[
+					{ text: t('common.cancel'), style: 'cancel' },
+					{
+						text: t('common.delete'),
+						style: 'destructive',
+						onPress: () => deleteServer(server.id),
+					},
+				],
+			)
+		},
+		[deleteServer, t],
+	)
 
 	const onSelectForEdit = useCallback(
 		async (server: SavedServer) => {
@@ -97,12 +111,6 @@ export default function Screen() {
 
 	return (
 		<Fragment>
-			<DeleteServerConfirmation
-				deletingServer={deletingServer}
-				onClose={() => setDeletingServer(null)}
-				onConfirm={onConfirmDelete}
-			/>
-
 			<EditServerDialog
 				editingServer={editingServer}
 				onClose={() => setEditingServer(null)}
@@ -111,8 +119,8 @@ export default function Screen() {
 
 			{isCleanSlate && (
 				<EmptyState
-					title="Nothing to show yet"
-					message="Get started by adding a server to access book collections"
+					title={t('emptyState.noServers')}
+					message={t('emptyState.cta')}
 					actions={
 						<>
 							<Button
@@ -122,12 +130,12 @@ export default function Screen() {
 								className="relative"
 								onPress={() => Linking.openURL('https://www.stumpapp.dev/guides/mobile/app')}
 							>
-								<Text>See Documentation</Text>
+								<Text>{t('emptyState.seeDocumentation')}</Text>
 
 								<Icon
 									as={ExternalLink}
 									size={16}
-									className="absolute right-4 transform text-foreground"
+									className="right-4 absolute transform text-foreground"
 								/>
 							</Button>
 						</>
@@ -142,13 +150,13 @@ export default function Screen() {
 					className="flex-1 bg-background"
 					contentInsetAdjustmentBehavior="automatic"
 				>
-					<View className="flex-1 items-start justify-start gap-5 bg-background p-4 tablet:p-6">
+					<View className="gap-5 p-4 tablet:p-6 flex-1 items-start justify-start bg-background">
 						{stumpEnabled && (
-							<View className="flex w-full items-start gap-2">
+							<View className="gap-2 flex w-full items-start">
 								<ListLabel className="px-2">Stump</ListLabel>
 
 								{!stumpServers.length && (
-									<ListEmptyMessage icon={Server} message="No Stump servers added" />
+									<ListEmptyMessage icon={Server} message={t('emptyState.noStumpServers')} />
 								)}
 
 								{stumpServers.map((server) => (
@@ -156,17 +164,17 @@ export default function Screen() {
 										key={server.id}
 										server={server}
 										onEdit={() => onSelectForEdit(server)}
-										onDelete={() => setDeletingServer(server)}
+										onDelete={() => handleDeleteServer(server)}
 									/>
 								))}
 							</View>
 						)}
 
-						<View className="flex w-full items-start gap-2">
+						<View className="gap-2 flex w-full items-start">
 							<ListLabel className="px-2">OPDS</ListLabel>
 
 							{!allOPDSServers.length && (
-								<ListEmptyMessage icon={Rss} message="No OPDS feeds added" />
+								<ListEmptyMessage icon={Rss} message={t('emptyState.noOPDSServers')} />
 							)}
 
 							{allOPDSServers.map((server) => (
@@ -175,7 +183,7 @@ export default function Screen() {
 									server={server}
 									forceOPDS
 									onEdit={() => onSelectForEdit(server)}
-									onDelete={() => setDeletingServer(server)}
+									onDelete={() => handleDeleteServer(server)}
 								/>
 							))}
 						</View>

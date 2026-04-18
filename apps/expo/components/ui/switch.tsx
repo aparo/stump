@@ -125,7 +125,7 @@ const Switch = React.forwardRef<SwitchPrimitives.RootRef, Props>(
 					<Animated.View style={animatedThumbStyle}>
 						<SwitchPrimitives.Thumb
 							className={cn(
-								'squircle rounded-full bg-background shadow-md shadow-foreground/25',
+								'squircle shadow-md rounded-full bg-background shadow-foreground/25',
 								resolvedSize.thumb,
 								{
 									'bg-white': variant === 'brand',

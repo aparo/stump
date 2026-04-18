@@ -55,7 +55,7 @@ function StatItem({ iosIcon, androidIcon, count }: StatItemProps) {
 	const color = COLORS.dark.foreground.DEFAULT
 
 	return (
-		<View className="squircle flex-row items-center gap-1 rounded-full bg-black/70 px-2.5 py-1.5 shadow-lg">
+		<View className="squircle gap-1 bg-black/70 px-2.5 py-1.5 shadow-lg flex-row items-center rounded-full">
 			{Platform.OS === 'ios' ? (
 				<Host matchContents>
 					<Image systemName={iosIcon} size={iconSize} color={color} />
@@ -106,13 +106,13 @@ export default function SmartListGridItem({ smartList, getLayoutNumber }: Props)
 						/>
 
 						{/* Note: I've tried a few variations of placement and didn't love many but this was most OK */}
-						<View className="absolute left-0 top-0 z-20 flex-row gap-2 px-4 py-2">
+						<View className="left-0 top-0 gap-2 px-4 py-2 absolute z-20 flex-row">
 							<StatItem iosIcon="books.vertical" androidIcon={Library} count={matchedLibraries} />
 							<StatItem iosIcon="square.stack" androidIcon={Rows3} count={matchedSeries} />
 							<StatItem iosIcon="book.closed" androidIcon={Book} count={matchedBooks} />
 						</View>
 
-						<View className="absolute bottom-0 left-0 z-20 w-full px-4 py-2">
+						<View className="bottom-0 left-0 px-4 py-2 absolute z-20 w-full">
 							<Text
 								size="2xl"
 								className="font-bold leading-8 tracking-wide"

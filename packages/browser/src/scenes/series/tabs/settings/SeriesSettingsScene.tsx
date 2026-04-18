@@ -6,7 +6,7 @@ import { useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 
 import { SceneContainer } from '@/components/container'
-import { ResetMetadata } from '@/components/metadataEditor'
+import { ResetMetadata } from '@/components/metadata/metadataEditor'
 import { SeriesMetadataEditor } from '@/components/series/metadata'
 import { useAppContext } from '@/context'
 import paths from '@/paths'
@@ -74,7 +74,7 @@ export default function SeriesSettingsScene() {
 
 	return (
 		<SceneContainer>
-			<div className="flex flex-col items-start gap-y-6 text-left">
+			<div className="gap-y-6 flex flex-col items-start text-left">
 				<Alert variant="warning">
 					<Construction />
 					<AlertDescription>
@@ -94,7 +94,7 @@ export default function SeriesSettingsScene() {
 
 				<SeriesThumbnailSelector fragment={seriesById} />
 
-				<div className="flex w-full flex-col gap-y-2">
+				<div className="gap-y-2 flex w-full flex-col">
 					<div className="flex items-end justify-between">
 						<div>
 							<Heading size="sm">Metadata</Heading>

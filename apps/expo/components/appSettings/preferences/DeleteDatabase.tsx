@@ -3,15 +3,15 @@ import { Alert } from 'react-native'
 
 import { Button, Text } from '~/components/ui'
 import { deleteDatabase } from '~/db'
+import { useTranslate } from '~/lib/hooks'
 
 import AppSettingsRow from '../AppSettingsRow'
 
 export default function DeleteDatabase() {
+	const { t } = useTranslate()
 	const onDeletedDatabase = (success: boolean) => {
-		Alert.alert(
-			success ? 'Database deleted' : 'Error',
-			success ? 'Please restart the app' : 'Failed to delete database',
-		)
+		const baseKey = success ? 'success' : 'error'
+		Alert.alert(t(getKey(`${baseKey}.title`)), t(getKey(`${baseKey}.description`)))
 	}
 
 	return (
@@ -19,6 +19,7 @@ export default function DeleteDatabase() {
 			<Button
 				size="sm"
 				variant="destructive"
+				roundness="full"
 				onPress={async () => {
 					try {
 						await deleteDatabase(__DEV__)
@@ -29,8 +30,11 @@ export default function DeleteDatabase() {
 					}
 				}}
 			>
-				<Text className="text-foreground">Delete</Text>
+				<Text>Delete</Text>
 			</Button>
 		</AppSettingsRow>
 	)
 }
+
+const LOCALE_BASE = 'settings.debug.deleteDatabase'
+const getKey = (key: string) => `${LOCALE_BASE}.${key}`

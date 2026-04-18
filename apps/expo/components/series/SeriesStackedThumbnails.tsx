@@ -83,7 +83,7 @@ export default function SeriesStackedThumbnails({ thumbnailData, width: cardWidt
 			return (
 				<View
 					key={index}
-					className="absolute bottom-0"
+					className="bottom-0 absolute"
 					style={{
 						zIndex: config.zIndex,
 						left: leftOffset,

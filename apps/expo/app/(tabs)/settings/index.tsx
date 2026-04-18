@@ -5,13 +5,17 @@ import { ContactInformation, SupportInformation } from '~/components/appSettings
 import { AppDataUsageLink } from '~/components/appSettings/management'
 import {
 	AppLanguage,
+	AppPrimaryColor,
 	AppTheme,
 	AutoSyncLocalData,
 	DefaultServer,
 	DeleteDatabase,
+	DisableDismissGesture,
+	EnableDebugAnalytics,
 	ImageCacheActions,
 	MaskURLs,
 	PerformanceMonitor,
+	PreferMinimalReader,
 	PreferNativePdf,
 	ReaderSettingsLink,
 	ReduceAnimations,
@@ -19,16 +23,17 @@ import {
 	ThumbnailRatio,
 	ThumbnailResizeMode,
 } from '~/components/appSettings/preferences'
-import AppPrimaryColor from '~/components/appSettings/preferences/AppPrimaryColor'
-import DisableDismissGesture from '~/components/appSettings/preferences/DisableDismissGesture'
 import { BookClubsEnabled, StumpEnabled } from '~/components/appSettings/stump'
 import { Card } from '~/components/ui'
+import { useTranslate } from '~/lib/hooks'
 
 export default function Screen() {
+	const { t } = useTranslate()
+
 	return (
 		<ScrollView className="flex-1 bg-background" contentInsetAdjustmentBehavior="automatic">
-			<View className="flex-1 gap-8 bg-background p-4 tablet:p-6">
-				<Card label="Preferences">
+			<View className="gap-8 p-4 tablet:p-6 flex-1 bg-background">
+				<Card label={t(getSectionLabelKey('preferences'))}>
 					<AppTheme />
 					<AppPrimaryColor />
 					<AppLanguage />
@@ -38,31 +43,33 @@ export default function Screen() {
 					<ThumbnailResizeMode />
 				</Card>
 
-				<Card label="Reading">
+				<Card label={t(getSectionLabelKey('reading'))}>
 					<PreferNativePdf />
+					<PreferMinimalReader />
 					{Platform.OS === 'ios' && <DisableDismissGesture />}
 					<ReaderSettingsLink />
 				</Card>
 
 				<Card
-					label="Stump"
-					description="Stump features are optional, you can completely turn them off if you just want OPDS support"
+					label={t(getSectionLabelKey('stump'))}
+					description={t(getSectionKey('stump', 'description'))}
 				>
 					<StumpEnabled />
 					<AutoSyncLocalData />
 					<BookClubsEnabled />
 				</Card>
 
-				<Card label="Management">
+				<Card label={t(getSectionLabelKey('management'))}>
 					<AppDataUsageLink />
 				</Card>
 
-				<Card label="Debug">
+				<Card label={t(getSectionLabelKey('debug'))}>
 					<ImageCacheActions />
 					{__DEV__ && <DeleteDatabase />}
 					<PerformanceMonitor />
 					<ReduceAnimations />
 					<MaskURLs />
+					<EnableDebugAnalytics />
 				</Card>
 
 				<ContactInformation />
@@ -72,3 +79,6 @@ export default function Screen() {
 		</ScrollView>
 	)
 }
+
+const getSectionKey = (section: string, key: string) => `settings.${section}.${key}`
+const getSectionLabelKey = (section: string) => `${getSectionKey(section, 'label')}`

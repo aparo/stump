@@ -33,7 +33,7 @@ export default function FeedSubtitle({ value }: Props) {
 				backgroundColor={IS_IOS_24_PLUS ? undefined : colors.background.DEFAULT}
 				grabberOptions={{ color: isDarkColorScheme ? '#333' : '#ccc' }}
 			>
-				<ScrollView className="flex-1 p-6">
+				<ScrollView className="p-6 flex-1">
 					<Text className="text-foreground">{value}</Text>
 				</ScrollView>
 			</TrueSheet>

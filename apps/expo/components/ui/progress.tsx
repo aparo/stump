@@ -21,7 +21,7 @@ const Progress = React.forwardRef<ProgressPrimitive.RootRef, Props>(
 			<ProgressPrimitive.Root
 				ref={ref}
 				className={cn(
-					'squircle relative h-4 w-full overflow-hidden rounded-full bg-background-surface',
+					'squircle h-4 relative w-full overflow-hidden rounded-full bg-background-surface',
 					{ 'rotate-180 transform': inverted },
 					className,
 				)}

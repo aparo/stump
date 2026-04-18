@@ -26,7 +26,7 @@ type WriterItemProps = {
 
 const WriterItem = memo(function WriterItem({ item, checked, onSelect }: WriterItemProps) {
 	return (
-		<View className="flex flex-row items-center gap-3 px-7 py-3">
+		<View className="gap-3 px-7 py-3 flex flex-row items-center">
 			<Checkbox id={item} checked={checked} onCheckedChange={(c) => onSelect(item, !!c)} />
 			<Label htmlFor={item}>{item}</Label>
 		</View>

@@ -79,10 +79,10 @@ export default function Screen() {
 
 	if (!isInputFocused) {
 		return (
-			<View className="flex-1 items-center justify-center gap-4 bg-background p-4 tablet:p-7">
+			<View className="gap-4 p-4 tablet:p-7 flex-1 items-center justify-center bg-background">
 				<Owl owl="search" />
 				<View className="gap-2 px-4 tablet:max-w-lg">
-					<Text size="xl" className="text-center font-semibold leading-tight">
+					<Text size="xl" className="font-semibold leading-tight text-center">
 						Search the server
 					</Text>
 					<Text size="lg" className="text-center text-foreground-muted">

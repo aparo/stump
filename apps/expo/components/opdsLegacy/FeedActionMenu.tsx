@@ -114,7 +114,7 @@ export default function FeedActionMenu() {
 				<DropdownMenuContent
 					insets={contentInsets}
 					sideOffset={2}
-					className="w-2/3 tablet:w-64"
+					className="tablet:w-64 w-2/3"
 					align="end"
 				>
 					<DropdownMenuCheckboxItem

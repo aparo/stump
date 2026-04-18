@@ -16,7 +16,7 @@ export default function ClearFilters({ onPress }: Props) {
 			{({ pressed }) => (
 				<View
 					className={cn(
-						'squircle flex flex-grow-0 flex-row items-center justify-center rounded-full bg-fill-danger-secondary px-3 py-2',
+						'squircle px-3 py-2 flex flex-grow-0 flex-row items-center justify-center rounded-full bg-fill-danger-secondary',
 						pressed && 'opacity-70',
 					)}
 					style={{ flex: 0 }}

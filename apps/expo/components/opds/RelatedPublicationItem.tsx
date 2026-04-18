@@ -45,7 +45,7 @@ export function RelatedPublicationItem({ item }: Props) {
 			}
 		>
 			{({ pressed }) => (
-				<View className={cn('flex items-start pr-3', { 'opacity-80': pressed })}>
+				<View className={cn('pr-3 flex items-start', { 'opacity-80': pressed })}>
 					<ThumbnailImage
 						source={{
 							uri: thumbnail,

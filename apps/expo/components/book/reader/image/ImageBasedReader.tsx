@@ -313,7 +313,7 @@ const PageSet = React.memo(
 				>
 					<View
 						className={cn('relative flex-row items-center justify-center', {
-							'mx-auto gap-0': indexes.length > 1,
+							'gap-0 mx-auto': indexes.length > 1,
 						})}
 						style={{
 							height:

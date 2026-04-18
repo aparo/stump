@@ -108,7 +108,7 @@ export default function ReadStatus() {
 			>
 				{STATUSES.map((status, idx) => (
 					<Fragment key={status}>
-						<View className="flex flex-row items-center gap-3 px-7 py-3">
+						<View className="gap-3 px-7 py-3 flex flex-row items-center">
 							<Checkbox
 								id={status}
 								checked={selectionState[status]}

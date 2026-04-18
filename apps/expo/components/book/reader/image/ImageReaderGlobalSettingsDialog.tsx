@@ -63,12 +63,12 @@ export default function ImageReaderGlobalSettingsDialog({ isOpen, onClose }: Pro
 			insetAdjustment="automatic"
 		>
 			<ScrollView
-				className="flex-1 p-6"
+				className="p-6 flex-1"
 				contentContainerStyle={{ alignItems: 'flex-start' }}
 				nestedScrollEnabled
 			>
 				<View
-					className="w-full flex-1 gap-8"
+					className="gap-8 w-full flex-1"
 					style={{
 						paddingBottom: insets.bottom,
 					}}

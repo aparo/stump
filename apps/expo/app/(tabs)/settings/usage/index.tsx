@@ -7,13 +7,15 @@ import { Pressable, ScrollView } from 'react-native-gesture-handler'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 import RefreshControl from '~/components/RefreshControl'
-import { Card, Heading, Icon, ListEmptyMessage, Text } from '~/components/ui'
+import { Card, Icon, Text } from '~/components/ui'
 import { getAppUsage } from '~/lib/filesystem'
 import { formatBytes } from '~/lib/format'
+import { useTranslate } from '~/lib/hooks'
 import { useDynamicHeader } from '~/lib/hooks/useDynamicHeader'
 import { useSavedServers } from '~/stores'
 
 export default function Screen() {
+	const { t } = useTranslate()
 	const { data, isLoading, isRefetching, refetch } = useQuery({
 		queryKey: ['app-usage'],
 		queryFn: getAppUsage,
@@ -22,7 +24,7 @@ export default function Screen() {
 	})
 
 	useDynamicHeader({
-		title: 'Data Usage',
+		title: t(getKey('label')),
 	})
 
 	const { savedServers } = useSavedServers()
@@ -50,30 +52,23 @@ export default function Screen() {
 				refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
 				contentInsetAdjustmentBehavior="automatic"
 			>
-				<View className="flex-1 gap-8 bg-background px-4 pt-8">
-					<View className="flex-row justify-around">
-						<View className="flex items-center justify-center">
-							<Heading className="font-medium">{formatBytes(data?.appTotal || 0, 0, 'MB')}</Heading>
-							<Text size="sm" className="shrink-0 text-foreground-muted">
-								Non-Stump data
-							</Text>
-						</View>
+				<View className="gap-8 px-4 pt-8 flex-1 bg-background">
+					<Card>
+						<Card.StatGroup>
+							<Card.Stat label={t(getKey('nonStumpData'))} value={formatBytes(data?.appTotal)} />
+							<Card.Stat
+								label={t(getKey('serversTotal'))}
+								value={formatBytes(data?.serversTotal)}
+							/>
+						</Card.StatGroup>
+					</Card>
 
-						<View className="flex items-center justify-center">
-							<Heading className="font-medium">
-								{formatBytes(data?.serversTotal || 0, 0, 'MB')}
-							</Heading>
-							<Text size="sm" className="shrink-0 text-foreground-muted">
-								Servers total
-							</Text>
-						</View>
-					</View>
-
-					<View className="flex-1 gap-4">
-						<Heading>Servers</Heading>
-
+					<View className="gap-4 flex-1">
 						{savedServers.length > 0 && (
-							<Card>
+							<Card
+								label={t('common.servers')}
+								listEmptyStyle={{ icon: Server, message: 'No servers added' }}
+							>
 								{savedServers.map((server) => (
 									<Pressable
 										key={server.id}
@@ -85,8 +80,10 @@ export default function Screen() {
 										}
 									>
 										<Card.Row label={server.name}>
-											<View className="flex flex-row items-center gap-2">
-												<Text>{formatBytes(serverToUsage[server.id], 0, 'MB')}</Text>
+											<View className="gap-2 flex flex-row items-center">
+												<Text className="text-foreground-muted">
+													{formatBytes(serverToUsage[server.id])}
+												</Text>
 												<Icon as={ChevronRight} className="h-5 w-5 text-foreground-muted" />
 											</View>
 										</Card.Row>
@@ -94,13 +91,12 @@ export default function Screen() {
 								))}
 							</Card>
 						)}
-
-						{savedServers.length === 0 && (
-							<ListEmptyMessage icon={Server} message="No servers added" />
-						)}
 					</View>
 				</View>
 			</ScrollView>
 		</SafeAreaView>
 	)
 }
+
+const LOCALE_BASE = 'settings.management.dataUsage'
+const getKey = (key: string) => `${LOCALE_BASE}.${key}`

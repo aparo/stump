@@ -22,7 +22,7 @@ function Checkbox({
 	return (
 		<CheckboxPrimitive.Root
 			className={cn(
-				'squircle h-6 w-6 shrink-0 rounded-md border border-edge bg-background-surface shadow-sm shadow-black/5',
+				'squircle h-6 w-6 rounded-md shadow-sm shadow-black/5 shrink-0 border border-edge bg-background-surface',
 				Platform.select({
 					native: 'overflow-hidden',
 				}),
@@ -35,7 +35,7 @@ function Checkbox({
 		>
 			<CheckboxPrimitive.Indicator
 				className={cn(
-					'squircle h-full w-full items-center justify-center rounded-md bg-fill-brand',
+					'squircle rounded-md h-full w-full items-center justify-center bg-fill-brand',
 					indicatorClassName,
 				)}
 			>

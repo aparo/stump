@@ -28,7 +28,7 @@ export default function FilterHeaderButton({ icon, onPress, variant }: Props) {
 
 	return (
 		<Button
-			className="squircle h-[unset] w-[unset] rounded-full border p-1 tablet:p-2"
+			className="squircle p-1 tablet:p-2 h-[unset] w-[unset] rounded-full border"
 			variant={variant === 'prominent' ? 'brand' : 'outline'}
 			size="icon"
 			onPress={onPress}

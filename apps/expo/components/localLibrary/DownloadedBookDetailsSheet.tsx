@@ -4,13 +4,7 @@ import { formatHumanDuration } from '@stump/i18n'
 import { intlFormat } from 'date-fns'
 import { forwardRef, useMemo } from 'react'
 import { Platform, View } from 'react-native'
-import Animated, {
-	Extrapolation,
-	interpolate,
-	useAnimatedRef,
-	useAnimatedStyle,
-	useScrollOffset,
-} from 'react-native-reanimated'
+import Animated from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import TImage from 'react-native-turbo-image'
 
@@ -18,9 +12,10 @@ import { epubProgress, imageMeta } from '~/db'
 import { formatSeriesPosition } from '~/lib/bookUtils'
 import { useColors } from '~/lib/constants'
 import { formatBytes } from '~/lib/format'
+import { useTranslate } from '~/lib/hooks'
 import { usePreferencesStore } from '~/stores'
 
-import { DescriptionSection, InfoRow } from '../book/overview'
+import { DescriptionSection, useOverviewAnimations } from '../book/overview'
 import { ThumbnailImage } from '../image'
 import { MetadataBadgeSection } from '../overview'
 import { Card, Heading, Text } from '../ui'
@@ -35,6 +30,8 @@ type Props = {
 // overview components, instead, instead of being :sparkles: l a z y :sparkles:
 export const DownloadedBookDetailsSheet = forwardRef<TrueSheet, Props>(
 	function DownloadedBookDetailsSheet({ downloadedFile }, ref) {
+		const { t } = useTranslate()
+
 		const colors = useColors()
 		const insets = useSafeAreaInsets()
 		const thumbnailRatio = usePreferencesStore((state) => state.thumbnailRatio)
@@ -98,15 +95,7 @@ export const DownloadedBookDetailsSheet = forwardRef<TrueSheet, Props>(
 
 		const thumbnailUri = getThumbnailPath(downloadedFile)
 
-		const animatedScrollRef = useAnimatedRef<Animated.ScrollView>()
-		const scrollOffset = useScrollOffset(animatedScrollRef)
-		const parallaxStyle = useAnimatedStyle(() => ({
-			transform: [
-				{
-					translateY: interpolate(scrollOffset.value, [0, 200], [0, 100], Extrapolation.EXTEND),
-				},
-			],
-		}))
+		const { animatedScrollRef, parallaxStyle } = useOverviewAnimations()
 
 		const showDetails =
 			formattedSize ||
@@ -131,10 +120,10 @@ export const DownloadedBookDetailsSheet = forwardRef<TrueSheet, Props>(
 				}}
 			>
 				<Animated.ScrollView ref={animatedScrollRef}>
-					<View className="overflow-hidden pb-16">
+					<View className="pb-16 overflow-hidden">
 						{thumbnailUri && (
 							<Animated.View
-								className="absolute -inset-12 opacity-70 dark:opacity-30"
+								className="-inset-12 absolute opacity-70 dark:opacity-30"
 								style={parallaxStyle}
 							>
 								<TImage
@@ -149,7 +138,7 @@ export const DownloadedBookDetailsSheet = forwardRef<TrueSheet, Props>(
 							</Animated.View>
 						)}
 
-						<View className="items-center gap-4 px-4 pb-8 pt-8">
+						<View className="gap-4 px-4 pb-8 pt-8 items-center">
 							<ThumbnailImage
 								source={{
 									// @ts-expect-error: URI doesn't like undefined but it shows a placeholder when undefined
@@ -162,24 +151,24 @@ export const DownloadedBookDetailsSheet = forwardRef<TrueSheet, Props>(
 							/>
 
 							<View className="gap-1">
-								<Heading size="lg" className="text-center leading-6" numberOfLines={3}>
-									{downloadedFile.bookName || 'Untitled'}
+								<Heading size="lg" className="leading-6 text-center" numberOfLines={3}>
+									{downloadedFile.bookName || t('common.unknownTitle')}
 								</Heading>
 
 								{seriesPosition != null ? (
-									<Text className="text-center text-base text-foreground-muted" numberOfLines={1}>
+									<Text className="text-base text-center text-foreground-muted" numberOfLines={1}>
 										{seriesPosition}
 									</Text>
 								) : (
 									downloadedFile.series && (
-										<Text className="text-center text-base text-foreground-muted" numberOfLines={1}>
+										<Text className="text-base text-center text-foreground-muted" numberOfLines={1}>
 											{downloadedFile.series.name}
 										</Text>
 									)
 								)}
 
 								{downloadedFile.library && (
-									<Text className="text-center text-sm text-foreground-muted" numberOfLines={1}>
+									<Text className="text-sm text-center text-foreground-muted" numberOfLines={1}>
 										{downloadedFile.library.name}
 									</Text>
 								)}
@@ -187,22 +176,22 @@ export const DownloadedBookDetailsSheet = forwardRef<TrueSheet, Props>(
 						</View>
 					</View>
 
-					<View className="ios:rounded-[3rem] ios:-mt-[4.5rem] -mt-[2.5rem] gap-4 rounded-[2.5rem] bg-background px-4 py-6">
+					<View className="ios:rounded-[3rem] ios:-mt-[4.5rem] gap-4 px-4 py-6 -mt-[2.5rem] rounded-[2.5rem] bg-background">
 						<Card>
 							<Card.StatGroup>
 								{pages && <Card.Stat label="Pages" value={pages} />}
 								{epubProgressData?.chapterTitle &&
 									!epubProgressData.chapterTitle.match(/\.(html|xml|xhtml)$/i) && (
-										<Card.Stat label="Chapter" value={epubProgressData.chapterTitle} />
+										<Card.Stat label={t('common.chapter')} value={epubProgressData.chapterTitle} />
 									)}
 								{progressPercentage != null && (
 									<Card.Stat
-										label="Progress"
+										label={t('common.progress')}
 										value={`${progressPercentage.toFixed(1)}`}
 										suffix={'%'}
 									/>
 								)}
-								{readTime && <Card.Stat label="Read time" value={readTime} />}
+								{readTime && <Card.Stat label={t('common.readTime')} value={readTime} />}
 							</Card.StatGroup>
 						</Card>
 
@@ -210,29 +199,37 @@ export const DownloadedBookDetailsSheet = forwardRef<TrueSheet, Props>(
 
 						<Card>
 							<Card.StatGroup>
-								{!!publisher && <Card.Stat label="Publisher" value={publisher} />}
-								{!!seriesVolume && <Card.Stat label="Volume" value={seriesVolume} />}
-								{year != null && year > 0 && <Card.Stat label="Year" value={year} />}
-								{pages && <Card.Stat label="Pages" value={pages} />}
+								{!!publisher && <Card.Stat label={t('bookMetadata.publisher')} value={publisher} />}
+								{!!seriesVolume && (
+									<Card.Stat label={t('bookMetadata.volume')} value={seriesVolume} />
+								)}
+								{year != null && year > 0 && (
+									<Card.Stat label={t('bookMetadata.year')} value={year} />
+								)}
+								{pages && <Card.Stat label={t('common.pages')} value={pages} />}
 							</Card.StatGroup>
 						</Card>
 
 						<MetadataBadgeSection
-							label="Genres"
+							label={t('bookMetadata.genres')}
 							items={genres.map((genre) => ({ label: genre }))}
 						/>
 
 						{showDetails && (
-							<Card label="Details">
-								{extension && <InfoRow label="Format" value={extension} />}
-								{!!formattedSize && <InfoRow label="Size" value={formattedSize} />}
-								{metadata?.language && <InfoRow label="Language" value={metadata.language} />}
+							<Card label={t('common.details')}>
+								{extension && <Card.Row label={t('bookMetadata.format')} value={extension} />}
+								{!!formattedSize && (
+									<Card.Row label={t('bookMetadata.size')} value={formattedSize} />
+								)}
+								{metadata?.language && (
+									<Card.Row label={t('bookMetadata.language')} value={metadata.language} />
+								)}
 								{metadata?.ageRating != null && metadata.ageRating > 0 && (
-									<InfoRow label="Age Rating" value={`${metadata.ageRating}+`} />
+									<Card.Row label={t('bookMetadata.ageRating')} value={`${metadata.ageRating}+`} />
 								)}
 								{downloadedFile.downloadedAt && (
-									<InfoRow
-										label="Downloaded"
+									<Card.Row
+										label={t('bookMetadata.downloadedAt')}
 										value={intlFormat(new Date(downloadedFile.downloadedAt), {
 											month: 'long',
 											day: 'numeric',

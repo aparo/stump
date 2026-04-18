@@ -88,12 +88,12 @@ export default function Sort() {
 						onValueChange={handleSortDirectionChanged}
 						className="squircle gap-0 rounded-lg border border-edge bg-background-surface"
 					>
-						<View className="flex flex-row items-center gap-3 p-3">
+						<View className="gap-3 p-3 flex flex-row items-center">
 							<RadioGroupItem value="ASC" id="ascending" />
 							<Label htmlFor="ascending">Ascending</Label>
 						</View>
 						<Divider />
-						<View className="flex flex-row items-center gap-3 p-3">
+						<View className="gap-3 p-3 flex flex-row items-center">
 							<RadioGroupItem value="DESC" id="descending" />
 							<Label htmlFor="descending">Descending</Label>
 						</View>
@@ -108,63 +108,63 @@ export default function Sort() {
 						onValueChange={(value) => handleSortFieldChanged(value, false)}
 						className="squircle gap-0 rounded-lg border border-edge bg-background-surface"
 					>
-						<View className="flex flex-row items-center gap-3 p-3">
+						<View className="gap-3 p-3 flex flex-row items-center">
 							<RadioGroupItem value="NAME" id="name" />
 							<Label htmlFor="name">Name</Label>
 						</View>
 
 						<Divider />
 
-						<View className="flex flex-row items-center gap-3 p-3">
+						<View className="gap-3 p-3 flex flex-row items-center">
 							<RadioGroupItem value="CREATED_AT" id="createdAt" />
 							<Label htmlFor="createdAt">Created At</Label>
 						</View>
 
 						<Divider />
 
-						<View className="flex flex-row items-center gap-3 p-3">
+						<View className="gap-3 p-3 flex flex-row items-center">
 							<RadioGroupItem value="EXTENSION" id="extension" />
 							<Label htmlFor="extension">Extension</Label>
 						</View>
 
 						<Divider />
 
-						<View className="flex flex-row items-center gap-3 p-3">
+						<View className="gap-3 p-3 flex flex-row items-center">
 							<RadioGroupItem value="MODIFIED_AT" id="modifiedAt" />
 							<Label htmlFor="modifiedAt">Modified At (on disk)</Label>
 						</View>
 
 						<Divider />
 
-						<View className="flex flex-row items-center gap-3 p-3">
+						<View className="gap-3 p-3 flex flex-row items-center">
 							<RadioGroupItem value="PAGES" id="pages" />
 							<Label htmlFor="pages">Pages</Label>
 						</View>
 
 						<Divider />
 
-						<View className="flex flex-row items-center gap-3 p-3">
+						<View className="gap-3 p-3 flex flex-row items-center">
 							<RadioGroupItem value="PATH" id="path" />
 							<Label htmlFor="path">Path</Label>
 						</View>
 
 						<Divider />
 
-						<View className="flex flex-row items-center gap-3 p-3">
+						<View className="gap-3 p-3 flex flex-row items-center">
 							<RadioGroupItem value="SIZE" id="size" />
 							<Label htmlFor="size">Size</Label>
 						</View>
 
 						<Divider />
 
-						<View className="flex flex-row items-center gap-3 p-3">
+						<View className="gap-3 p-3 flex flex-row items-center">
 							<RadioGroupItem value="STATUS" id="status" />
 							<Label htmlFor="status">Status</Label>
 						</View>
 
 						<Divider />
 
-						<View className="flex flex-row items-center gap-3 p-3">
+						<View className="gap-3 p-3 flex flex-row items-center">
 							<RadioGroupItem value="UPDATED_AT" id="updatedAt" />
 							<Label htmlFor="updatedAt">Updated At</Label>
 						</View>
@@ -179,21 +179,21 @@ export default function Sort() {
 						onValueChange={(value) => handleSortFieldChanged(value, true)}
 						className="squircle gap-0 rounded-lg border border-edge bg-background-surface"
 					>
-						<View className="flex flex-row items-center gap-3 p-3">
+						<View className="gap-3 p-3 flex flex-row items-center">
 							<RadioGroupItem value="TITLE" id="title" />
 							<Label htmlFor="title">Title</Label>
 						</View>
 
 						<Divider />
 
-						<View className="flex flex-row items-center gap-3 p-3">
+						<View className="gap-3 p-3 flex flex-row items-center">
 							<RadioGroupItem value="AGE_RATING" id="ageRating" />
 							<Label htmlFor="ageRating">Age Rating</Label>
 						</View>
 
 						<Divider />
 
-						<View className="flex flex-row items-center gap-3 p-3">
+						<View className="gap-3 p-3 flex flex-row items-center">
 							<RadioGroupItem value="NUMBER" id="number" />
 							<Label htmlFor="number">Series Position</Label>
 						</View>

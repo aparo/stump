@@ -88,12 +88,12 @@ export default function Sort() {
 						onValueChange={handleSortDirectionChanged}
 						className="squircle gap-0 rounded-lg border border-edge bg-background-surface"
 					>
-						<View className="flex flex-row items-center gap-3 p-3">
+						<View className="gap-3 p-3 flex flex-row items-center">
 							<RadioGroupItem value="ASC" id="ascending" />
 							<Label htmlFor="ascending">Ascending</Label>
 						</View>
 						<Divider />
-						<View className="flex flex-row items-center gap-3 p-3">
+						<View className="gap-3 p-3 flex flex-row items-center">
 							<RadioGroupItem value="DESC" id="descending" />
 							<Label htmlFor="descending">Descending</Label>
 						</View>
@@ -108,28 +108,28 @@ export default function Sort() {
 						onValueChange={(value) => handleSortFieldChanged(value, false)}
 						className="squircle gap-0 rounded-lg border border-edge bg-background-surface"
 					>
-						<View className="flex flex-row items-center gap-3 p-3">
+						<View className="gap-3 p-3 flex flex-row items-center">
 							<RadioGroupItem value="NAME" id="name" />
 							<Label htmlFor="name">Name</Label>
 						</View>
 
 						<Divider />
 
-						<View className="flex flex-row items-center gap-3 p-3">
+						<View className="gap-3 p-3 flex flex-row items-center">
 							<RadioGroupItem value="CREATED_AT" id="createdAt" />
 							<Label htmlFor="createdAt">Created At</Label>
 						</View>
 
 						<Divider />
 
-						<View className="flex flex-row items-center gap-3 p-3">
+						<View className="gap-3 p-3 flex flex-row items-center">
 							<RadioGroupItem value="PATH" id="path" />
 							<Label htmlFor="path">Path</Label>
 						</View>
 
 						<Divider />
 
-						<View className="flex flex-row items-center gap-3 p-3">
+						<View className="gap-3 p-3 flex flex-row items-center">
 							<RadioGroupItem value="UPDATED_AT" id="updatedAt" />
 							<Label htmlFor="updatedAt">Updated At</Label>
 						</View>
@@ -144,14 +144,14 @@ export default function Sort() {
 						onValueChange={(value) => handleSortFieldChanged(value, true)}
 						className="squircle gap-0 rounded-lg border border-edge bg-background-surface"
 					>
-						<View className="flex flex-row items-center gap-3 p-3">
+						<View className="gap-3 p-3 flex flex-row items-center">
 							<RadioGroupItem value="TITLE" id="title" />
 							<Label htmlFor="title">Title</Label>
 						</View>
 
 						<Divider />
 
-						<View className="flex flex-row items-center gap-3 p-3">
+						<View className="gap-3 p-3 flex flex-row items-center">
 							<RadioGroupItem value="AGE_RATING" id="ageRating" />
 							<Label htmlFor="ageRating">Age Rating</Label>
 						</View>

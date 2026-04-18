@@ -74,8 +74,8 @@ const CreateAnnotationSheet = forwardRef<CreateAnnotationSheetRef, Props>(
 			>
 				<View className="gap-4 p-4">
 					{selectedText && (
-						<View className="rounded-lg bg-background-surface p-3">
-							<Text className="italic text-foreground-muted" numberOfLines={3}>
+						<View className="rounded-lg p-3 bg-background-surface">
+							<Text className="text-foreground-muted italic" numberOfLines={3}>
 								&ldquo;{selectedText}&rdquo;
 							</Text>
 						</View>
@@ -90,7 +90,7 @@ const CreateAnnotationSheet = forwardRef<CreateAnnotationSheetRef, Props>(
 							placeholderTextColor={colors.foreground.muted}
 							multiline
 							numberOfLines={3}
-							className="min-h-[80px] rounded-lg border border-edge bg-background-surface p-3 text-foreground"
+							className="rounded-lg p-3 min-h-[80px] border border-edge bg-background-surface text-foreground"
 							textAlignVertical="top"
 							autoFocus
 						/>

@@ -37,7 +37,7 @@ export default function EpubSettingsSheet() {
 			insetAdjustment="automatic"
 		>
 			<PortalHostContext.Provider value={Platform.OS === 'android' ? SHEET_PORTAL_HOST : undefined}>
-				<ScrollView className="flex-1 p-6" nestedScrollEnabled>
+				<ScrollView className="p-6 flex-1" nestedScrollEnabled>
 					<ThemeSheetContent />
 				</ScrollView>
 				{Platform.OS === 'android' && <PortalHost name={SHEET_PORTAL_HOST} />}

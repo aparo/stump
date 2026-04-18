@@ -20,6 +20,7 @@ export const SWITCH_SIZE_VARIANTS = {
 	sm: 'h-[20px] w-[36px]',
 	xs: 'h-[16px] w-[28px]',
 }
+// TODO(tailwind): Once I migrate to new tailwind and redo theming I need a switch background token for themes
 export const SWITCH_VARIANTS = {
 	default: 'focus:ring-background-400 data-[state=checked]:bg-background-surface-secondary-hover',
 	primary: 'focus:ring-edge-brand data-[state=checked]:bg-fill-brand',
@@ -53,7 +54,7 @@ export const RawSwitch = React.forwardRef<RawSwitchRef, RawSwitchProps>(
 			>
 				<SwitchPrimitives.Thumb
 					className={cn(
-						'pointer-events-none block rounded-full bg-white shadow-lg ring-0 transition-transform',
+						'bg-white shadow-lg pointer-events-none block rounded-full ring-0 transition-transform',
 						{
 							'h-5 w-5 data-[state=checked]:translate-x-5 data-[state=unchecked]:translate-x-0':
 								size === 'default',

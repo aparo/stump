@@ -94,9 +94,9 @@ export default function NavigationFeed({
 						style={style}
 						className={cn(
 							'bg-black/5 dark:bg-white/10',
-							index === 0 && 'squircle ios:rounded-t-[2rem] overflow-hidden rounded-t-3xl',
+							index === 0 && 'squircle ios:rounded-t-[2rem] rounded-t-3xl overflow-hidden',
 							index === navigation.length - 1 &&
-								'squircle ios:rounded-b-[2rem] overflow-hidden rounded-b-3xl',
+								'squircle ios:rounded-b-[2rem] rounded-b-3xl overflow-hidden',
 						)}
 						{...props}
 					>
