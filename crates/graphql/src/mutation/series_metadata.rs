@@ -39,7 +39,7 @@ impl SeriesMetadataMutation {
 			.ok_or("Series not found")?;
 
 		let mut active_model = input.into_active_model();
-		active_model.series_id = Set(model.series.id.clone());
+		active_model.series_id = Set(model.series.id);
 
 		let updated_metadata = if model.metadata.is_some() {
 			active_model.update(conn).await?
@@ -97,7 +97,7 @@ impl SeriesMetadataMutation {
 							.column(media::Column::Id)
 							.from(media::Entity)
 							.and_where(
-								media::Column::SeriesId.eq(model.series.id.clone()),
+								media::Column::SeriesId.eq(model.series.id),
 							)
 							.to_owned(),
 					),
@@ -292,7 +292,7 @@ impl SeriesMetadataMutation {
 			active.update(conn).await?
 		} else {
 			let active = series_metadata::ActiveModel {
-				series_id: Set(model.series.id.clone()),
+				series_id: Set(model.series.id),
 				locked_fields: Set(Some(locked_json)),
 				..Default::default()
 			};

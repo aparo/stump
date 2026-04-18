@@ -40,11 +40,11 @@ impl MediaMetadataMutation {
 		let updated_metadata = if let Some(existing) = model.metadata {
 			let mut active_model = input.into_active_model();
 			active_model.id = Set(existing.id);
-			active_model.media_id = Set(Some(model.media.id.clone()));
+			active_model.media_id = Set(Some(model.media.id));
 			active_model.update(conn).await?
 		} else {
 			let mut active_model = input.into_active_model();
-			active_model.media_id = Set(Some(model.media.id.clone()));
+			active_model.media_id = Set(Some(model.media.id));
 			active_model.insert(conn).await?
 		};
 
@@ -245,7 +245,7 @@ impl MediaMetadataMutation {
 			active.update(conn).await?
 		} else {
 			let active = media_metadata::ActiveModel {
-				media_id: Set(Some(model.media.id.clone())),
+				media_id: Set(Some(model.media.id)),
 				locked_fields: Set(Some(locked_json)),
 				..Default::default()
 			};

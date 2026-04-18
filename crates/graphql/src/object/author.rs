@@ -94,7 +94,7 @@ impl SharedWork {
 				Author {
 					name,
 					role: Some(role),
-					library_id: self.library_id.clone(),
+					library_id: self.library_id,
 				}
 			})
 			.collect()
@@ -118,7 +118,7 @@ impl SharedWork {
 				Author {
 					name,
 					role: Some(role),
-					library_id: self.library_id.clone(),
+					library_id: self.library_id,
 				}
 			})
 			.collect()
@@ -134,7 +134,7 @@ impl AuthorSeries {
 		let key = MetadataSeriesMediaLoaderKey {
 			series_title: self.title.clone(),
 			library_id: self.library_id,
-			user_id: user.id.clone(),
+			user_id: user.id,
 		};
 
 		let media = loader.load_one(key).await?.unwrap_or_default();
@@ -149,7 +149,7 @@ impl AuthorSeries {
 		let key = MetadataSeriesMediaLoaderKey {
 			series_title: self.title.clone(),
 			library_id: self.library_id,
-			user_id: user.id.clone(),
+			user_id: user.id,
 		};
 
 		let models = loader.load_one(key).await?.unwrap_or_default();
@@ -199,7 +199,7 @@ impl Author {
 		let key = AuthorMediaLoaderKey {
 			author_name: self.name.clone(),
 			library_id: self.library_id,
-			user_id: user.id.clone(),
+			user_id: user.id,
 		};
 
 		let media = loader.load_one(key).await?.unwrap_or_default();
@@ -213,7 +213,7 @@ impl Author {
 		let key = AuthorMediaLoaderKey {
 			author_name: self.name.clone(),
 			library_id: self.library_id,
-			user_id: user.id.clone(),
+			user_id: user.id,
 		};
 
 		let media = loader.load_one(key).await?.unwrap_or_default();
@@ -247,7 +247,7 @@ impl Author {
 		let key = AuthorMediaLoaderKey {
 			author_name: self.name.clone(),
 			library_id: self.library_id,
-			user_id: user.id.clone(),
+			user_id: user.id,
 		};
 
 		let media = loader.load_one(key).await?.unwrap_or_default();
@@ -277,8 +277,8 @@ impl Author {
 
 		let key = AuthorMediaLoaderKey {
 			author_name: self.name.clone(),
-			library_id: self.library_id.clone(),
-			user_id: user.id.clone(),
+			library_id: self.library_id,
+			user_id: user.id,
 		};
 
 		let media = loader.load_one(key).await?.unwrap_or_default();
@@ -295,7 +295,7 @@ impl Author {
 			.map(|media| SharedWork {
 				media,
 				viewing_author: self.name.clone(),
-				library_id: self.library_id.clone(),
+				library_id: self.library_id,
 			})
 			.collect();
 

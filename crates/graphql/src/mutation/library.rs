@@ -991,7 +991,7 @@ impl LibraryMutation {
 			.ok_or("Library not found")?;
 
 		let locked_json = serde_json::to_value(&locked_fields)?;
-		let library_id_str = library.id.clone();
+		let library_id_str = library.id;
 
 		let series_ids: Vec<String> = series::Entity::find()
 			.filter(series::Column::LibraryId.eq(library_id_str))
@@ -1042,7 +1042,7 @@ impl LibraryMutation {
 			.ok_or("Library not found")?;
 
 		let locked_json = serde_json::to_value(&locked_fields)?;
-		let library_id_str = library.id.clone();
+		let library_id_str = library.id;
 
 		let media_ids: Vec<String> = media::Entity::find()
 			.filter(

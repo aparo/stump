@@ -290,7 +290,7 @@ async fn set_series_completed(
 	// the completion record
 	let session_map = deleted_sessions
 		.into_iter()
-		.map(|s| (s.media_id.clone(), s))
+		.map(|s| (s.media_id, s))
 		.collect::<std::collections::HashMap<_, _>>();
 
 	let now = DateTimeWithTimeZone::from(Utc::now());
@@ -299,12 +299,12 @@ async fn set_series_completed(
 		.map(|media_id| {
 			let prior = session_map.get(&media_id);
 			finished_reading_session::ActiveModel {
-				user_id: Set(user.id.clone()),
+				user_id: Set(user.id),
 				media_id: Set(media_id),
 				started_at: Set(prior.map(|s| s.started_at).unwrap_or(now)),
 				completed_at: Set(now),
 				elapsed_seconds: Set(prior.and_then(|s| s.elapsed_seconds)),
-				device_id: Set(prior.and_then(|s| s.device_id.clone())),
+				device_id: Set(prior.and_then(|s| s.device_id)),
 				..Default::default()
 			}
 		})

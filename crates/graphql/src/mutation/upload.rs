@@ -255,8 +255,7 @@ impl UploadMutation {
 				config: PlaceholderGenerationJobConfig {
 					force_regenerate: true,
 					scope: PlaceholderGenerationJobScope::Libraries(vec![library
-						.id
-						.clone()]),
+						.id]),
 				},
 			})
 			.await
@@ -362,8 +361,7 @@ impl UploadMutation {
 					force_regenerate: true,
 					scope: PlaceholderGenerationJobScope::Series(vec![series
 						.series
-						.id
-						.clone()]),
+						.id]),
 				},
 			})
 			.await
@@ -480,8 +478,7 @@ impl UploadMutation {
 					force_regenerate: true,
 					scope: PlaceholderGenerationJobScope::Books(vec![book
 						.media
-						.id
-						.clone()]),
+						.id]),
 				},
 			})
 			.await
@@ -575,8 +572,7 @@ impl UploadMutation {
 					force_regenerate: true,
 					scope: PlaceholderGenerationJobScope::Series(vec![series
 						.series
-						.id
-						.clone()]),
+						.id]),
 				},
 			})
 			.await
@@ -677,8 +673,7 @@ impl UploadMutation {
 					force_regenerate: true,
 					scope: PlaceholderGenerationJobScope::Books(vec![book
 						.media
-						.id
-						.clone()]),
+						.id]),
 				},
 			})
 			.await

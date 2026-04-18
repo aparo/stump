@@ -66,7 +66,7 @@ impl Library {
 					Query::select()
 						.column(series::Column::Id)
 						.from(series::Entity)
-						.and_where(series::Column::LibraryId.eq(self.model.id.clone()))
+						.and_where(series::Column::LibraryId.eq(self.model.id))
 						.to_owned(),
 				),
 			)
@@ -85,7 +85,7 @@ impl Library {
 			})
 			.collect();
 
-		let library_id = Some(self.model.id.clone());
+		let library_id = Some(self.model.id);
 		let authors = unique_names
 			.into_iter()
 			.map(|name| Author {
@@ -94,7 +94,7 @@ impl Library {
 				// rationale here is that in the context of a library, an author has no role. We only
 				// care about surfacing all authors here.
 				role: None,
-				library_id: library_id.clone(),
+				library_id: library_id,
 			})
 			.collect();
 

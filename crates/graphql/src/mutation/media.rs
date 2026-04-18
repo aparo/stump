@@ -410,7 +410,7 @@ impl MediaMutation {
 			}
 
 			let finished_reading_session = finished_reading_session::ActiveModel {
-				user_id: Set(user.id.clone()),
+				user_id: Set(user.id),
 				media_id: Set(id),
 				started_at: Set(active_session.started_at),
 				completed_at: Set(chrono::Utc::now().into()),

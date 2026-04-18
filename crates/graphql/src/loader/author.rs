@@ -119,8 +119,8 @@ impl Loader<AuthorMediaLoaderKey> for AuthorMediaLoader {
 							{
 								let key = AuthorMediaLoaderKey {
 									author_name: original_name.clone(),
-									library_id: library_id.clone(),
-									user_id: user_id.clone(),
+									library_id: library_id,
+									user_id: user_id,
 								};
 								if let Some(media_list) = result.get_mut(&key) {
 									media_list.push(Media::from(model.clone()));
@@ -207,7 +207,7 @@ impl Loader<MetadataSeriesMediaLoaderKey> for MetadataSeriesMediaLoader {
 			if let Some(ref lib_id) = library_id {
 				query = query.filter(
 					media::Column::SeriesId
-						.in_subquery(series_in_library_subquery(lib_id.clone())),
+						.in_subquery(series_in_library_subquery(*lib_id)),
 				);
 			}
 
@@ -230,8 +230,8 @@ impl Loader<MetadataSeriesMediaLoaderKey> for MetadataSeriesMediaLoader {
 						{
 							let key = MetadataSeriesMediaLoaderKey {
 								series_title: original_title.clone(),
-								library_id: library_id.clone(),
-								user_id: user_id.clone(),
+								library_id: library_id,
+								user_id: user_id,
 							};
 							if let Some(media_list) = result.get_mut(&key) {
 								media_list.push(Media::from(model.clone()));

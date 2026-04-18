@@ -1370,14 +1370,13 @@ async fn update_book_progression(
 	let locator = input.locator();
 
 	match page {
-		Some(p) if book.pages > -1 => {
-			if p < 1 || p > book.pages {
+		Some(p) if book.pages > -1
+			&& (p < 1 || p > book.pages) => {
 				return Err(APIError::BadRequest(format!(
 					"Page {} is out of bounds (1-{})",
 					p, book.pages
 				)));
-			}
-		},
+			},
 		_ => {},
 	}
 

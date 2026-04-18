@@ -84,7 +84,7 @@ impl AuthorQuery {
 	) -> Result<Option<Author>> {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 
-		let authors = fetch_all_authors(conn, library_id.clone()).await?;
+		let authors = fetch_all_authors(conn, library_id).await?;
 		let search_key = name.to_lowercase();
 
 		Ok(authors.get(&search_key).map(|original_name| Author {
@@ -108,7 +108,7 @@ impl AuthorQuery {
 	) -> Result<PaginatedResponse<Author>> {
 		let conn = ctx.data::<CoreContext>()?.conn.as_ref();
 
-		let all_authors = fetch_all_authors(conn, library_id.clone()).await?;
+		let all_authors = fetch_all_authors(conn, library_id).await?;
 
 		let filtered: Vec<String> = if let Some(ref search_term) = search {
 			let search_lower = search_term.to_lowercase();
@@ -143,7 +143,7 @@ impl AuthorQuery {
 					.map(|name| Author {
 						name,
 						role: None,
-						library_id: library_id.clone(),
+						library_id: library_id,
 					})
 					.collect();
 
@@ -158,7 +158,7 @@ impl AuthorQuery {
 					.map(|name| Author {
 						name,
 						role: None,
-						library_id: library_id.clone(),
+						library_id: library_id,
 					})
 					.collect();
 
@@ -196,7 +196,7 @@ impl AuthorQuery {
 		if let Some(ref lib_id) = library_id {
 			query = query.filter(
 				media::Column::SeriesId
-					.in_subquery(series_in_library_subquery(lib_id.clone())),
+					.in_subquery(series_in_library_subquery(*lib_id)),
 			);
 		}
 
