@@ -114,7 +114,7 @@ export default function Status() {
 						<View className="gap-3 px-7 py-3 flex flex-row items-center">
 							<Checkbox
 								id={status}
-								checked={selectionState[status]}
+								checked={Boolean(selectionState[status])}
 								onCheckedChange={(checked) => onSelectStatus(status, !!checked)}
 							/>
 							<Label htmlFor={status}>{LABELS[status]}</Label>

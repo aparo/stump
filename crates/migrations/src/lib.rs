@@ -24,6 +24,8 @@ mod m20260322_151809_normalize_timestamp;
 mod m20260325_074457_drop_fks;
 mod m20260325_074458_migrate_text_uuid;
 mod m20260325_074459_restore_fks;
+mod m20260404_185829_add_name_indexes;
+mod m20260406_000000_add_kobo_sync_sessions;
 mod sqlite_extra;
 
 pub struct Migrator;
@@ -54,6 +56,8 @@ impl MigratorTrait for Migrator {
 			Box::new(m20260325_074457_drop_fks::Migration),
 			Box::new(m20260325_074458_migrate_text_uuid::Migration),
 			Box::new(m20260325_074459_restore_fks::Migration),
+			Box::new(m20260404_185829_add_name_indexes::Migration),
+			Box::new(m20260406_000000_add_kobo_sync_sessions::Migration),
 		]
 	}
 }

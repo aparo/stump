@@ -66,11 +66,10 @@ impl MetadataFetchRecord {
 		// Note: This is another awkward access issue where a user with permission to view these
 		// fetch records might not have permission to view the associated media.
 		// TODO(docs): I think this is acceptable but worth noting in the docs
-		let model =
-			series::ModelWithMetadata::find_by_id_for_user(*series_id, user)
-				.into_model::<series::ModelWithMetadata>()
-				.one(conn)
-				.await?;
+		let model = series::ModelWithMetadata::find_by_id_for_user(*series_id, user)
+			.into_model::<series::ModelWithMetadata>()
+			.one(conn)
+			.await?;
 
 		Ok(model.map(|s| s.into()))
 	}

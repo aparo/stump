@@ -12,8 +12,8 @@ async-stream.workspace = true
 async-trait.workspace = true
 axum.workspace = true
 axum-macros = "0.5.0"
-axum_typed_multipart = "0.15.1"
-axum-extra = { version = "0.10.0", features = [
+axum_typed_multipart = "0.16.5"
+axum-extra = { version = "0.12.6", features = [
   "typed-header",
   "query",
 ] }
@@ -30,7 +30,6 @@ itertools.workspace = true
 jsonwebtoken = "9.3.0"
 linemux = { git = "https://github.com/jmagnuson/linemux.git", rev = "acaafc602afac5d7a9cd3e087dafc937cac1e364" }
 local-ip-address = "0.6.2"
-once_cell.workspace = true
 openidconnect = "4.0.1"
 prefixed-api-key = { workspace = true}
 rand = { workspace = true }
@@ -41,12 +40,12 @@ serde_json.workspace = true
 serde_qs = { version = "0.14.0", features = ["axum"] }
 serde-untagged = "0.1.2"
 serde_with.workspace = true
-sha2 = "0.10"
+sha2 = "0.11.0"
 stump_core = { path = "../../core" }
 apalis.workspace = true
 apalis-cron.workspace = true
 tempfile = "3.13.0"
-tower-http = { version = "0.5.2", features = [
+tower-http = { version = "0.6.8", features = [
   "fs",
   "cors",
   "set-header",
@@ -56,8 +55,8 @@ thiserror.workspace = true
 time = "0.3.36"
 tokio.workspace = true
 tokio-util = "0.7.10"
-tower = "0.4.13"
-tower-sessions = "0.14.0"
+tower = "0.5.3"
+tower-sessions = "0.15.0"
 tracing.workspace = true
 urlencoding.workspace = true
 uuid.workspace = true
@@ -67,6 +66,7 @@ zip.workspace = true
 axum-test = "17.2.0"
 maplit.workspace = true
 tokio = { workspace = true, features = ["full", "test-util"] }
+tests = { path = "../../crates/tests" }
 
 [build-dependencies]
 chrono.workspace = true

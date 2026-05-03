@@ -6,8 +6,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { Icon, Text } from '~/components/ui'
 import { useColors } from '~/lib/constants'
-import { useColorScheme } from '~/lib/useColorScheme'
 import { cn } from '~/lib/utils'
+
+import { SheetBackDetection } from '../SheetBackDetection'
 
 export interface FilterSheetRef {
 	open: () => void
@@ -33,7 +34,6 @@ const FilterSheet = forwardRef<FilterSheetRef, Props>(function FilterSheet(
 
 	const _Icon = icon ?? ListFilter
 
-	const { colorScheme } = useColorScheme()
 	const colors = useColors()
 	const insets = useSafeAreaInsets()
 
@@ -86,13 +86,10 @@ const FilterSheet = forwardRef<FilterSheetRef, Props>(function FilterSheet(
 			<TrueSheet
 				ref={sheetRef}
 				detents={[1]}
-				cornerRadius={24}
 				grabber
 				scrollable
 				backgroundColor={colors.background.DEFAULT}
-				grabberOptions={{
-					color: colorScheme === 'dark' ? '#333' : '#ccc',
-				}}
+				grabberOptions={{ color: colors.sheet.grabber }}
 				onDidPresent={() => setIsOpen(true)}
 				onDidDismiss={() => setIsOpen(false)}
 				style={{
@@ -111,6 +108,8 @@ const FilterSheet = forwardRef<FilterSheetRef, Props>(function FilterSheet(
 					{children}
 				</View>
 			</TrueSheet>
+
+			<SheetBackDetection ref={sheetRef} isOpen={isOpen} />
 		</View>
 	)
 })

@@ -90,7 +90,7 @@ export default function Screen() {
 									>
 										{({ pressed }) => (
 											<View
-												className={cn('px-4 flex-row items-center justify-between', {
+												className={cn('px-4 tablet:py-1 flex-row items-center justify-between', {
 													'opacity-60': pressed,
 												})}
 											>

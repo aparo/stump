@@ -82,8 +82,8 @@ const FIXED_TAB_PATHS: Href[] = [
 	'/index',
 	'/library',
 	'/settings',
-	'/settings/reader',
 ]
+
 const DYNAMIC_TAB_PATHS = [
 	/^\/server\/[^/]+\/?$/,
 	/^\/server\/[^/]+\/(index|browse)\/?$/,

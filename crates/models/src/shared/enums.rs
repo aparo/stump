@@ -682,11 +682,19 @@ pub enum UserPermission {
 	AccessAPIKeys,
 	/// Grant access to the koreader sync feature
 	AccessKoreaderSync,
+	/// Grant access to the kobo sync feature
+	AccessKoboSync,
 	///TODO: Expand permissions for bookclub + smartlist
 	/// Grant access to the book club feature
 	AccessBookClub,
 	/// Grant access to create a book club (access book club)
 	CreateBookClub,
+	/// Grant user access to change **their own** password
+	ChangePassword,
+	/// Grant user access to change **their own** username
+	ChangeUsername,
+	/// Grant user access to change **their own** avatar
+	ChangeAvatar,
 	/// Grant access to read any emailers in the system
 	EmailerRead,
 	/// Grant access to create an emailer

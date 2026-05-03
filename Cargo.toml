@@ -35,7 +35,7 @@ bcrypt = "0.19.0"
 derive_builder = "0.20.2"
 derivative = "2.2.0"
 chrono = { version = "0.4.44", features = ["serde"] }
-clap = { version = "4.6.0", features = ["derive"] }
+clap = { version = "4.6.1", features = ["derive"] }
 english-to-cron = "0.1.7"
 futures = "0.3.32"
 futures-util = "0.3.32"
@@ -55,9 +55,9 @@ md5 = "0.8.0"
 num-traits = "0.2.19"
 once_cell = "1.21.4"
 prefixed-api-key = { version = "0.3.0", features = ["sha2"] }
-rand = "0.10.0"
+rand = "0.10.1"
 regex = "1.12.3"
-reqwest = { version = "0.12.23", default-features = false, features = [ "json", "rustls-tls" ] }
+reqwest = { version = "0.12.28", default-features = false, features = [ "json"] }
 reqwest-middleware = { version = "0.4.0", features = ["json"] }
 reqwest-retry = "0.7.0"
 rust_decimal = { version = "1.41.0", features = ["serde-with-float"] }
@@ -79,7 +79,7 @@ serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
 serde_with = "3.18.0"
 simple_crypt = "0.2.3"
-strum = { version = "0.27.2", features = ["derive"] }
+strum = { version = "0.28.0", features = ["derive"] }
 tempfile = "3.23.0"
 thiserror = "2.0.18"
 tokio = { version = "1.51.1", features = [
@@ -91,8 +91,8 @@ tokio = { version = "1.51.1", features = [
   "signal",
   "macros"
 ] }
-toml = "0.9.7"
-tower-sessions = "0.14.0"
+toml = "1.1.2"
+tower-sessions = "0.15.0"
 tracing = "0.1.44"
 urlencoding = "2.1.3"
 # Required for macro crates
@@ -105,7 +105,7 @@ syn = "2.0.117"
 zip = { version = "=1.1.3", features = ["deflate"], default-features = false }
 # TODO: Use danigm/epub-rs once PR merged: https://github.com/danigm/epub-rs/pull/57
 epub = { git = "https://github.com/stumpapp/epub-rs", rev = "baf89d1", features = ["mock"] }
-uuid = { version = "1.23.0", features = ["v4"] }
+uuid = { version = "1.23.1", features = ["v4"] }
 tokio-test = "0.4.5"
 pretty_assertions = "1.4.1"
 

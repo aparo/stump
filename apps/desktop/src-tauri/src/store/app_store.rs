@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use serde::Serialize;
 use tauri::{App, AppHandle, Manager, Wry};
 use tauri_plugin_store::{Store, StoreExt};
@@ -24,7 +26,7 @@ pub struct AppStore {
 }
 
 impl AppStore {
-	pub fn load_store(handle: &AppHandle) -> Result<Store<Wry>, StoreError> {
+	pub fn load_store(handle: &AppHandle) -> Result<Arc<Store<Wry>>, StoreError> {
 		let path = handle
 			.path()
 			.app_config_dir()
@@ -32,13 +34,13 @@ impl AppStore {
 			.join(STORE_FILE);
 
 		// Init store and load it from disk
-		let store = handle.store_builder(path).build();
+		let store = handle.store_builder(path).build().unwrap();
 
 		// TODO(tauri-v2): Still necessary?
 		// If there are no saved settings yet, this will return an error so we ignore the return value.
-		let _ = store.load();
+		let _ = store.reload();
 
-		Ok(store)
+		Ok(store.clone())
 	}
 
 	pub fn init(app: &mut App) -> Result<Self, StoreError> {

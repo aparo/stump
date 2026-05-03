@@ -1,5 +1,5 @@
-import { Host, Switch as IosSwitch } from '@expo/ui/swift-ui'
-import { disabled, fixedSize } from '@expo/ui/swift-ui/modifiers'
+import { Host, Toggle as IosSwitch } from '@expo/ui/swift-ui'
+import { disabled, fixedSize, tint } from '@expo/ui/swift-ui/modifiers'
 import * as SwitchPrimitives from '@rn-primitives/switch'
 import * as React from 'react'
 import { Platform } from 'react-native'
@@ -88,20 +88,20 @@ const Switch = React.forwardRef<SwitchPrimitives.RootRef, Props>(
 		}))
 		const resolvedSize = SIZES[size] || SIZES.default
 
+		// https://docs.expo.dev/versions/latest/sdk/ui/swift-ui/toggle/
 		if (Platform.OS === 'ios') {
 			return (
-				<Host matchContents>
+				<Host matchContents ignoreSafeArea="all">
 					<IosSwitch
-						value={props.checked}
-						onValueChange={(checked) => {
+						isOn={props.checked}
+						onIsOnChange={(checked) => {
 							props.onCheckedChange?.(checked)
 						}}
-						color={colors.primary}
-						variant="switch"
 						modifiers={[
 							// Note: disabled(false) shows disabled styles lol
 							...(props.disabled ? [disabled(true)] : []),
 							fixedSize({ horizontal: true, vertical: true }),
+							tint(colors.primary),
 						]}
 					/>
 				</Host>

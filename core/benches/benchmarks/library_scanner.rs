@@ -312,7 +312,7 @@ async fn scan_new_library(test_ctx: TestCtx) {
 		job_ctx,
 		job_id,
 		&StumpJob::LibraryScan {
-			id: job.id.clone(),
+			id: job.id,
 			path: job.path.clone(),
 			options: Some(job.options),
 		},

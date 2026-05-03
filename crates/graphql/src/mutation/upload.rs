@@ -254,8 +254,7 @@ impl UploadMutation {
 			.enqueue(StumpJob::PlaceholderGeneration {
 				config: PlaceholderGenerationJobConfig {
 					force_regenerate: true,
-					scope: PlaceholderGenerationJobScope::Libraries(vec![library
-						.id]),
+					scope: PlaceholderGenerationJobScope::Libraries(vec![library.id]),
 				},
 			})
 			.await
@@ -359,9 +358,7 @@ impl UploadMutation {
 			.enqueue(StumpJob::PlaceholderGeneration {
 				config: PlaceholderGenerationJobConfig {
 					force_regenerate: true,
-					scope: PlaceholderGenerationJobScope::Series(vec![series
-						.series
-						.id]),
+					scope: PlaceholderGenerationJobScope::Series(vec![series.series.id]),
 				},
 			})
 			.await
@@ -476,9 +473,7 @@ impl UploadMutation {
 			.enqueue(StumpJob::PlaceholderGeneration {
 				config: PlaceholderGenerationJobConfig {
 					force_regenerate: true,
-					scope: PlaceholderGenerationJobScope::Books(vec![book
-						.media
-						.id]),
+					scope: PlaceholderGenerationJobScope::Books(vec![book.media.id]),
 				},
 			})
 			.await
@@ -570,9 +565,7 @@ impl UploadMutation {
 			.enqueue(StumpJob::PlaceholderGeneration {
 				config: PlaceholderGenerationJobConfig {
 					force_regenerate: true,
-					scope: PlaceholderGenerationJobScope::Series(vec![series
-						.series
-						.id]),
+					scope: PlaceholderGenerationJobScope::Series(vec![series.series.id]),
 				},
 			})
 			.await
@@ -671,9 +664,7 @@ impl UploadMutation {
 			.enqueue(StumpJob::PlaceholderGeneration {
 				config: PlaceholderGenerationJobConfig {
 					force_regenerate: true,
-					scope: PlaceholderGenerationJobScope::Books(vec![book
-						.media
-						.id]),
+					scope: PlaceholderGenerationJobScope::Books(vec![book.media.id]),
 				},
 			})
 			.await

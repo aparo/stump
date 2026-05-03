@@ -260,7 +260,6 @@ export const EmojiPickerSheet = forwardRef<EmojiPickerSheetRef, Props>(({ onEmoj
 		<TrueSheet
 			ref={sheetRef}
 			detents={[1]}
-			cornerRadius={24}
 			grabber
 			backgroundColor={IS_IOS_24_PLUS ? undefined : colors.sheet.background}
 			grabberOptions={{ color: colors.sheet.grabber }}

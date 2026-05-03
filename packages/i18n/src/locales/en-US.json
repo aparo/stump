@@ -686,10 +686,7 @@
 					"description": "Fetch metadata for the media in this library",
 					"noProviders": {
 						"title": "There are no metadata providers available",
-						"description": [
-							"You can configure metadata providers",
-							"here"
-						]
+						"description": "You can configure metadata providers in the metadata integration settings"
 					},
 					"fetchButton": "Start background fetch",
 					"fetchError": "Failed to start metadata fetch"
@@ -1347,6 +1344,7 @@
 				"email": "Email",
 				"metadata": "Metadata",
 				"notifications": "Notifications",
+				"tags": "Tags",
 				"label": "Management"
 			}
 		},
@@ -1363,7 +1361,12 @@
 					"labels": {
 						"username": "Username",
 						"password": "Password",
-						"activeChangesPrompt": "You have unsaved changes"
+						"activeChangesPrompt": "You have unsaved changes",
+						"uselessForm": {
+							"title": "You lack permissions to change these settings",
+							"description": "Contact your administrator if you want to make changes to these settings"
+						},
+						"insufficientPermission": "You do not have permission to change this"
 					},
 					"errors": {
 						"updateFailed": "A server error occurred while updating your profile. Please try again."
@@ -2008,6 +2011,16 @@
 					}
 				},
 				"permissions": {
+					"groups": {
+						"accountManagement": "Account",
+						"featureAccess": "Feature access",
+						"fileManagement": "Files",
+						"emailers": "Emailers",
+						"emailing": "Emailing",
+						"libraryManagement": "Library management",
+						"userManagement": "User management",
+						"serverManagement": "Server management"
+					},
 					"heading": "Permissions",
 					"subtitle": [
 						"Select the permissions you want to grant to this user. For more information on what each permission does, see the",
@@ -2315,7 +2328,7 @@
 					},
 					"strategy": {
 						"label": "Merge strategy",
-						"configuration": {
+						"options": {
 							"FILL_GAPS": "Accept missing fields",
 							"FILL_AND_MERGE_LISTS": "Accept missing fields and merge lists",
 							"PREFER_EXTERNAL": "Prefer external data"
@@ -2334,6 +2347,55 @@
 			"deleteDialog": {
 				"title": "Delete provider",
 				"description": "Are you sure you want to delete {{providerName}}? This action cannot be undone."
+			}
+		},
+		"server/tags": {
+			"helmet": "Tag management",
+			"title": "Tags",
+			"description": "Create and manage tags for organizing your content",
+			"sections": {
+				"table": {
+					"title": "Tags",
+					"description": "All tags available on this server",
+					"empty": {
+						"title": "No tags",
+						"action": "Create your first tag to get started"
+					},
+					"columns": {
+						"name": "Name"
+					},
+					"actionMenu": {
+						"rename": "Rename"
+					}
+				},
+				"createTag": {
+					"trigger": "Create tag",
+					"modal": {
+						"heading": "Create new tag",
+						"description": "Tags can be assigned to books, series, and libraries",
+						"name": {
+							"label": "Name",
+							"placeholder": "Enter tag name"
+						},
+						"submit": "Create"
+					}
+				},
+				"renameTag": {
+					"modal": {
+						"heading": "Rename tag",
+						"description": "Change the name of this tag across all assigned items",
+						"name": {
+							"label": "Name",
+							"placeholder": "Enter new tag name"
+						},
+						"submit": "Rename"
+					}
+				},
+				"deleteTag": {
+					"title": "Delete tag",
+					"description": "This tag will be removed from all books, series, and libraries. This cannot be undone.",
+					"confirm": "Delete"
+				}
 			}
 		}
 	},
@@ -2461,6 +2523,16 @@
 		"clear": "Clear",
 		"confirm": "Confirm",
 		"delete": "Delete",
+		"deleteConfirmation": {
+			"title": "Delete {{type}}",
+			"description": "Are you sure you want to delete this {{type}}? This action cannot be undone.",
+			"confirm": "Delete {{type}}",
+			"typeToConfirm": "Type {{name}} to confirm:"
+		},
+		"experimentalDisclaimer": {
+			"title": "This feature is experimental",
+			"description": "It might be missing features, have bugs, or not work at all. Use at your own discretion and report any issues you encounter"
+		},
 		"enter": "Enter",
 		"save": "Save",
 		"send": "Send",
@@ -2508,9 +2580,25 @@
 			"label": "KoReader sync",
 			"description": "Allows the user to access the KoReader sync integration"
 		},
+		"ACCESS_KOBO_SYNC": {
+			"label": "Kobo sync",
+			"description": "Allows the user to access the Kobo sync integration"
+		},
 		"ACCESS_SMART_LIST": {
 			"label": "Smart Lists",
 			"description": "Allows the user to access smart list features, including creating and managing smart lists"
+		},
+		"CHANGE_PASSWORD": {
+			"label": "Change password",
+			"description": "Allows the user to change their own password"
+		},
+		"CHANGE_USERNAME": {
+			"label": "Change username",
+			"description": "Allows the user to change their own username"
+		},
+		"CHANGE_AVATAR": {
+			"label": "Change avatar",
+			"description": "Allows the user to change their own avatar"
 		},
 		"CREATE_BOOK_CLUB": {
 			"label": "Create book clubs",
@@ -2839,11 +2927,12 @@
 				"label": "Reading",
 				"preferNativePdf": "Prefer Native PDF",
 				"preferMinimalReader": "Prefer Minimal Reader",
-				"disableDismissGesture": "Disable Dismiss Gesture"
+				"disableDismissGesture": "Disable Dismiss Gesture",
+				"incognitoReading": "Incognito Reading"
 			},
 			"stump": {
 				"label": "Stump",
-				"description": "Stump features are optional and can be turn them off if you do not need them",
+				"description": "Stump features are optional and can be turned off if you do not need them",
 				"bookClubsEnabled": "Book Club Features"
 			},
 			"autoSyncLocalData": "Auto-Sync Local Data",
@@ -2860,8 +2949,7 @@
 						"confirmation": "Are you sure you want to delete all downloads from {{serverName}}?",
 						"deleteFailed": {
 							"title": "Deletion Failed",
-							"description": "There was an error deleting all all downloads from {{serverName}}"
-
+							"description": "There was an error deleting all downloads from {{serverName}}"
 						}
 					},
 					"noDownloads": "No downloaded files for this server",
@@ -2875,6 +2963,7 @@
 			"debug": {
 				"label": "Debug",
 				"clearCache": {
+					"label": "Clear Cache",
 					"memory": {
 						"button": "Memory",
 						"success": "Memory cache cleared"
@@ -2898,6 +2987,14 @@
 				"performanceMonitor": "Performance Monitor",
 				"reduceAnimations": "Reduce Animations",
 				"maskUrls": "Mask URLs",
+				"displayLanguageKeys": {
+					"label": "Display Language Keys",
+					"options": {
+						"none": "None",
+						"abbreviated": "Abbreviated",
+						"full": "Full"
+					}
+				},
 				"debugAnalytics": {
 					"label": "Debug Analytics",
 					"description": "Send additional debug-related events to help troubleshoot issues"
@@ -2916,7 +3013,8 @@
 			}
 		},
 		"readerSettings": {
-			"title": "Reader Settings",
+			"title": "Image Reader Settings",
+			"overrideGlobalSettings": "Override global settings",
 			"sections": {
 				"mode": "Mode",
 				"imageOptions": "Image Options",
@@ -2963,6 +3061,77 @@
 					"images": "Image Gallery",
 					"slider": "Slider"
 				}
+			},
+			"readingTimer": {
+				"label": "Reading Timer",
+				"resetTimer": "Reset Timer"
+			},
+			"allSettings": "All Settings"
+		},
+		"epubSettings": {
+			"title": "Epub Reader Settings",
+			"typeface": "Typeface",
+			"fontSize": "Font Size",
+			"fontWeight": {
+				"label": "Font Weight",
+				"options": {
+					"light": "Light",
+					"normal": "Normal",
+					"medium": "Medium",
+					"bold": "Bold"
+				}
+			},
+			"textNormalization": "Text Normalization",
+			"verticalText": "Vertical Text",
+			"readingDirection": {
+				"label": "Reading Direction",
+				"options": {
+					"rtl": "Right to left",
+					"ltr": "Left to right"
+				}
+			},
+			"columns": {
+				"label": "Columns",
+				"options": {
+					"auto": "Auto",
+					"single": "Single",
+					"double": "Double"
+				}
+			},
+			"pageMargins": "Page Margins",
+			"imageFilter": {
+				"label": "Image Filter",
+				"options": {
+					"none": "None",
+					"darken": "Darken",
+					"invert": "Invert"
+				}
+			},
+			"publisherStyles": "Publisher Styles",
+			"textAlignment": {
+				"label": "Text Alignment",
+				"options": {
+					"start": "Start",
+					"left": "Left",
+					"center": "Center",
+					"right": "Right",
+					"justify": "Justify"
+				}
+			},
+			"typeScale": "Type Scale",
+			"lineHeight": "Line Height",
+			"paragraphIndent": "Paragraph Indent",
+			"paragraphSpacing": "Paragraph Spacing",
+			"wordSpacing": "Word Spacing",
+			"letterSpacing": "Letter Spacing",
+			"hyphens": "Hyphens",
+			"ligatures": "Ligatures",
+			"customizeTheme": {
+				"placeholder": "Theme name",
+				"background": "Background",
+				"text": "Text",
+				"highlight": "Highlight",
+				"premadeThemes": "Premade themes"
 			}
 		},
 		"savedServerActions": {

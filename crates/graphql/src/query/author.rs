@@ -195,8 +195,7 @@ impl AuthorQuery {
 
 		if let Some(ref lib_id) = library_id {
 			query = query.filter(
-				media::Column::SeriesId
-					.in_subquery(series_in_library_subquery(*lib_id)),
+				media::Column::SeriesId.in_subquery(series_in_library_subquery(*lib_id)),
 			);
 		}
 

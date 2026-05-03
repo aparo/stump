@@ -933,6 +933,33 @@ export type FinishedReadingSessionModel = {
   userId: Scalars['String']['output'];
 };
 
+/**
+ * A resize option which will resize the image to fit within the given dimensions,
+ * maintaining the aspect ratio.
+ *
+ * If the image already fits within the dimensions, it will not be scaled up.
+ */
+export type FitWithinResize = {
+  __typename?: 'FitWithinResize';
+  /** The maximum height (in pixels) of the resulting image */
+  height: Scalars['Int']['output'];
+  /** The maximum width (in pixels) of the resulting image */
+  width: Scalars['Int']['output'];
+};
+
+/**
+ * A resize option which will resize the image to fit within the given dimensions,
+ * maintaining the aspect ratio.
+ *
+ * If the image already fits within the dimensions, it will not be scaled up.
+ */
+export type FitWithinResizeInput = {
+  /** The maximum height (in pixels) of the resulting image */
+  height: Scalars['Int']['input'];
+  /** The maximum width (in pixels) of the resulting image */
+  width: Scalars['Int']['input'];
+};
+
 export type ImageColor = {
   __typename?: 'ImageColor';
   color: Scalars['String']['output'];
@@ -995,13 +1022,14 @@ export type ImageRef = {
 };
 
 /** The resize options to use when generating an image */
-export type ImageResizeMethod = ExactDimensionResize | ScaleEvenlyByFactor | ScaledDimensionResize;
+export type ImageResizeMethod = ExactDimensionResize | FitWithinResize | ScaleEvenlyByFactor | ScaledDimensionResize;
 
 /** The resize options to use when generating an image */
 export type ImageResizeMethodInput =
-  { exact: ExactDimensionResizeInput; scaleDimension?: never; scaleEvenlyByFactor?: never; }
-  |  { exact?: never; scaleDimension: ScaledDimensionResizeInput; scaleEvenlyByFactor?: never; }
-  |  { exact?: never; scaleDimension?: never; scaleEvenlyByFactor: ScaleEvenlyByFactorInput; };
+  { exact: ExactDimensionResizeInput; fitWithin?: never; scaleDimension?: never; scaleEvenlyByFactor?: never; }
+  |  { exact?: never; fitWithin: FitWithinResizeInput; scaleDimension?: never; scaleEvenlyByFactor?: never; }
+  |  { exact?: never; fitWithin?: never; scaleDimension: ScaledDimensionResizeInput; scaleEvenlyByFactor?: never; }
+  |  { exact?: never; fitWithin?: never; scaleDimension?: never; scaleEvenlyByFactor: ScaleEvenlyByFactorInput; };
 
 export type InProgressBooks = {
   __typename?: 'InProgressBooks';
@@ -2014,7 +2042,7 @@ export type Mutation = {
   /**
    * Delete tags. Returns a list containing the deleted tags, or an error if deletion failed.
    *
-   * * `tags` - A non-empty list of tags to create.
+   * * `tags` - A non-empty list of tags to delete.
    */
   deleteTags: Array<Tag>;
   deleteUser: User;
@@ -2054,6 +2082,11 @@ export type Mutation = {
   removeBookClubMember: BookClubMember;
   /** Remove your own suggestion (only before it's resolved) */
   removeSuggestion: BookClubBookSuggestion;
+  /**
+   * Rename a tag. Returns the updated tag, or an error if the tag was not found or the new
+   * name already exists.
+   */
+  renameTag: Tag;
   /** Reorder uncompleted books in the club's queue. Completed books cannot be reordered since they are effectively archived */
   reorderBooks: BookClub;
   resetLibraryMetadata: Library;
@@ -2074,6 +2107,11 @@ export type Mutation = {
   setLibrarySeriesLockedFields: Scalars['Int']['output'];
   /** Set the locked metadata fields for a media item */
   setMediaLockedFields: Media;
+  /**
+   * Set the tags for a media item. Creates any tags that don't exist yet, links new ones,
+   * and unlinks removed ones. Returns the updated media item.
+   */
+  setMediaTags: Media;
   /** Set the locked metadata fields for a series */
   setSeriesLockedFields: Series;
   /** Suggest a book for the book club */
@@ -2608,6 +2646,12 @@ export type MutationRemoveSuggestionArgs = {
 };
 
 
+export type MutationRenameTagArgs = {
+  id: Scalars['Int']['input'];
+  name: Scalars['String']['input'];
+};
+
+
 export type MutationReorderBooksArgs = {
   bookClubId: Scalars['ID']['input'];
   bookIds: Array<Scalars['String']['input']>;
@@ -2669,6 +2713,12 @@ export type MutationSetLibrarySeriesLockedFieldsArgs = {
 export type MutationSetMediaLockedFieldsArgs = {
   lockedFields: Array<MetadataField>;
   mediaId: Scalars['ID']['input'];
+};
+
+
+export type MutationSetMediaTagsArgs = {
+  id: Scalars['ID']['input'];
+  tags: Array<Scalars['String']['input']>;
 };
 
 
@@ -4251,6 +4301,8 @@ export type StumpConfig = {
   configDir: Scalars['String']['output'];
   /** An optional custom path for the database. */
   dbPath?: Maybe<Scalars['String']['output']>;
+  /** Indicates if the Kobo sync feature should be enabled. */
+  enableKoboSync: Scalars['Boolean']['output'];
   /** Indicates if the KoReader sync feature should be enabled. */
   enableKoreaderSync: Scalars['Boolean']['output'];
   /**
@@ -4264,6 +4316,8 @@ export type StumpConfig = {
   enableUpload: Scalars['Boolean']['output'];
   /** The interval at which automatic deleted session cleanup is performed. */
   expiredSessionCleanupInterval: Scalars['Int']['output'];
+  /** The directory where the applicaiton logs will be stored */
+  logDir?: Maybe<Scalars['String']['output']>;
   /** The maximum size, in bytes, of files that can be uploaded to be included in libraries. */
   maxFileUploadSize: Scalars['Int']['output'];
   /**
@@ -4309,6 +4363,8 @@ export type StumpConfig = {
   refreshTokenTtl: Scalars['Int']['output'];
   /** The time in seconds that a login session will be valid for. */
   sessionTtl: Scalars['Int']['output'];
+  /** Whether to trust proxy headers for determining client IP and scheme (e.g., X-Forwarded-For) */
+  trustProxyHeaders: Scalars['Boolean']['output'];
   /** The verbosity with which system logs are visible (default: 1). */
   verbosity: Scalars['Int']['output'];
 };
@@ -4543,10 +4599,18 @@ export enum UserPermission {
    * Grant access to the book club feature
    */
   AccessBookClub = 'ACCESS_BOOK_CLUB',
+  /** Grant access to the kobo sync feature */
+  AccessKoboSync = 'ACCESS_KOBO_SYNC',
   /** Grant access to the koreader sync feature */
   AccessKoreaderSync = 'ACCESS_KOREADER_SYNC',
   /** Grant access to access the smart list feature. This includes the ability to create and edit smart lists */
   AccessSmartList = 'ACCESS_SMART_LIST',
+  /** Grant user access to change **their own** avatar */
+  ChangeAvatar = 'CHANGE_AVATAR',
+  /** Grant user access to change **their own** password */
+  ChangePassword = 'CHANGE_PASSWORD',
+  /** Grant user access to change **their own** username */
+  ChangeUsername = 'CHANGE_USERNAME',
   /** Grant access to create a book club (access book club) */
   CreateBookClub = 'CREATE_BOOK_CLUB',
   /** Grant access to create a library */
@@ -5129,7 +5193,7 @@ export type OnDeckBooksQuery = { __typename?: 'Query', onDeck: { __typename?: 'P
       & { ' $fragmentRefs'?: { 'OnDeckBookItemFragment': OnDeckBookItemFragment } }
     )>, pageInfo: { __typename: 'CursorPaginationInfo' } | { __typename: 'OffsetPaginationInfo', totalPages: number, currentPage: number, pageSize: number, pageOffset: number, zeroBased: boolean } } };
 
-export type ReadingNowFragment = { __typename?: 'Media', id: string, resolvedName: string, pages: number, metadata?: { __typename?: 'MediaMetadata', summary?: string | null, genres: Array<string>, links: Array<string> } | null, thumbnail: { __typename?: 'ImageRef', url: string, height?: number | null, width?: number | null, metadata?: { __typename?: 'ImageMetadata', averageColor?: string | null, thumbhash?: string | null, colors: Array<{ __typename?: 'ImageColor', color: string, percentage: any }> } | null }, readProgress?: { __typename?: 'ActiveReadingSession', epubcfi?: string | null, page?: number | null, percentageCompleted?: any | null, updatedAt?: any | null, locator?: { __typename?: 'ReadiumLocator', locations?: { __typename?: 'ReadiumLocation', position?: number | null } | null } | null } | null } & { ' $fragmentName'?: 'ReadingNowFragment' };
+export type ReadingNowFragment = { __typename?: 'Media', id: string, resolvedName: string, pages: number, metadata?: { __typename?: 'MediaMetadata', summary?: string | null, genres: Array<string>, links: Array<string>, publisher?: string | null, year?: number | null } | null, thumbnail: { __typename?: 'ImageRef', url: string, height?: number | null, width?: number | null, metadata?: { __typename?: 'ImageMetadata', averageColor?: string | null, thumbhash?: string | null, colors: Array<{ __typename?: 'ImageColor', color: string, percentage: any }> } | null }, readProgress?: { __typename?: 'ActiveReadingSession', epubcfi?: string | null, page?: number | null, percentageCompleted?: any | null, updatedAt?: any | null, locator?: { __typename?: 'ReadiumLocator', locations?: { __typename?: 'ReadiumLocation', position?: number | null } | null } | null } | null } & { ' $fragmentName'?: 'ReadingNowFragment' };
 
 export type RecentlyAddedBooksQueryVariables = Exact<{
   pagination?: InputMaybe<Pagination>;
@@ -5796,7 +5860,7 @@ export type BookManagementSceneQueryVariables = Exact<{
 
 
 export type BookManagementSceneQuery = { __typename?: 'Query', mediaById?: (
-    { __typename?: 'Media', id: string, resolvedName: string, library: { __typename?: 'Library', id: string, name: string }, series: { __typename?: 'Series', id: string, resolvedName: string } }
+    { __typename?: 'Media', id: string, resolvedName: string, library: { __typename?: 'Library', id: string, name: string }, series: { __typename?: 'Series', id: string, resolvedName: string }, tags: Array<{ __typename?: 'Tag', id: number, name: string }> }
     & { ' $fragmentRefs'?: { 'BookThumbnailSelectorFragment': BookThumbnailSelectorFragment } }
   ) | null };
 
@@ -5806,6 +5870,14 @@ export type BookManagementSceneAnalyzeMutationVariables = Exact<{
 
 
 export type BookManagementSceneAnalyzeMutation = { __typename?: 'Mutation', analyzeMedia: boolean };
+
+export type BookTagEditorSetTagsMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  tags: Array<Scalars['String']['input']> | Scalars['String']['input'];
+}>;
+
+
+export type BookTagEditorSetTagsMutation = { __typename?: 'Mutation', setMediaTags: { __typename?: 'Media', id: string, tags: Array<{ __typename?: 'Tag', id: number, name: string }> } };
 
 export type BookThumbnailSelectorFragment = { __typename?: 'Media', id: string, pages: number, thumbnail: { __typename?: 'ImageRef', url: string } } & { ' $fragmentName'?: 'BookThumbnailSelectorFragment' };
 
@@ -6010,7 +6082,7 @@ export type LibrarySeriesGridQueryVariables = Exact<{
 
 export type LibrarySeriesGridQuery = { __typename?: 'Query', series: { __typename?: 'PaginatedSeriesResponse', nodes: Array<{ __typename?: 'Series', id: string, thumbnail: { __typename?: 'ImageRef', url: string } }>, pageInfo: { __typename: 'CursorPaginationInfo', currentCursor?: string | null, nextCursor?: string | null, limit: number } | { __typename: 'OffsetPaginationInfo' } } };
 
-export type LibrarySettingsConfigFragment = { __typename?: 'Library', config: { __typename?: 'LibraryConfig', id: number, convertRarToZip: boolean, hardDeleteConversions: boolean, defaultReadingDir: ReadingDirection, defaultReadingMode: ReadingMode, defaultReadingImageScaleFit: ReadingImageScaleFit, defaultLibraryViewMode: LibraryViewMode, hideSeriesView: boolean, skipBookOverview: boolean, generateFileHashes: boolean, generateKoreaderHashes: boolean, processMetadata: boolean, watch: boolean, libraryPattern: LibraryPattern, processThumbnailColorsEvenWithoutConfig: boolean, ignoreRules?: Array<string> | null, thumbnailConfig?: { __typename: 'ImageProcessorOptions', format: SupportedImageFormat, quality?: number | null, page?: number | null, resizeMethod?: { __typename: 'ExactDimensionResize', width: number, height: number } | { __typename: 'ScaleEvenlyByFactor', factor: any } | { __typename: 'ScaledDimensionResize', dimension: Dimension, size: number } | null } | null } } & { ' $fragmentName'?: 'LibrarySettingsConfigFragment' };
+export type LibrarySettingsConfigFragment = { __typename?: 'Library', config: { __typename?: 'LibraryConfig', id: number, convertRarToZip: boolean, hardDeleteConversions: boolean, defaultReadingDir: ReadingDirection, defaultReadingMode: ReadingMode, defaultReadingImageScaleFit: ReadingImageScaleFit, defaultLibraryViewMode: LibraryViewMode, hideSeriesView: boolean, skipBookOverview: boolean, generateFileHashes: boolean, generateKoreaderHashes: boolean, processMetadata: boolean, watch: boolean, libraryPattern: LibraryPattern, processThumbnailColorsEvenWithoutConfig: boolean, ignoreRules?: Array<string> | null, thumbnailConfig?: { __typename: 'ImageProcessorOptions', format: SupportedImageFormat, quality?: number | null, page?: number | null, resizeMethod?: { __typename: 'ExactDimensionResize', width: number, height: number } | { __typename: 'FitWithinResize' } | { __typename: 'ScaleEvenlyByFactor', factor: any } | { __typename: 'ScaledDimensionResize', dimension: Dimension, size: number } | null } | null } } & { ' $fragmentName'?: 'LibrarySettingsConfigFragment' };
 
 export type LibrarySettingsRouterEditLibraryMutationMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -6574,6 +6646,33 @@ export type ProvidersSectionGetProvidersQuery = { __typename?: 'Query', metadata
     & { ' $fragmentRefs'?: { 'ExistingProviderCardFragment': ExistingProviderCardFragment } }
   )> };
 
+export type CreateTagModalMutationVariables = Exact<{
+  tags: Array<Scalars['String']['input']> | Scalars['String']['input'];
+}>;
+
+
+export type CreateTagModalMutation = { __typename?: 'Mutation', createTags: Array<{ __typename?: 'Tag', id: number, name: string }> };
+
+export type DeleteTagConfirmModalMutationVariables = Exact<{
+  tags: Array<Scalars['String']['input']> | Scalars['String']['input'];
+}>;
+
+
+export type DeleteTagConfirmModalMutation = { __typename?: 'Mutation', deleteTags: Array<{ __typename?: 'Tag', id: number, name: string }> };
+
+export type RenameTagModalMutationVariables = Exact<{
+  id: Scalars['Int']['input'];
+  name: Scalars['String']['input'];
+}>;
+
+
+export type RenameTagModalMutation = { __typename?: 'Mutation', renameTag: { __typename?: 'Tag', id: number, name: string } };
+
+export type TagTableQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type TagTableQuery = { __typename?: 'Query', tags: Array<{ __typename?: 'Tag', id: number, name: string }> };
+
 export type UserStatsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -6770,6 +6869,8 @@ export const ReadingNowFragmentDoc = new TypedDocumentString(`
     summary
     genres
     links
+    publisher
+    year
   }
   thumbnail {
     url
@@ -9105,6 +9206,8 @@ export const ContinueReadingDocument = new TypedDocumentString(`
     summary
     genres
     links
+    publisher
+    year
   }
   thumbnail {
     url
@@ -11032,6 +11135,10 @@ export const BookManagementSceneDocument = new TypedDocumentString(`
       id
       resolvedName
     }
+    tags {
+      id
+      name
+    }
     ...BookThumbnailSelector
   }
 }
@@ -11047,6 +11154,17 @@ export const BookManagementSceneAnalyzeDocument = new TypedDocumentString(`
   analyzeMedia(id: $id)
 }
     `) as unknown as TypedDocumentString<BookManagementSceneAnalyzeMutation, BookManagementSceneAnalyzeMutationVariables>;
+export const BookTagEditorSetTagsDocument = new TypedDocumentString(`
+    mutation BookTagEditorSetTags($id: ID!, $tags: [String!]!) {
+  setMediaTags(id: $id, tags: $tags) {
+    id
+    tags {
+      id
+      name
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<BookTagEditorSetTagsMutation, BookTagEditorSetTagsMutationVariables>;
 export const BookThumbnailSelectorUpdateDocument = new TypedDocumentString(`
     mutation BookThumbnailSelectorUpdate($id: ID!, $input: PageBasedThumbnailInput!) {
   updateMediaThumbnail(id: $id, input: $input) {
@@ -12628,6 +12746,38 @@ export const ProvidersSectionGetProvidersDocument = new TypedDocumentString(`
   createdAt
   updatedAt
 }`) as unknown as TypedDocumentString<ProvidersSectionGetProvidersQuery, ProvidersSectionGetProvidersQueryVariables>;
+export const CreateTagModalDocument = new TypedDocumentString(`
+    mutation CreateTagModal($tags: [String!]!) {
+  createTags(tags: $tags) {
+    id
+    name
+  }
+}
+    `) as unknown as TypedDocumentString<CreateTagModalMutation, CreateTagModalMutationVariables>;
+export const DeleteTagConfirmModalDocument = new TypedDocumentString(`
+    mutation DeleteTagConfirmModal($tags: [String!]!) {
+  deleteTags(tags: $tags) {
+    id
+    name
+  }
+}
+    `) as unknown as TypedDocumentString<DeleteTagConfirmModalMutation, DeleteTagConfirmModalMutationVariables>;
+export const RenameTagModalDocument = new TypedDocumentString(`
+    mutation RenameTagModal($id: Int!, $name: String!) {
+  renameTag(id: $id, name: $name) {
+    id
+    name
+  }
+}
+    `) as unknown as TypedDocumentString<RenameTagModalMutation, RenameTagModalMutationVariables>;
+export const TagTableDocument = new TypedDocumentString(`
+    query TagTable {
+  tags {
+    id
+    name
+  }
+}
+    `) as unknown as TypedDocumentString<TagTableQuery, TagTableQueryVariables>;
 export const UserStatsDocument = new TypedDocumentString(`
     query UserStats {
   userCount

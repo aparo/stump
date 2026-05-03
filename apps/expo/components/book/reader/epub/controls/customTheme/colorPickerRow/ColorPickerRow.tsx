@@ -3,9 +3,9 @@ import { useRef, useState } from 'react'
 import { Pressable, View } from 'react-native'
 import ColorPicker, { HueSlider, Panel1 } from 'reanimated-color-picker'
 
+import { SheetBackDetection } from '~/components/SheetBackDetection'
 import { Button, Text } from '~/components/ui'
 import { useColors } from '~/lib/constants'
-import { useColorScheme } from '~/lib/useColorScheme'
 
 type Props = {
 	label: string
@@ -16,8 +16,9 @@ type Props = {
 export function ColorPickerRow({ label, value, onChange }: Props) {
 	const sheetRef = useRef<TrueSheet>(null)
 	const [tempColor, setTempColor] = useState(value)
-	const { colorScheme } = useColorScheme()
 	const colors = useColors()
+
+	const [isOpen, setIsOpen] = useState(false)
 
 	const openPicker = () => {
 		setTempColor(value)
@@ -48,16 +49,15 @@ export function ColorPickerRow({ label, value, onChange }: Props) {
 			<TrueSheet
 				ref={sheetRef}
 				detents={[0.5]}
-				cornerRadius={24}
 				grabber
 				// Note: Complex and conflicting gesture handling if not disabled,
 				// I tried a nested gesture handler but a bit yucky. For now Android can
 				// just tap the buttons to dismiss
 				dismissible={false}
 				backgroundColor={colors.background.DEFAULT}
-				grabberOptions={{
-					color: colorScheme === 'dark' ? '#333' : '#ccc',
-				}}
+				grabberOptions={{ color: colors.sheet.grabber }}
+				onDidPresent={() => setIsOpen(true)}
+				onDidDismiss={() => setIsOpen(false)}
 			>
 				<View className="gap-4 p-4 pb-8">
 					<Text className="text-lg font-medium text-center">{label}</Text>
@@ -83,6 +83,8 @@ export function ColorPickerRow({ label, value, onChange }: Props) {
 					</View>
 				</View>
 			</TrueSheet>
+
+			<SheetBackDetection ref={sheetRef} isOpen={isOpen} />
 		</>
 	)
 }

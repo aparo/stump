@@ -19,7 +19,7 @@ export function ColorPickerRow({ label, value, onChange }: Props) {
 					key={value}
 					label=""
 					selection={value}
-					onValueChanged={onChange}
+					onSelectionChange={onChange}
 					supportsOpacity={false}
 				/>
 			</Host>

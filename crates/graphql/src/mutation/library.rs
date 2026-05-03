@@ -245,56 +245,23 @@ impl LibraryMutation {
 		.await?;
 
 		if let Some(tags) = tags {
-			let existing_tags = tag::Entity::find()
-				.filter(tag::Column::Name.is_in(tags.clone()))
-				.all(&txn)
+			let (to_connect, _) = super::tag::sync_tags(&txn, &tags, &[]).await?;
+
+			if !to_connect.is_empty() {
+				library_tag::Entity::insert_many(
+					to_connect
+						.into_iter()
+						.map(|tag_id| library_tag::ActiveModel {
+							library_id: Set(created_library.id.clone()),
+							tag_id: Set(tag_id),
+							..Default::default()
+						})
+						.collect::<Vec<library_tag::ActiveModel>>(),
+				)
+				.on_conflict_do_nothing()
+				.exec(&txn)
 				.await?;
-
-			tracing::trace!(existing_tags = existing_tags.len(), "Found existing tags");
-
-			let tags_to_create = tags
-				.iter()
-				.filter(|tag| !existing_tags.iter().any(|t| t.name == **tag))
-				.map(|tag| tag::ActiveModel {
-					name: Set(tag.clone()),
-					..Default::default()
-				})
-				.collect::<Vec<_>>();
-
-			tracing::trace!(
-				tags_to_create = tags_to_create.len(),
-				"Found tags to create"
-			);
-
-			let created_tags = if !tags_to_create.is_empty() {
-				tag::Entity::insert_many(tags_to_create)
-					.exec_with_returning_many(&txn)
-					.await?
-			} else {
-				vec![]
-			};
-
-			let to_link = existing_tags
-				.iter()
-				.chain(created_tags.iter())
-				.map(|tag| tag.id)
-				.collect::<Vec<_>>();
-
-			library_tag::Entity::insert_many(
-				to_link
-					.into_iter()
-					.map(|tag_id| library_tag::ActiveModel {
-						library_id: Set(created_library.id),
-						tag_id: Set(tag_id),
-						..Default::default()
-					})
-					.collect::<Vec<library_tag::ActiveModel>>(),
-			)
-			.on_conflict_do_nothing()
-			.exec(&txn)
-			.await?;
-		} else {
-			tracing::debug!("No tags provided, skipping tag creation");
+			}
 		}
 
 		txn.commit().await?;
@@ -463,94 +430,36 @@ impl LibraryMutation {
 		.update(&txn)
 		.await?;
 
-		match tags {
-			Some(tags) if tags.is_empty() && existing_tags.is_empty() => {
-				tracing::debug!("No change in tags, skipping tag update");
-			},
-			Some(tags) => {
-				let tags_not_in_existing = tags
-					.iter()
-					.filter(|tag| !existing_tags.iter().any(|t| t.name == **tag))
-					.collect::<Vec<_>>();
+		if let Some(tags) = tags {
+			let (to_connect, to_disconnect) =
+				super::tag::sync_tags(&txn, &tags, &existing_tags).await?;
 
-				let tags_to_add_which_already_exist = tag::Entity::find()
-					.filter(tag::Column::Name.is_in(tags_not_in_existing.clone()))
-					.all(&txn)
+			if !to_disconnect.is_empty() {
+				library_tag::Entity::delete_many()
+					.filter(library_tag::Column::TagId.is_in(to_disconnect).and(
+						library_tag::Column::LibraryId.eq(updated_library.id.clone()),
+					))
+					.exec(&txn)
 					.await?;
+			}
 
-				let tags_to_create = tags_not_in_existing
-					.iter()
-					.filter(|tag| {
-						!tags_to_add_which_already_exist
-							.iter()
-							.any(|t| t.name == ***tag)
-					})
-					.map(|tag| tag::ActiveModel {
-						name: Set(tag.to_string()),
-						..Default::default()
-					})
-					.collect::<Vec<_>>();
-
-				tracing::trace!(
-					to_create = tags_to_create.len(),
-					to_link = tags_to_add_which_already_exist.len(),
-					"Creating and linking tags to library",
-				);
-
-				let created_tags = if !tags_to_create.is_empty() {
-					tag::Entity::insert_many(tags_to_create)
-						.exec_with_returning_many(&txn)
-						.await?
-				} else {
-					vec![]
-				};
-
-				let tags_to_connect = tags_to_add_which_already_exist
-					.iter()
-					.chain(created_tags.iter())
-					.map(|tag| tag.id)
-					.collect::<Vec<_>>();
-
-				let tags_to_disconnect = existing_tags
-					.iter()
-					.filter(|tag| !tags.iter().any(|t| t == &tag.name))
-					.map(|tag| tag.id)
-					.collect::<Vec<_>>();
-
-				if !tags_to_disconnect.is_empty() {
-					let affected_rows = library_tag::Entity::delete_many()
-						.filter(
-							library_tag::Column::Id.is_in(tags_to_disconnect).and(
-								library_tag::Column::LibraryId.eq(updated_library.id),
-							),
-						)
-						.exec(&txn)
-						.await?
-						.rows_affected;
-					tracing::debug!(affected_rows, "Deleted tags from library");
-				}
-
-				if !tags_to_connect.is_empty() {
-					let library_id = updated_library.id;
-					let to_link = tags_to_connect
+			if !to_connect.is_empty() {
+				let library_id = updated_library.id.clone();
+				library_tag::Entity::insert_many(
+					to_connect
 						.into_iter()
 						.map(|tag_id| library_tag::ActiveModel {
 							library_id: Set(library_id),
 							tag_id: Set(tag_id),
 							..Default::default()
 						})
-						.collect::<Vec<library_tag::ActiveModel>>();
-
-					library_tag::Entity::insert_many(to_link)
-						.on_conflict_do_nothing()
-						.exec(&txn)
-						.await?;
-				}
-			},
-			_ => {
-				tracing::warn!("No tags provided, skipping tag update");
-			},
-		};
+						.collect::<Vec<library_tag::ActiveModel>>(),
+				)
+				.on_conflict_do_nothing()
+				.exec(&txn)
+				.await?;
+			}
+		}
 
 		txn.commit().await?;
 
@@ -991,10 +900,10 @@ impl LibraryMutation {
 			.ok_or("Library not found")?;
 
 		let locked_json = serde_json::to_value(&locked_fields)?;
-		let library_id_str = library.id;
+		let library_id = library.id;
 
-		let series_ids: Vec<String> = series::Entity::find()
-			.filter(series::Column::LibraryId.eq(library_id_str))
+		let series_ids: Vec<Uuid> = series::Entity::find()
+			.filter(series::Column::LibraryId.eq(library_id))
 			.select_only()
 			.column(series::Column::Id)
 			.into_tuple()
@@ -1015,7 +924,7 @@ impl LibraryMutation {
 			.await?;
 
 		tracing::debug!(
-			library_id = ?library_id_str,
+			library_id = ?library_id,
 			?locked_fields,
 			updated = result.rows_affected,
 			"Set locked fields for series metadata in library"
@@ -1042,7 +951,7 @@ impl LibraryMutation {
 			.ok_or("Library not found")?;
 
 		let locked_json = serde_json::to_value(&locked_fields)?;
-		let library_id_str = library.id;
+		let library_id = library.id;
 
 		let media_ids: Vec<String> = media::Entity::find()
 			.filter(
@@ -1050,7 +959,7 @@ impl LibraryMutation {
 					Query::select()
 						.column(series::Column::Id)
 						.from(series::Entity)
-						.and_where(series::Column::LibraryId.eq(library_id_str))
+						.and_where(series::Column::LibraryId.eq(library_id))
 						.to_owned(),
 				),
 			)
@@ -1074,7 +983,7 @@ impl LibraryMutation {
 			.await?;
 
 		tracing::debug!(
-			library_id = ?library_id_str,
+			library_id = ?library_id,
 			?locked_fields,
 			updated = result.rows_affected,
 			"Set locked fields for media metadata in library"

@@ -24,6 +24,7 @@ pub mod env_keys {
 	pub const PORT_KEY: &str = "STUMP_PORT";
 	pub const VERBOSITY_KEY: &str = "STUMP_VERBOSITY";
 	pub const PRETTY_LOGS_KEY: &str = "STUMP_PRETTY_LOGS";
+	pub const LOG_DIR_KEY: &str = "STUMP_LOG_DIR";
 	pub const COLORFUL_LOGS_KEY: &str = "STUMP_COLORFUL_LOGS";
 	pub const DB_PATH_KEY: &str = "STUMP_DB_PATH";
 	pub const DB_URL_KEY: &str = "STUMP_DB_URL";
@@ -32,6 +33,7 @@ pub mod env_keys {
 	pub const PDFIUM_KEY: &str = "PDFIUM_PATH";
 	pub const ENABLE_SWAGGER_KEY: &str = "ENABLE_SWAGGER_UI";
 	pub const ENABLE_KOREADER_SYNC_KEY: &str = "ENABLE_KOREADER_SYNC";
+	pub const ENABLE_KOBO_SYNC_KEY: &str = "ENABLE_KOBO_SYNC";
 	pub const ENABLE_OPDS_PROGRESSION_KEY: &str = "ENABLE_OPDS_PROGRESSION";
 	pub const HASH_COST_KEY: &str = "HASH_COST";
 	pub const SESSION_TTL_KEY: &str = "SESSION_TTL";
@@ -57,6 +59,7 @@ pub mod env_keys {
 	pub const OIDC_EXTRA_AUDIENCES_KEY: &str = "STUMP_OIDC_EXTRA_AUDIENCES";
 	pub const BOOK_COMPLETION_DEDUP_TIMEOUT_SECS_KEY: &str =
 		"STUMP_BOOK_COMPLETION_DEDUP_TIMEOUT_SECS";
+	pub const TRUST_PROXY_HEADERS_KEY: &str = "STUMP_TRUST_PROXY_HEADERS";
 }
 use env_keys::*;
 
@@ -135,6 +138,11 @@ pub struct StumpConfig {
 	#[env_key(PRETTY_LOGS_KEY)]
 	pub pretty_logs: bool,
 
+	/// The directory where the applicaiton logs will be stored
+	#[default_value(None)]
+	#[env_key(LOG_DIR_KEY)]
+	pub log_dir: Option<String>,
+
 	/// Whether or not to include ANSI color codes in log files.
 	#[default_value(false)]
 	#[env_key(COLORFUL_LOGS_KEY)]
@@ -181,6 +189,11 @@ pub struct StumpConfig {
 	#[default_value(false)]
 	#[env_key(ENABLE_KOREADER_SYNC_KEY)]
 	pub enable_koreader_sync: bool,
+
+	/// Indicates if the Kobo sync feature should be enabled.
+	#[default_value(false)]
+	#[env_key(ENABLE_KOBO_SYNC_KEY)]
+	pub enable_kobo_sync: bool,
 
 	/// Indicates if OPDS page access should automatically track reading progression.
 	/// When disabled, clients loading/preloading pages won't trigger progress updates.
@@ -282,6 +295,11 @@ pub struct StumpConfig {
 	#[default_value(DEFAULT_BOOK_COMPLETION_DEDUP_TIMEOUT_SECS)]
 	#[env_key(BOOK_COMPLETION_DEDUP_TIMEOUT_SECS_KEY)]
 	pub book_completion_dedup_timeout_secs: i64,
+
+	/// Whether to trust proxy headers for determining client IP and scheme (e.g., X-Forwarded-For)
+	#[default_value(false)]
+	#[env_key(TRUST_PROXY_HEADERS_KEY)]
+	pub trust_proxy_headers: bool,
 }
 
 impl StumpConfig {
@@ -359,6 +377,13 @@ impl StumpConfig {
 	/// Returns a `PathBuf` to the Stump configuration directory.
 	pub fn get_config_dir(&self) -> PathBuf {
 		PathBuf::from(&self.config_dir)
+	}
+
+	pub fn get_log_dir(&self) -> PathBuf {
+		match &self.log_dir {
+			Some(value) => PathBuf::from(value),
+			None => self.get_config_dir(),
+		}
 	}
 
 	/// Returns a `PathBuf` to the Stump cache directory.
@@ -459,6 +484,7 @@ mod tests {
 			port: Some(1337),
 			verbosity: Some(3),
 			pretty_logs: Some(true),
+			log_dir: None,
 			colorful_logs: None,
 			db_path: Some("not_a_real_path".to_string()),
 			db_url: Some("not_a_real_db_url".to_string()),
@@ -470,6 +496,7 @@ mod tests {
 			pdfium_path: Some("not_a_path_to_pdfium".to_string()),
 			enable_swagger: Some(false),
 			enable_koreader_sync: Some(false),
+			enable_kobo_sync: Some(false),
 			password_hash_cost: None,
 			session_ttl: None,
 			access_token_ttl: None,
@@ -488,6 +515,7 @@ mod tests {
 			pdf_high_quality: None,
 			oidc: None,
 			book_completion_dedup_timeout_secs: None,
+			trust_proxy_headers: None,
 		};
 		partial_config.apply_to_config(&mut config);
 
@@ -508,6 +536,7 @@ mod tests {
 				port: Some(1337),
 				verbosity: Some(3),
 				pretty_logs: Some(true),
+				log_dir: None,
 				colorful_logs: Some(false),
 				db_path: Some("not_a_real_path".to_string()),
 				db_url: Some("not_a_real_db_url".to_string()),
@@ -518,6 +547,7 @@ mod tests {
 				pdfium_path: Some("not_a_path_to_pdfium".to_string()),
 				enable_swagger: Some(false),
 				enable_koreader_sync: Some(false),
+				enable_kobo_sync: Some(false),
 				enable_opds_progression: Some(false),
 				password_hash_cost: Some(DEFAULT_PASSWORD_HASH_COST),
 				session_ttl: Some(DEFAULT_SESSION_TTL),
@@ -541,6 +571,7 @@ mod tests {
 				book_completion_dedup_timeout_secs: Some(
 					DEFAULT_BOOK_COMPLETION_DEDUP_TIMEOUT_SECS
 				),
+				trust_proxy_headers: Some(false),
 			}
 		);
 
@@ -582,6 +613,7 @@ mod tests {
 						port: 1337,
 						verbosity: 2,
 						pretty_logs: true,
+						log_dir: None,
 						colorful_logs: false,
 						db_path: None,
 						db_url: None,
@@ -591,6 +623,7 @@ mod tests {
 						pdfium_path: None,
 						enable_swagger: true,
 						enable_koreader_sync: false,
+						enable_kobo_sync: false,
 						enable_opds_progression: false,
 						password_hash_cost: 1,
 						session_ttl: DEFAULT_SESSION_TTL,
@@ -613,6 +646,7 @@ mod tests {
 						oidc: None,
 						book_completion_dedup_timeout_secs:
 							DEFAULT_BOOK_COMPLETION_DEDUP_TIMEOUT_SECS,
+						trust_proxy_headers: false,
 					}
 				);
 			},

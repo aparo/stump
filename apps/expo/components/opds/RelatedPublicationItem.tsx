@@ -54,7 +54,6 @@ export function RelatedPublicationItem({ item }: Props) {
 								Authorization: sdk.authorizationHeader || '',
 							},
 						}}
-						resizeMode="cover"
 						size={{ height: 110 / thumbnailRatio, width: 110 }}
 					/>
 

@@ -96,9 +96,7 @@ impl SeriesMetadataMutation {
 						Query::select()
 							.column(media::Column::Id)
 							.from(media::Entity)
-							.and_where(
-								media::Column::SeriesId.eq(model.series.id),
-							)
+							.and_where(media::Column::SeriesId.eq(model.series.id))
 							.to_owned(),
 					),
 				)
